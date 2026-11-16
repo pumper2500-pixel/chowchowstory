@@ -120,3 +120,6 @@ drop policy if exists "dog-photos: delete own or admin" on storage.objects;
 create policy "dog-photos: delete own or admin" on storage.objects
   for delete to authenticated
   using (bucket_id = 'dog-photos' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+
+-- ให้ API ของ Supabase เห็นตาราง/ฟังก์ชันใหม่ทันที (กัน error 'schema cache')
+notify pgrst, 'reload schema';

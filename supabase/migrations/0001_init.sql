@@ -237,3 +237,6 @@ grant insert, update (dog_name, years, message, status), delete on public.memori
 -- ซ่อมยอดกระดูกให้ตรงกับภารกิจที่ทำจริง (รันซ้ำได้)
 update public.profiles p
 set bones = coalesce((select sum(r.points) from public.profile_rewards r where r.user_id = p.id), 0);
+
+-- ให้ API ของ Supabase เห็นตาราง/ฟังก์ชันใหม่ทันที (กัน error 'schema cache')
+notify pgrst, 'reload schema';
