@@ -370,3 +370,18 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 @keyframes yumPop{0%{scale:0}12%{scale:1.2}20%{scale:1}80%{opacity:1}100%{opacity:0;translate:-50% -60px}}
 .scene.night .spray{stroke:#9ADCF5}
 @media (prefers-reduced-motion:reduce){.treat{animation:none}}
+
+/* น้องเดินกระจาย + คนเดินบนทางเท้า + ร้านแต่งใหม่ */
+.scene .dog{transition:none;transform-origin:50% 100%}
+.peds{position:absolute;inset:0;pointer-events:none;z-index:1}
+.ped{position:absolute;left:0;bottom:84px;width:40px;height:66px;will-change:transform}
+.ped svg{width:100%;height:100%;display:block;overflow:visible;animation:pedbob .32s ease-in-out infinite alternate}
+.ped .lg,.ped .arm{transform-box:fill-box;transform-origin:50% 0;animation:pedleg .64s ease-in-out infinite alternate}
+.ped .lg.r,.ped .arm.b{animation-delay:-.64s}
+.ped svg.run,.ped svg.run .lg,.ped svg.run .arm{animation-duration:.36s}
+.ped svg.run .lg.r,.ped svg.run .arm.b{animation-delay:-.36s}
+@keyframes pedleg{from{transform:rotate(-20deg)}to{transform:rotate(20deg)}}
+@keyframes pedbob{to{transform:translateY(-1.5px)}}
+.scene.night .bulb{filter:drop-shadow(0 0 4px currentColor) brightness(1.25)}
+.scene.night .glare{opacity:.15}
+@media (prefers-reduced-motion:reduce){.ped svg,.ped .lg,.ped .arm{animation:none}}
