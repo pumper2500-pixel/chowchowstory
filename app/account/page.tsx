@@ -25,7 +25,7 @@ const thai = (m: string) => {
 };
 
 export default function AccountPage() {
-  const { session, state, sync, displayName, setDisplayName, showToast } = useGame();
+  const { session, state, sync, displayName, setDisplayName, showToast, syncError } = useGame();
   const [mode, setMode] = useState<Mode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -98,6 +98,7 @@ export default function AccountPage() {
             <div className="acct-row"><span>สถานะ</span>
               <b className={`sync ${sync}`}>{{ synced: "เก็บในบัญชีแล้ว", syncing: "กำลังซิงก์…", error: "ซิงก์ไม่สำเร็จ ลองรีเฟรช", local: "—" }[sync]}</b>
             </div>
+            {sync === "error" && syncError && <p className="form-msg bad" style={{ fontFamily: "monospace", fontSize: 12.5 }}>{syncError}</p>}
             <button className="btn signout" type="button" onClick={async () => { await supabase.auth.signOut(); showToast("ออกจากระบบแล้ว"); }}>ออกจากระบบ</button>
           </div>
           {pending !== null && (

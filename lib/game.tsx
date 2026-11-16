@@ -28,6 +28,7 @@ type Ctx = {
   sync: SyncStatus;
   displayName: string | null;
   setDisplayName: (n: string | null) => void;
+  syncError: string | null;
 };
 
 const GameCtx = createContext<Ctx | null>(null);
@@ -52,6 +53,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sync, setSync] = useState<SyncStatus>("local");
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const fail = useCallback((where: string, e: { message?: string } | null) => {
+    const m = `${where}: ${e?.message || "unknown"}`;
+    console.error("[sync]", m);
+    setSyncError(m);
+    setSync("error");
+  }, []);
   const stateRef = useRef(state);
   const sessionRef = useRef<Session | null>(null);
   const today = useMemo(() => todayKey(), []);
@@ -70,19 +78,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const localKeys = Object.keys(readLocal().done);
     if (localKeys.length) {
       const { error } = await supabase.rpc("merge_rewards", { p_keys: localKeys });
-      if (error) { setSync("error"); return; }
+      if (error) { fail("merge_rewards", error); return; }
     }
     const [{ data: prof, error: e1 }, { data: rows, error: e2 }] = await Promise.all([
       supabase.from("profiles").select("bones, display_name").single(),
       supabase.from("profile_rewards").select("key"),
     ]);
-    if (e1 || e2 || !prof) { setSync("error"); return; }
+    if (e1 || e2 || !prof) { fail(e1 ? "profiles" : "profile_rewards", e1 || e2 || { message: "no profile row" }); return; }
     const done: Record<string, boolean> = {};
     (rows || []).forEach((r: { key: string }) => { done[r.key] = true; });
     apply({ bones: prof.bones, done });
     setDisplayName(prof.display_name);
+    setSyncError(null);
     setSync("synced");
-  }, [apply]);
+  }, [apply, fail]);
 
   useEffect(() => {
     const s = readLocal();
@@ -134,7 +143,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     announce(pts, label, levelUp, r.state.bones);
     if (sessionRef.current) {
       supabase.rpc("claim_reward", { p_key: key }).then(({ data, error }) => {
-        if (error) { setSync("error"); return; }
+        if (error) { fail("claim_reward", error); return; }
         const row = Array.isArray(data) ? data[0] : data;
         if (row && typeof row.bones === "number" && row.bones !== stateRef.current.bones) {
           apply({ ...stateRef.current, bones: row.bones });
@@ -143,13 +152,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
     }
     return true;
-  }, [apply, announce]);
+  }, [apply, announce, fail]);
 
   const value: Ctx = {
     state, ready, preview, setPreview,
     shownBones: preview ? LEVELS[LEVELS.length - 1].min : state.bones,
     today, earn, toast, showToast, levelUpTick,
-    session, sync, displayName, setDisplayName,
+    session, sync, displayName, setDisplayName, syncError,
   };
   return <GameCtx.Provider value={value}>{children}</GameCtx.Provider>;
 }
