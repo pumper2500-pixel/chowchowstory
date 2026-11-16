@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { DOGS, levelOf } from "@/lib/game-core.mjs";
 import { TIPS } from "@/lib/content";
 import { useGame } from "@/lib/game";
+import { AccountButton } from "@/components/Chrome";
 
 type Actor = {
   i: number; x: number; y: number; w: number; dir: 1 | -1; speed: number;
@@ -92,6 +93,7 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
       <button className="topbtn r" type="button" aria-label="วิธีสะสมกระดูก" onClick={onEarnClick}>
         <span className="bone">🦴</span>{hasMissions && <i className="dot" />}
       </button>
+      <AccountButton className="topbtn r2" />
       <div className="yard" ref={yardRef}>
         {actors.current.map((a) => (
           <button

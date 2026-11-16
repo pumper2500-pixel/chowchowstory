@@ -219,3 +219,13 @@ dialog.sheet::backdrop{background:rgba(20,16,12,.6)}
 .btn:disabled{opacity:.6}
 .mem-list{display:flex;flex-direction:column;gap:12px}
 .mem-status{font-size:12.5px;font-weight:600;color:var(--muted)}
+
+/* ปุ่มบัญชี: มุมขวาบนของทุกหน้า */
+.acct-btn{display:flex;align-items:center;justify-content:center;background:#fff;border:3px solid var(--ink);border-radius:50%;color:var(--ink);text-decoration:none;position:relative}
+.acct-btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.acct-btn .ok{position:absolute;right:-2px;bottom:-2px;width:16px;height:16px;border-radius:50%;background:var(--ok);border:2px solid #fff}
+.acct-btn.topbtn.r2{position:absolute;right:84px;width:58px;height:58px;box-shadow:0 3px 0 var(--ink)}
+.phead{position:relative}
+.ph-acct{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:46px;height:46px;box-shadow:0 2px 0 var(--ink)}
+.phead div{padding-right:52px}
+.btn.signout{align-self:stretch;background:#fff;color:var(--bad);border:2px solid var(--bad);margin-top:4px}

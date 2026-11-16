@@ -74,6 +74,7 @@ export default function AccountPage() {
             <div className="acct-row"><span>สถานะ</span>
               <b className={`sync ${sync}`}>{{ synced: "เก็บในบัญชีแล้ว", syncing: "กำลังซิงก์…", error: "ซิงก์ไม่สำเร็จ ลองรีเฟรช", local: "—" }[sync]}</b>
             </div>
+            <button className="btn signout" type="button" onClick={async () => { await supabase.auth.signOut(); showToast("ออกจากระบบแล้ว"); }}>ออกจากระบบ</button>
           </div>
           <div className="card mem-form">
             <label htmlFor="dn">ชื่อที่แสดง</label>
@@ -102,7 +103,6 @@ export default function AccountPage() {
             </div>
           </form>
           {msg && <p className={`form-msg ${msg.ok ? "ok" : "bad"}`} role="status">{msg.text}</p>}
-          <button className="btn ghost" type="button" onClick={() => supabase.auth.signOut()}>ออกจากระบบ</button>
         </div>
       </>
     );

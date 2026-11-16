@@ -40,9 +40,21 @@ export function ToastHost() {
   );
 }
 
+export function AccountButton({ className = "" }: { className?: string }) {
+  const { session, displayName } = useGame();
+  const label = session ? `บัญชีของ ${displayName || session.user.email}` : "สมัครสมาชิก / เข้าสู่ระบบ";
+  return (
+    <Link href="/account/" className={`acct-btn ${className}${session ? " in" : ""}`} aria-label={label} title={label}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" /><path d="M4.5 20.5c1.2-3.8 4.2-5.6 7.5-5.6s6.3 1.8 7.5 5.6" /></svg>
+      {session && <i className="ok" />}
+    </Link>
+  );
+}
+
 export function PageHead({ img, eyebrow, title }: { img: string; eyebrow: string; title: string }) {
   return (
     <header className="phead">
+      <AccountButton className="ph-acct" />
       <img src={`/img/${img}.png`} alt="" />
       <div><p className="eb">{eyebrow}</p><h1>{title}</h1></div>
     </header>
