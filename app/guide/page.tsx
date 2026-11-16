@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { PageHead } from "@/components/Chrome";
-import { AKC_URL, STAGES, type Stage } from "@/lib/content";
+import { AKC_URL, FUN_FACTS, LOOKS, STAGES, type Stage } from "@/lib/content";
+import Traits from "@/components/Traits";
 import { useGame } from "@/lib/game";
 
 export default function GuidePage() {
@@ -31,6 +32,17 @@ export default function GuidePage() {
           <div><b>5 สี</b><span>แดง ดำ บลู ซินนามอน ครีม</span></div>
         </div>
         <p className="src">ขนาด อายุขัย กลุ่ม และสีมาตรฐาน: <a href={AKC_URL} target="_blank" rel="noopener noreferrer">American Kennel Club</a></p>
+        <section className="card stack" aria-labelledby="looks-h">
+          <h2 id="looks-h" style={{ fontSize: 21 }}>ดูยังไงว่าใช่เชาเชา</h2>
+          {LOOKS.map(([h, t]) => <div className="topic" key={h}><b>{h}</b><span>{t}</span></div>)}
+        </section>
+        <Traits />
+        <section className="card stack facts-fun" aria-labelledby="fun-h">
+          <img className="pic" src="/img/s8.png" alt="" />
+          <h2 id="fun-h" style={{ fontSize: 21 }}>รู้หรือไม่</h2>
+          <ul>{FUN_FACTS.map((f) => <li key={f}>{f}</li>)}</ul>
+        </section>
+        <h2 style={{ fontSize: 21 }}>ดูแลตามช่วงวัย</h2>
         <div className="tabs" role="tablist" aria-label="ช่วงวัย">
           {STAGES.map((s) => (
             <button key={s.id} role="tab" id={`tab-${s.id}`} aria-controls="stage-panel"
