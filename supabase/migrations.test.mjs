@@ -24,6 +24,8 @@ const B = "22222222-2222-2222-2222-222222222222";
 async function setup() {
   const db = new PGlite();
   await db.exec(AUTH_STUB);
+  // ผู้ใช้ที่สมัครก่อนรัน migration ต้องได้โปรไฟล์ด้วย
+  await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ('33333333-3333-3333-3333-333333333333','early@x.com','{"display_name":"มาก่อน"}')`);
   await db.exec(SQL);
   await db.exec(SQL); // รันซ้ำต้องไม่พัง
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1,'a@x.com','{"display_name":"ปั้ม"}'), ($2,'b@x.com','{}')`, [A, B]);
@@ -44,8 +46,9 @@ const today = () => {
 test("สมัครแล้วมีโปรไฟล์และชื่อ", async () => {
   const db = await setup();
   const r = await db.query("select display_name, bones from public.profiles order by display_name nulls last");
-  assert.equal(r.rows.length, 2);
-  assert.equal(r.rows[0].display_name, "ปั้ม");
+  assert.equal(r.rows.length, 3, "รวมคนที่สมัครก่อนรัน migration");
+  assert.ok(r.rows.some((x) => x.display_name === "มาก่อน"));
+  assert.ok(r.rows.some((x) => x.display_name === "ปั้ม"));
   assert.equal(r.rows[0].bones, 0);
 });
 

@@ -46,6 +46,12 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users for each row execute function public.handle_new_user();
 
+-- บัญชีที่สมัครไว้ก่อนรันไฟล์นี้: สร้างโปรไฟล์ให้ย้อนหลัง
+insert into public.profiles (id, display_name)
+select id, nullif(left(coalesce(raw_user_meta_data ->> 'display_name', ''), 40), '')
+from auth.users
+on conflict (id) do nothing;
+
 -- ---------------------------------------------------------------
 -- rewards: บันทึกว่าได้กระดูกจากภารกิจไหนแล้ว (ได้ครั้งเดียวต่อ key)
 -- ---------------------------------------------------------------
