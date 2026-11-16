@@ -190,7 +190,7 @@ function CatLoaf({ x, y, c = "#FFFFFF", s = 1 }: { x: number; y: number; c?: str
   );
 }
 
-function Bust({ x, y, skin = "#F5C9A0", shirt = "#fff", hair = "#3A2A20", apron, wave = false, coat = false }: { x: number; y: number; skin?: string; shirt?: string; hair?: string; apron?: string; wave?: boolean; coat?: boolean }) {
+function Bust({ x, y, skin = "#F5C9A0", shirt = "#fff", animal = "bear", apron, wave = false, coat = false }: { x: number; y: number; skin?: string; shirt?: string; animal?: Animal; apron?: string; wave?: boolean; coat?: boolean }) {
   // คนในร้าน (เห็นครึ่งตัว) โบกมือทักทาย
   return (
     <g transform={`translate(${x} ${y})`}>
@@ -198,11 +198,7 @@ function Bust({ x, y, skin = "#F5C9A0", shirt = "#fff", hair = "#3A2A20", apron,
       {apron && <path d="M-7 22 v-11 h14 v11z" fill={apron} stroke={INK} strokeWidth="1.5" />}
       {coat && <path d="M-4 8 q-3 8 2 12 M4 8 q3 8 -2 12" fill="none" stroke="#3F4A5A" strokeWidth="1.8" />}
       {wave && <g className="wave"><path d="M10 12 l8 -12" stroke={INK} strokeWidth="5.5" strokeLinecap="round" /><path d="M10 12 l8 -12" stroke={shirt} strokeWidth="3" strokeLinecap="round" /><circle cx="18" cy="-1" r="3" fill={skin} stroke={INK} strokeWidth="1.5" /></g>}
-      <circle cy="-4" r="10" fill={skin} stroke={INK} strokeWidth="2" />
-      <path d="M-10 -5 q2 -12 10 -11 q9 0 10 11 q-4 -6 -10 -6 q-6 0 -10 6z" fill={hair} stroke={INK} strokeWidth="1.2" />
-      <ellipse cx="-3.5" cy="-3" rx="1.3" ry="1.8" fill={INK} /><ellipse cx="3.5" cy="-3" rx="1.3" ry="1.8" fill={INK} />
-      <path d="M-2 1.5 q2 2 4 0" fill="none" stroke={INK} strokeWidth="1.3" strokeLinecap="round" />
-      <circle cx="-6.5" cy="0" r="1.8" fill="#FF8FA3" opacity=".6" /><circle cx="6.5" cy="0" r="1.8" fill="#FF8FA3" opacity=".6" />
+      <g transform="translate(0 -4) scale(.78)"><AnimalHead a={animal} /></g>
     </g>
   );
 }
@@ -229,6 +225,119 @@ function Smoke({ x, y }: { x: number; y: number }) {
       <circle cx={x} cy={y} r="5" /><circle cx={x + 4} cy={y - 10} r="6.5" /><circle cx={x - 2} cy={y - 22} r="8" />
     </g>
   );
+}
+
+
+// ---------------------------------------------------------------
+// หัวสัตว์ (วาดเอง) ใช้แทนหัวคน: กลางอยู่ที่ (0,0) รัศมีราว 13.5 — dx เลื่อนหน้าไปทางขวาเมื่อหันข้าง
+// ---------------------------------------------------------------
+export type Animal = "panda" | "penguin" | "cat" | "bear" | "monkey" | "tiger" | "rabbit" | "elephant" | "pig" | "dog";
+const ST = { stroke: INK, strokeWidth: 2.4, strokeLinejoin: "round" as const };
+function Eyes({ dx, y = -1, white = false }: { dx: number; y?: number; white?: boolean }) {
+  return (
+    <g>
+      <ellipse cx={dx - 4.5} cy={y} rx="1.8" ry="2.4" fill={white ? "#fff" : INK} /><ellipse cx={dx + 4.5} cy={y} rx="1.8" ry="2.4" fill={white ? "#fff" : INK} />
+      {!white && <><circle cx={dx - 3.9} cy={y - .9} r=".75" fill="#fff" /><circle cx={dx + 5.1} cy={y - .9} r=".75" fill="#fff" /></>}
+    </g>
+  );
+}
+function Cheeks({ dx, y = 4 }: { dx: number; y?: number }) {
+  return <><circle cx={dx - 8.5} cy={y} r="2.4" fill="#FF8FA3" opacity=".6" /><circle cx={dx + 8.5} cy={y} r="2.4" fill="#FF8FA3" opacity=".6" /></>;
+}
+export function AnimalHead({ a, dx = 0 }: { a: Animal; dx?: number }) {
+  switch (a) {
+    case "panda": return (
+      <g>
+        <circle cx="-10" cy="-11" r="5" fill={INK} /><circle cx="10" cy="-11" r="5" fill={INK} />
+        <circle r="13.5" fill="#fff" {...ST} />
+        <ellipse cx={dx - 5} cy="-.5" rx="3.6" ry="4.6" fill={INK} transform={`rotate(20 ${dx - 5} 0)`} /><ellipse cx={dx + 5} cy="-.5" rx="3.6" ry="4.6" fill={INK} transform={`rotate(-20 ${dx + 5} 0)`} />
+        <circle cx={dx - 4.6} cy="-1.4" r="1.3" fill="#fff" /><circle cx={dx + 5.4} cy="-1.4" r="1.3" fill="#fff" />
+        <ellipse cx={dx} cy="5" rx="2.2" ry="1.5" fill={INK} /><path d={`M${dx - 2} 8 q2 2 4 0`} fill="none" stroke={INK} strokeWidth="1.3" />
+        <Cheeks dx={dx} y={6} />
+      </g>);
+    case "penguin": return (
+      <g>
+        <circle r="13.5" fill="#2B3A67" {...ST} />
+        <path d={`M${dx - 10} 2 q0 -10 10 -9 q10 -1 10 9 q0 10 -10 10 q-10 0 -10 -10z`} fill="#fff" />
+        <Eyes dx={dx} y={-1} />
+        <path d={`M${dx - 3} 3.5 l3 3.5 l3 -3.5z`} fill="#FFB020" stroke={INK} strokeWidth="1.3" strokeLinejoin="round" />
+        <Cheeks dx={dx} y={5} />
+      </g>);
+    case "cat": return (
+      <g>
+        <path d="M-12 -4 l1 -13 l9 6z M12 -4 l-1 -13 l-9 6z" fill="#FFE2C4" {...ST} /><path d="M-9.5 -8 l.5 -6 l4 3z M9.5 -8 l-.5 -6 l-4 3z" fill="#FF9FB4" />
+        <ellipse rx="14" ry="12.5" fill="#FFE2C4" {...ST} />
+        <path d="M-6 -11 q2 4 0 6 M0 -12 v5 M6 -11 q-2 4 0 6" stroke="#F2A65A" strokeWidth="2" fill="none" strokeLinecap="round" />
+        <Eyes dx={dx} y={0} />
+        <path d={`M${dx - 1.4} 3.5 h2.8 l-1.4 1.6z`} fill="#FF6F91" /><path d={`M${dx - 2.6} 6 q1.3 1.4 2.6 0 q1.3 1.4 2.6 0`} fill="none" stroke={INK} strokeWidth="1.2" />
+        <path d={`M${dx + 9} 4 h6 M${dx + 9} 6.5 l5 1.5 M${dx - 9} 4 h-6`} stroke={INK} strokeWidth="1" />
+        <Cheeks dx={dx} y={5} />
+      </g>);
+    case "bear": return (
+      <g>
+        <circle cx="-10" cy="-10" r="5.5" fill="#B9773E" {...ST} /><circle cx="10" cy="-10" r="5.5" fill="#B9773E" {...ST} />
+        <circle cx="-10" cy="-10" r="2.6" fill="#E8B48A" /><circle cx="10" cy="-10" r="2.6" fill="#E8B48A" />
+        <circle r="13.5" fill="#B9773E" {...ST} />
+        <ellipse cx={dx} cy="5" rx="6.5" ry="5" fill="#F2D2A9" stroke={INK} strokeWidth="1.5" />
+        <Eyes dx={dx} y={-2.5} />
+        <ellipse cx={dx} cy="3" rx="2.4" ry="1.7" fill={INK} /><path d={`M${dx - 2} 6.5 q2 2 4 0`} fill="none" stroke={INK} strokeWidth="1.2" />
+        <Cheeks dx={dx} y={3} />
+      </g>);
+    case "monkey": return (
+      <g>
+        <circle cx="-13" cy="0" r="5" fill="#9A5B2E" {...ST} /><circle cx="13" cy="0" r="5" fill="#9A5B2E" {...ST} />
+        <circle cx="-13" cy="0" r="2.5" fill="#F2C6A0" /><circle cx="13" cy="0" r="2.5" fill="#F2C6A0" />
+        <circle r="13" fill="#9A5B2E" {...ST} />
+        <path d={`M${dx} -5 q-4 -5 -8 -1 q-4 5 0 10 q3 5 8 5 q5 0 8 -5 q4 -5 0 -10 q-4 -4 -8 1z`} fill="#F2C6A0" stroke={INK} strokeWidth="1.3" />
+        <Eyes dx={dx} y={-1.5} />
+        <path d={`M${dx - 3} 5 q3 3 6 0`} fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" />
+        <circle cx={dx - 1} cy="2.3" r=".7" fill={INK} /><circle cx={dx + 1} cy="2.3" r=".7" fill={INK} />
+      </g>);
+    case "tiger": return (
+      <g>
+        <circle cx="-10" cy="-10" r="5" fill="#F28C28" {...ST} /><circle cx="10" cy="-10" r="5" fill="#F28C28" {...ST} />
+        <circle cx="-10" cy="-10" r="2.2" fill="#FFF1D6" /><circle cx="10" cy="-10" r="2.2" fill="#FFF1D6" />
+        <circle r="13.5" fill="#F28C28" {...ST} />
+        <path d="M-3 -13 l1.5 4 l1.5 -4 M-9 -9 l3 2 M9 -9 l-3 2 M-13 0 l4 1 M13 0 l-4 1" stroke={INK} strokeWidth="1.8" fill="none" strokeLinecap="round" />
+        <ellipse cx={dx} cy="5.5" rx="7.5" ry="5" fill="#FFF1D6" stroke={INK} strokeWidth="1.3" />
+        <Eyes dx={dx} y={-2} />
+        <path d={`M${dx - 1.8} 3 h3.6 l-1.8 2z`} fill="#FF6F91" stroke={INK} strokeWidth=".8" /><path d={`M${dx - 3} 7 q1.5 1.5 3 0 q1.5 1.5 3 0`} fill="none" stroke={INK} strokeWidth="1.2" />
+      </g>);
+    case "rabbit": return (
+      <g>
+        <ellipse cx="-5" cy="-19" rx="4.5" ry="11" fill="#fff" {...ST} transform="rotate(-10 -5 -19)" /><ellipse cx="6" cy="-19" rx="4.5" ry="11" fill="#fff" {...ST} transform="rotate(12 6 -19)" />
+        <ellipse cx="-5" cy="-19" rx="2" ry="7" fill="#FFB3C6" transform="rotate(-10 -5 -19)" /><ellipse cx="6" cy="-19" rx="2" ry="7" fill="#FFB3C6" transform="rotate(12 6 -19)" />
+        <circle r="13" fill="#fff" {...ST} />
+        <Eyes dx={dx} y={0} />
+        <path d={`M${dx - 1.4} 3.5 h2.8 l-1.4 1.6z`} fill="#FF6F91" /><path d={`M${dx} 5 v1.5 M${dx - 2.4} 7 q1.2 1.2 2.4 -.4 q1.2 1.6 2.4 .4`} fill="none" stroke={INK} strokeWidth="1.2" />
+        <Cheeks dx={dx} y={5} />
+      </g>);
+    case "elephant": return (
+      <g>
+        <ellipse cx="-11" cy="1" rx="8" ry="10" fill="#A9B4C8" {...ST} /><ellipse cx="-11" cy="1" rx="4.5" ry="6.5" fill="#F0B8C8" />
+        <circle r="13" fill="#A9B4C8" {...ST} />
+        <path d={`M${dx + 2} 2 q10 2 9 12 q-1 2 -3.5 1 q0 -6 -6 -7`} fill="#A9B4C8" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+        <Eyes dx={dx - 1} y={-3} />
+        <Cheeks dx={dx - 1} y={2} />
+      </g>);
+    case "pig": return (
+      <g>
+        <path d="M-12 -6 l-1 -9 l8 4z M12 -6 l1 -9 l-8 4z" fill="#FFB3C6" {...ST} />
+        <circle r="13.5" fill="#FFC7D5" {...ST} />
+        <Eyes dx={dx} y={-3} />
+        <ellipse cx={dx} cy="4" rx="5" ry="3.6" fill="#FF9FB4" stroke={INK} strokeWidth="1.4" />
+        <ellipse cx={dx - 1.6} cy="4" rx=".9" ry="1.3" fill={INK} /><ellipse cx={dx + 1.6} cy="4" rx=".9" ry="1.3" fill={INK} />
+      </g>);
+    case "dog": return (
+      <g>
+        <ellipse cx="-11" cy="-1" rx="5" ry="9" fill="#8A5A2B" {...ST} transform="rotate(15 -11 -1)" />
+        <circle r="13.5" fill="#F3E3C8" {...ST} />
+        <ellipse cx={dx - 5} cy="-2" rx="4.5" ry="5" fill="#C98A4B" opacity=".8" />
+        <Eyes dx={dx} y={-2} />
+        <ellipse cx={dx} cy="3.5" rx="2.6" ry="1.8" fill={INK} /><path d={`M${dx - 2.4} 6.5 q2.4 2 4.8 0`} fill="none" stroke={INK} strokeWidth="1.3" />
+        <Cheeks dx={dx} y={4} />
+      </g>);
+  }
 }
 
 // ---------------------------------------------------------------
@@ -261,7 +370,7 @@ export function Street() {
         <CatLoaf x={206} y={146} c="#fff" s={0.8} />
         <Win x={30} y={182} w={104} h={50} cols={2}>
           <ChowFace x={52} y={212} s={0.9} />
-          <Bust x={110} y={206} shirt="#fff" apron="#B5338A" wave />
+          <Bust x={110} y={206} shirt="#fff" apron="#B5338A" animal="dog" wave />
           <path d="M34 230 h44" stroke="#C98A4B" strokeWidth="4" />
           <ellipse cx="68" cy="226" rx="7" ry="3" fill="#5CC8F5" stroke={INK} strokeWidth="1.3" />
         </Win>
@@ -305,7 +414,7 @@ export function Street() {
         <Sign x={402} y={112} w={148} text="คลินิกหมอหมา" color="#1A7FA6" />
         <Awning x={394} y={152} w={164} a="#fff" b="#5CC8F5" h={12} />
         <Win x={402} y={176} w={52} h={50} cols={1}>
-          <Bust x={428} y={206} shirt="#fff" hair="#1E1A17" coat wave />
+          <Bust x={428} y={206} shirt="#fff" animal="rabbit" coat wave />
         </Win>
         <rect x="462" y="182" width="44" height="64" fill="#BFE9F7" className="win" {...sw} />
         <line x1="484" y1="182" x2="484" y2="246" stroke={INK} strokeWidth="2.5" />
@@ -365,7 +474,7 @@ export function Street() {
 
       {/* 5) รถเข็นน้ำแข็งใส + แม่ค้า */}
       <g>
-        <Bust x={1046} y={186} shirt="#FFD23F" hair="#3A2A20" apron="#5CC8F5" wave />
+        <Bust x={1046} y={186} shirt="#FFD23F" animal="pig" apron="#5CC8F5" wave />
         <line x1="1020" y1="150" x2="1020" y2="200" stroke={INK} strokeWidth="3" />
         <path d="M972 156 q48 -50 96 0z" fill="#5CC8F5" {...sw} />
         <path d="M972 156 q12 -40 48 -46 q-16 20 -12 46 M1068 156 q-12 -40 -48 -46 q16 20 12 46" fill="#fff" stroke={INK} strokeWidth="2" />
@@ -388,7 +497,7 @@ export function Street() {
         <rect x="1312" y="164" width="34" height="32" rx="2" fill="#FFF6E5" stroke={INK} strokeWidth="1.5" />
         <ChowFace x={1329} y={178} s={0.55} />
         <text x="1329" y="193" textAnchor="middle" fontFamily={F} fontSize="6" fill="#B5338A">ChowChowStory</text>
-        <Bust x={1288} y={196} shirt="#9C7BE8" hair="#5A3A1C" />
+        <Bust x={1288} y={196} shirt="#9C7BE8" animal="cat" />
         <rect x="1270" y="214" width="80" height="8" rx="3" fill="#F28C28" stroke={INK} strokeWidth="2" />
         <path d="M1281 222 l-2 16 M1294 222 l2 16" stroke="#3F4A5A" strokeWidth="4" strokeLinecap="round" />
         <path d="M1276 222 v14 M1344 222 v14" stroke={INK} strokeWidth="3" />
@@ -430,7 +539,7 @@ export function Street() {
         <g fill="#FFF6E5" stroke={INK} strokeWidth="1.2">{[1632, 1644, 1656].map((x) => <ellipse key={x} cx={x} cy="238" rx="5" ry="6" />)}</g>
         <rect x="1666" y="230" width="48" height="16" fill="#C98A4B" stroke={INK} strokeWidth="2" />
         <rect x="1728" y="182" width="58" height="64" fill="#FFF6E5" {...sw} />
-        <Bust x={1757} y={212} shirt="#FF6F91" hair="#555" apron="#2E8B57" wave />
+        <Bust x={1757} y={212} shirt="#FF6F91" animal="bear" apron="#2E8B57" wave />
         <rect x="1728" y="226" width="58" height="20" fill="#C98A4B" {...sw} strokeWidth={2.5} />
         <text x="1757" y="240" textAnchor="middle" fontFamily={F} fontWeight="700" fontSize="9" fill="#FFF6E5">ยินดีต้อนรับ</text>
         <g>
@@ -618,7 +727,7 @@ export function Rain() {
 // ---------------------------------------------------------------
 type PedLook = {
   skin: string; shirt: string; bottom: "pants" | "shorts" | "skirt" | "long"; bottomColor: string;
-  back?: ReactNode; hair: ReactNode; front?: ReactNode; s?: number; run?: boolean; speed?: number; custom?: ReactNode;
+  animal: Animal; back?: ReactNode; hat?: ReactNode; front?: ReactNode; s?: number; run?: boolean; speed?: number; custom?: ReactNode;
 };
 
 function Leg({ x, color, cls }: { x: number; color: string; cls: string }) {
@@ -641,17 +750,8 @@ function Arm({ x, color, skin, cls, dir }: { x: number; color: string; skin: str
   );
 }
 
-function Head({ skin, hair }: { skin: string; hair: ReactNode }) {
-  return (
-    <g>
-      <circle cx="22" cy="17" r="13.5" fill={skin} stroke={INK} strokeWidth="2.4" />
-      {hair}
-      <ellipse cx="27" cy="18" rx="1.7" ry="2.3" fill={INK} /><circle cx="27.6" cy="17.2" r=".7" fill="#fff" />
-      <ellipse cx="19.5" cy="18" rx="1.5" ry="2.1" fill={INK} opacity=".9" />
-      <circle cx="30" cy="23" r="2.4" fill="#FF8FA3" opacity=".6" /><circle cx="17" cy="23" r="2" fill="#FF8FA3" opacity=".5" />
-      <path d="M23 23.5 q2.2 2 4.4 0" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" />
-    </g>
-  );
+function Head({ animal, hat }: { animal: Animal; hat?: ReactNode }) {
+  return <g><g transform="translate(22 17)"><AnimalHead a={animal} dx={3} /></g>{hat}</g>;
 }
 
 function Person({ p }: { p: PedLook }) {
@@ -669,7 +769,7 @@ function Person({ p }: { p: PedLook }) {
         {p.bottom === "skirt" && <path d="M15 41 h14 l4 12 h-22z" fill={p.bottomColor} stroke={INK} strokeWidth="2" strokeLinejoin="round" />}
         {p.bottom === "long" && <path d="M15 41 h14 l3 21 h-20z" fill={p.bottomColor} stroke={INK} strokeWidth="2" strokeLinejoin="round" />}
         <rect x="14.5" y="29" width="15" height="16" rx="6" fill={p.shirt} stroke={INK} strokeWidth="2.2" />
-        <Head skin={p.skin} hair={p.hair} />
+        <Head animal={p.animal} hat={p.hat} />
         <Arm x={27} color={p.shirt} skin={p.skin} cls="f" dir={1} />
         {p.front}
       </g>
@@ -684,10 +784,8 @@ const SCOOTER = (
     <rect x="-2" y="34" width="14" height="12" rx="2" fill="#F28C28" stroke={INK} strokeWidth="2" />
     <path d="M2 40 h6" stroke="#fff" strokeWidth="1.5" />
     <rect x="16" y="26" width="12" height="16" rx="5" fill="#F28C28" stroke={INK} strokeWidth="2" />
-    <circle cx="23" cy="16" r="11" fill="#F5C9A0" stroke={INK} strokeWidth="2.2" />
-    <path d="M11 16 q0 -14 12 -14 q12 0 12 12 h-6 q-2 -6 -6 -6 q-6 0 -6 8z" fill="#E2463F" stroke={INK} strokeWidth="2" />
-    <ellipse cx="28" cy="17" rx="1.5" ry="2" fill={INK} />
-    <path d="M25 22 q2 1.6 4 0" fill="none" stroke={INK} strokeWidth="1.3" />
+    <g transform="translate(23 17) scale(.9)"><AnimalHead a="monkey" dx={3} /></g>
+    <path d="M10 13 q0 -14 13 -14 q13 0 13 12 h-5 q-3 -6 -8 -6 q-7 0 -8 9z" fill="#E2463F" stroke={INK} strokeWidth="2" />
     <path d="M27 32 l10 2" stroke={INK} strokeWidth="5" strokeLinecap="round" /><path d="M27 32 l10 2" stroke="#F28C28" strokeWidth="2.6" strokeLinecap="round" />
     <g className="wheel"><circle cx="10" cy="62" r="7" fill={INK} /><circle cx="10" cy="62" r="2.5" fill="#ccc" /></g>
     <g className="wheel"><circle cx="38" cy="62" r="7" fill={INK} /><circle cx="38" cy="62" r="2.5" fill="#ccc" /></g>
@@ -696,36 +794,30 @@ const SCOOTER = (
 
 export const PEDS: PedLook[] = [
   { // สาวถือถุงช้อปปิ้ง
-    skin: "#F5C9A0", shirt: "#FF6F91", bottom: "skirt", bottomColor: "#5CC8F5", speed: 18,
-    back: <><circle cx="21" cy="16" r="14.5" fill="#3A2A20" /><ellipse cx="8" cy="22" rx="4.5" ry="9" fill="#3A2A20" stroke={INK} strokeWidth="1.5" /><circle cx="9" cy="12" r="3" fill="#FFD23F" stroke={INK} strokeWidth="1.3" /></>,
-    hair: <path d="M9 15 q11 -16 26 -2 q-6 -2 -9 -6 q-6 6 -17 8z" fill="#3A2A20" />,
+    animal: "cat", skin: "#FFE2C4", shirt: "#FF6F91", bottom: "skirt", bottomColor: "#5CC8F5", speed: 18,
+    hat: <g transform="translate(30 3)"><path d="M0 0 l-6 -4 v8z M0 0 l6 -4 v8z" fill="#FF6F91" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" /><circle r="2" fill="#FF6F91" stroke={INK} strokeWidth="1.3" /></g>,
     front: <g><path d="M31 41 q3 -5 6 0" fill="none" stroke={INK} strokeWidth="1.5" /><rect x="28" y="41" width="11" height="12" rx="2" fill="#FFD23F" stroke={INK} strokeWidth="2" /><path d="M31 46 l2.5 2.5 l2.5 -2.5" fill="none" stroke="#FF6F91" strokeWidth="1.5" /></g> },
   { // ลุงกางร่มกันแดด
-    skin: "#E0A97A", shirt: "#1DA8DA", bottom: "pants", bottomColor: "#3F4A5A", speed: 13,
-    hair: <path d="M9 14 q13 -18 26 0 q-13 -7 -26 0z" fill="#B5B5B5" stroke={INK} strokeWidth="1.5" />,
+    animal: "bear", skin: "#B9773E", shirt: "#1DA8DA", bottom: "pants", bottomColor: "#3F4A5A", speed: 13,
     front: <g><line x1="30" y1="45" x2="30" y2="-4" stroke={INK} strokeWidth="2" /><path d="M8 -2 q22 -20 44 0 q-5.5 -4 -11 0 q-5.5 -4 -11 0 q-5.5 -4 -11 0 q-5.5 -4 -11 0z" fill="#E2463F" stroke={INK} strokeWidth="2" strokeLinejoin="round" /><path d="M24 -12 q6 -6 12 0" fill="#fff" opacity=".5" /></g> },
   { // เด็กถือลูกโป่ง
-    skin: "#F5C9A0", shirt: "#FFD23F", bottom: "shorts", bottomColor: "#2E8B57", s: 0.8, speed: 22,
-    hair: <path d="M9 13 q13 -18 26 0 l-4 -3 l-4 4 l-4 -4 l-4 4 l-4 -4z" fill="#5A3A1C" />,
+    animal: "rabbit", skin: "#fff", shirt: "#FFD23F", bottom: "shorts", bottomColor: "#2E8B57", s: 0.8, speed: 22,
     front: <g className="balloon"><path d="M31 45 q6 -20 4 -36" fill="none" stroke={INK} strokeWidth="1.2" /><ellipse cx="35" cy="0" rx="8.5" ry="10" fill="#E2463F" stroke={INK} strokeWidth="2" /><circle cx="32" cy="-3" r="2" fill="#fff" opacity=".6" /><Face x={35} y={1} s={0.45} /></g> },
   { // นักเรียนสะพายกระเป๋า
-    skin: "#C98E5E", shirt: "#fff", bottom: "shorts", bottomColor: "#2B3A67", s: 0.9, speed: 20,
-    back: <rect x="6" y="29" width="10" height="17" rx="3" fill="#1DA8DA" stroke={INK} strokeWidth="2" />,
-    hair: <path d="M9 14 q13 -17 26 -1 q-13 -6 -26 1z" fill="#1E1A17" stroke={INK} strokeWidth="1" /> },
+    animal: "penguin", skin: "#2B3A67", shirt: "#fff", bottom: "shorts", bottomColor: "#2B3A67", s: 0.9, speed: 20,
+    back: <rect x="6" y="29" width="10" height="17" rx="3" fill="#1DA8DA" stroke={INK} strokeWidth="2" /> },
   { // ยายหิ้วตะกร้า
-    skin: "#E8B48A", shirt: "#9C7BE8", bottom: "long", bottomColor: "#B5338A", speed: 10,
-    back: <circle cx="12" cy="7" r="5" fill="#E2E2E2" stroke={INK} strokeWidth="1.5" />,
-    hair: <path d="M9 15 q13 -18 26 -2 q-13 -6 -26 2z" fill="#E2E2E2" stroke={INK} strokeWidth="1.5" />,
+    animal: "elephant", skin: "#A9B4C8", shirt: "#9C7BE8", bottom: "long", bottomColor: "#B5338A", speed: 10,
+    hat: <g transform="translate(17 4)"><circle r="3.2" fill="#FFD23F" stroke={INK} strokeWidth="1.2" />{[0, 72, 144, 216, 288].map((a) => <circle key={a} cx={Math.cos(a * Math.PI / 180) * 4.4} cy={Math.sin(a * Math.PI / 180) * 4.4} r="2.4" fill="#FF6F91" stroke={INK} strokeWidth="1" />)}<circle r="2" fill="#FFD23F" /></g>,
     front: <g><path d="M28 42 q5 -8 10 0" fill="none" stroke={INK} strokeWidth="2" /><path d="M26 42 h14 l-2 10 h-10z" fill="#C98A4B" stroke={INK} strokeWidth="2" strokeLinejoin="round" /><circle cx="30" cy="40" r="3" fill="#9BE15D" stroke={INK} strokeWidth="1" /><circle cx="35" cy="40" r="3" fill="#F28C28" stroke={INK} strokeWidth="1" /></g> },
   { // คนวิ่งออกกำลังกาย
-    skin: "#F0BE93", shirt: "#6CC24A", bottom: "shorts", bottomColor: "#241C15", run: true, speed: 34,
-    hair: <path d="M8 12 q14 -17 28 0 h8 v3 h-36z" fill="#F28C28" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />,
+    animal: "tiger", skin: "#F28C28", shirt: "#6CC24A", bottom: "shorts", bottomColor: "#241C15", run: true, speed: 34,
+    hat: <path d="M9 9 q13 -6 26 0 v4 q-13 -6 -26 0z" fill="#E2463F" stroke={INK} strokeWidth="1.5" strokeLinejoin="round" />,
     front: <path d="M12 8 q-4 -2 -2 -6" fill="none" stroke="#5CC8F5" strokeWidth="2" strokeLinecap="round" /> },
   { // ไรเดอร์ส่งของ
-    skin: "#F5C9A0", shirt: "#F28C28", bottom: "pants", bottomColor: "#333", hair: null, speed: 52, custom: SCOOTER },
+    animal: "monkey", skin: "#9A5B2E", shirt: "#F28C28", bottom: "pants", bottomColor: "#333", speed: 52, custom: SCOOTER },
   { // พาน้องหมาขาวตัวเล็กเดินเล่น
-    skin: "#F5C9A0", shirt: "#5CC8F5", bottom: "pants", bottomColor: "#C98A4B", speed: 16,
-    hair: <path d="M9 15 q13 -18 26 -2 l-3 4 q-8 -8 -20 0z" fill="#8A5A2B" stroke={INK} strokeWidth="1.2" />,
+    animal: "panda", skin: "#2A2A2A", shirt: "#5CC8F5", bottom: "pants", bottomColor: "#C98A4B", speed: 16,
     front: <g>
       <path d="M31 44 q8 6 14 14" fill="none" stroke="#E2463F" strokeWidth="1.5" />
       <g className="pup">
