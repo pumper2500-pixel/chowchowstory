@@ -1,0 +1,11 @@
+{
+  "name": "ChowChowStory",
+  "short_name": "ChowChow",
+  "description": "เรื่องเล่าและคู่มือเลี้ยงเชาเชาในเมืองร้อน",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF6E5",
+  "theme_color": "#FFD23F",
+  "lang": "th",
+  "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }]
+}
