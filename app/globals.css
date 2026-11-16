@@ -494,3 +494,16 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .phase-day .sky-body{left:44%;top:2px}
 .phase-evening .sky-body{left:54%;top:16px}
 .night .sky-body{left:44%;top:6px}
+
+/* เมนูล่าง 6 แท็บ + หน้า Chow Chow Live Simulator */
+.nav div{grid-template-columns:repeat(6,1fr)}
+.nav a{font-size:10.5px}
+.nav a span{padding:1px 5px}
+.sim{position:fixed;inset:0;bottom:calc(66px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;background:#1f4f8f;z-index:5}
+.sim-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:#14100C;color:#FFD23F;font-family:var(--display);flex-wrap:wrap}
+.sim-bar b{font-size:14px;letter-spacing:.2px}
+.sim-modes{display:flex;gap:6px;align-items:center}
+.sim-modes button,.sim-full{border:2px solid #FFD23F;background:transparent;color:#FFD23F;border-radius:99px;padding:3px 10px;font:600 12px var(--display);text-decoration:none;cursor:pointer}
+.sim-modes button.on{background:#FFD23F;color:#241C15}
+.sim-frame{flex:1;width:100%;border:0;display:block;background:#bdebff}
+@media (min-width:600px){.sim{left:50%;right:auto;width:560px;translate:-50% 0}}

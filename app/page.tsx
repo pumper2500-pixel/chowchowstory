@@ -67,6 +67,7 @@ export default function Home() {
         <Tile href="/guide/" img="s8" title="คู่มือเลี้ยง" sub="แยกตามช่วงวัย" dot={!all(STAGES.map((s) => `guide-${s.id}`))} />
         <Tile href="/memorial/" img="s15" title="ความทรงจำ" sub="ถึงน้องที่จากไป" dot={!state.done.memorial} />
         <Tile href="/share/" img="s27" title="ส่งรูปน้องเชาเชา" sub="ขึ้นแกลเลอรีหลังผ่านการตรวจ · +20 🦴" dot={!state.done.post} wide />
+        <Tile href="/sim/" img="main-walk" title="Chow Chow Live Simulator" sub="เลี้ยงน้องในเมือง 3D · ปลูกผัก ตกปลา เข้าร้าน" dot={false} wide />
       </nav>
 
       <section className="missions">
