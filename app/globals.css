@@ -311,3 +311,15 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .photo img{width:100%;max-height:440px;object-fit:cover;border-radius:16px;display:block}
 .photo figcaption{font-size:13px;color:var(--muted);margin-top:6px}
 .story-card .thumb{width:76px;height:76px;object-fit:cover;border-radius:14px;flex-shrink:0}
+
+/* สนามหญ้า */
+.lawn{fill:#86C95A}
+.lawn-stripe rect{fill:#7ABD4F}
+.tuft{stroke:#4F8F32}
+.scene.night .lawn{fill:#3F6B44}
+.scene.night .lawn-stripe rect{fill:#386140}
+.scene.night .tuft{stroke:#2A4A2E}
+.scene.night .flower{opacity:.55}
+.paw svg{fill:#5A3A1C}
+.scene.night .paw svg{fill:#C9B8E8}
+.dog .shadow{background:rgba(30,60,20,.25)}

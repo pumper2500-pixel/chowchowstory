@@ -177,9 +177,15 @@ function SceneArt() {
       <circle cx="346" cy="150" r="42" fill="#6CC24A" stroke="#241C15" strokeWidth="3" />
       <circle cx="330" cy="140" r="5" fill="#FF6F91" /><circle cx="360" cy="158" r="5" fill="#FF6F91" /><circle cx="352" cy="126" r="5" fill="#FF6F91" />
       <path d="M292 240 h40 l-6 12 h-28z" fill="#1DA8DA" stroke="#241C15" strokeWidth="3" />
-      <rect y="246" width="400" height="84" fill="#FFF6E5" />
+      {/* สนามหญ้า: แถบตัดหญ้าสลับสี + ยอดหญ้า + ดอกไม้เล็ก ๆ */}
+      <rect className="lawn" y="246" width="400" height="84" />
+      <g className="lawn-stripe">
+        <rect x="0" y="246" width="50" height="84" /><rect x="100" y="246" width="50" height="84" />
+        <rect x="200" y="246" width="50" height="84" /><rect x="300" y="246" width="50" height="84" />
+      </g>
+      <g className="tufts" fill="none" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 300 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M62 282 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M118 318 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M176 292 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M236 312 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M286 286 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M338 304 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M378 322 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M96 270 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M214 274 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /><path d="M356 268 l2 -7 l2 7 l2 -9 l2 9 l2 -6 l1 6" className="tuft" /></g>
+      <g className="flower"><circle cx="40" cy="312" r="2.6" fill="#fff" /><circle cx="40" cy="312" r="1" fill="#FFD23F" /></g><g className="flower"><circle cx="150" cy="300" r="2.6" fill="#FF6F91" /><circle cx="150" cy="300" r="1" fill="#FFD23F" /></g><g className="flower"><circle cx="262" cy="322" r="2.6" fill="#fff" /><circle cx="262" cy="322" r="1" fill="#FFD23F" /></g><g className="flower"><circle cx="318" cy="292" r="2.6" fill="#FF6F91" /><circle cx="318" cy="292" r="1" fill="#FFD23F" /></g><g className="flower"><circle cx="392" cy="300" r="2.6" fill="#fff" /><circle cx="392" cy="300" r="1" fill="#FFD23F" /></g><g className="flower"><circle cx="88" cy="326" r="2.6" fill="#FF6F91" /><circle cx="88" cy="326" r="1" fill="#FFD23F" /></g>
       <line x1="0" y1="246" x2="400" y2="246" stroke="#241C15" strokeWidth="3" />
-      <line x1="0" y1="262" x2="400" y2="262" stroke="#241C15" strokeWidth="2" strokeDasharray="6 6" opacity=".35" />
     </svg>
   );
 }
