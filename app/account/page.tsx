@@ -13,7 +13,15 @@ const ERR: Record<string, string> = {
   "Email not confirmed": "ยังไม่ได้ยืนยันอีเมล เปิดลิงก์ในอีเมลที่ส่งไปก่อนนะ",
   "User already registered": "อีเมลนี้สมัครไว้แล้ว ลองเข้าสู่ระบบแทน",
 };
-const thai = (m: string) => ERR[m] || (m.includes("Password should be") ? "รหัสผ่านต้องยาวอย่างน้อย 6 ตัว" : m);
+const thai = (m: string) => {
+  if (ERR[m]) return ERR[m];
+  if (m.includes("Password should be")) return "รหัสผ่านต้องยาวอย่างน้อย 6 ตัว";
+  if (/rate limit/i.test(m)) return "ส่งอีเมลถี่เกินไป ระบบอีเมลทดลองของ Supabase ส่งได้ไม่กี่ฉบับต่อชั่วโมง รอประมาณ 1 ชั่วโมงแล้วลองใหม่";
+  const sec = m.match(/after (\d+) seconds/);
+  if (sec) return `รออีก ${sec[1]} วินาทีแล้วลองใหม่`;
+  if (/New password should be different/i.test(m)) return "รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม";
+  return m;
+};
 
 export default function AccountPage() {
   const { session, state, sync, displayName, setDisplayName, showToast } = useGame();
