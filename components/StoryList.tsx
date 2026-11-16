@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useGame } from "@/lib/game";
 
-type Item = { slug: string; title: string; kind: string; minutes: number; excerpt: string; text: string };
+type Item = { cover: string | null; slug: string; title: string; kind: string; minutes: number; excerpt: string; text: string };
 
 export default function StoryList({ items }: { items: Item[] }) {
   const { state } = useGame();
@@ -26,6 +26,7 @@ export default function StoryList({ items }: { items: Item[] }) {
         const read = !!state.done[`story-${s.slug}`];
         return (
           <Link key={s.slug} href={`/stories/${s.slug}/`} className={`story-card${read ? " read" : ""}`}>
+            {s.cover && <img className="thumb" src={s.cover} alt="" loading="lazy" />}
             <div>
               <h3>{s.title}</h3>
               <span className="meta">{s.kind} · อ่าน {s.minutes} นาที</span>

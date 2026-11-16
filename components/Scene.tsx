@@ -8,7 +8,7 @@ import { AccountButton } from "@/components/Chrome";
 
 type Actor = {
   i: number; x: number; y: number; w: number; dir: 1 | -1; speed: number;
-  state: "walk" | "rest"; t: number; talk: number; enter: boolean;
+  state: "walk" | "rest"; t: number; talk: number; enter: boolean; step: number; side: 1 | -1;
   el: HTMLButtonElement | null; bub: HTMLSpanElement | null;
 };
 
@@ -18,6 +18,7 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
   const { shownBones, ready, levelUpTick } = useGame();
   const count = levelOf(shownBones) + 1;
   const yardRef = useRef<HTMLDivElement>(null);
+  const trailRef = useRef<HTMLDivElement>(null);
   const actors = useRef<Actor[]>([]);
   const [night, setNight] = useState(false);
   const [, force] = useState(0);
@@ -38,7 +39,7 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
     for (let i = list.length; i < count; i++) {
       const depth = (i % 3) * 12;
       list.push({
-        i, w: W_DOG, y: depth, enter: entering, speed: DOGS[i].speed, state: "walk", t: 1 + Math.random() * 3, talk: 0,
+        i, w: W_DOG, y: depth, enter: entering, step: 0, side: 1, speed: DOGS[i].speed, state: "walk", t: 1 + Math.random() * 3, talk: 0,
         x: entering ? -80 : reduced ? (W - W_DOG) * (i / 5) : Math.random() * (W - W_DOG),
         dir: entering ? 1 : Math.random() < 0.5 ? -1 : 1, el: null, bub: null,
       });
@@ -61,6 +62,12 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
         if (a.talk > 0) { a.talk -= dt; if (a.talk <= 0) a.bub?.classList.remove("on"); }
         if (a.state === "walk") {
           a.x += a.dir * a.speed * dt;
+          // รอยเท้า: ก้าวทุก ~14px สลับซ้ายขวา วางไว้ด้านหลังตัวน้อง
+          a.step += Math.abs(a.speed * dt);
+          if (a.step >= 14 && trailRef.current) {
+            a.step = 0; a.side = (a.side * -1) as 1 | -1;
+            dropPaw(trailRef.current, a.x + a.w / 2 - a.dir * 22, a.y + 3 + a.side * 4, a.dir);
+          }
           if (a.x < -10) { a.x = -10; a.dir = 1; }
           if (a.x > W - a.w + 10) { a.x = W - a.w + 10; a.dir = -1; }
           if (a.t <= 0) { a.state = "rest"; a.t = 1 + Math.random() * 2.5; }
@@ -94,6 +101,7 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
         <span className="bone">🦴</span>{hasMissions && <i className="dot" />}
       </button>
       <AccountButton className="topbtn r2" />
+      <div className="trail" ref={trailRef} aria-hidden="true" />
       <div className="yard" ref={yardRef}>
         {actors.current.map((a) => (
           <button
@@ -114,6 +122,22 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
       </div>
     </div>
   );
+}
+
+// รอยเท้าเชาเชา (วาดเอง): อุ้งเท้าใหญ่ + นิ้ว 4 นิ้ว ชี้ไปทางที่เดิน
+const PAW = '<svg viewBox="0 0 20 20"><ellipse cx="10" cy="13.2" rx="5.2" ry="4.4"/><ellipse cx="4.2" cy="8" rx="1.9" ry="2.4"/><ellipse cx="8" cy="5.2" rx="1.9" ry="2.5"/><ellipse cx="12" cy="5.2" rx="1.9" ry="2.5"/><ellipse cx="15.8" cy="8" rx="1.9" ry="2.4"/></svg>';
+const MAX_PAWS = 60;
+
+function dropPaw(layer: HTMLDivElement, x: number, bottom: number, dir: number) {
+  const p = document.createElement("i");
+  p.className = "paw";
+  p.innerHTML = PAW;
+  p.style.left = `${x}px`;
+  p.style.bottom = `${bottom}px`;
+  p.style.setProperty("--r", dir > 0 ? "90deg" : "-90deg");
+  layer.appendChild(p);
+  while (layer.childElementCount > MAX_PAWS) layer.firstElementChild?.remove();
+  p.addEventListener("animationend", () => p.remove());
 }
 
 function SceneArt() {

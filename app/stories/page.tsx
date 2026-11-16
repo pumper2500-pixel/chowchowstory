@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function StoriesPage() {
   const articles = await getArticles();
-  const items = articles.map((a) => ({ slug: a.slug, title: a.title, kind: a.kind, minutes: a.minutes, excerpt: excerpt(a), text: a.body.join(" ") }));
+  const items = articles.map((a) => ({ cover: a.cover || null, slug: a.slug, title: a.title, kind: a.kind, minutes: a.minutes, excerpt: excerpt(a), text: a.body.join(" ") }));
   return (
     <>
       <PageHead img="s39" eyebrow="เรื่องเล่า" title="เรื่องของหมาหน้าสิงโต" />

@@ -14,7 +14,7 @@ async function load(): Promise<Story[]> {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 6000);
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/articles?select=slug,title,kind,minutes,body&published=eq.true&order=position`,
+      `${SUPABASE_URL}/rest/v1/articles?select=slug,title,kind,minutes,body,cover&published=eq.true&order=position`,
       { headers: { apikey: KEY }, signal: ctrl.signal, cache: "force-cache" },
     );
     clearTimeout(t);

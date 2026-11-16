@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: a.title,
     description,
     alternates: { canonical: `/stories/${a.slug}/` },
-    openGraph: { type: "article", title: a.title, description, url: `${SITE_URL}/stories/${a.slug}/`, siteName: SITE_NAME, locale: "th_TH", images: ["/og.png"] },
+    openGraph: { type: "article", title: a.title, description, url: `${SITE_URL}/stories/${a.slug}/`, siteName: SITE_NAME, locale: "th_TH", images: [a.cover || "/og.png"] },
   };
 }
 
@@ -35,7 +35,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
 
   const jsonLd = {
     "@context": "https://schema.org", "@type": "Article", headline: a.title, inLanguage: "th",
-    description: excerpt(a, 150), mainEntityOfPage: `${SITE_URL}/stories/${a.slug}/`,
+    description: excerpt(a, 150), ...(a.cover ? { image: `${SITE_URL}${a.cover}` } : {}), mainEntityOfPage: `${SITE_URL}/stories/${a.slug}/`,
     publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: `${SITE_URL}/icon-512.png` } },
   };
 
@@ -47,6 +47,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <div><p className="eb"><Link href="/stories/">เรื่องเล่า</Link> · {a.kind} · อ่าน {a.minutes} นาที</p><h1>{a.title}</h1></div>
       </header>
       <div className="pad stack prose">
+        {a.cover && <img className="cover" src={a.cover} alt={a.title} />}
         {a.body.map((p, k) => <p key={k}>{p}</p>)}
         {a.body.some((p) => p.includes("AKC")) && (
           <p className="src">ที่มา: <a href={AKC_URL} target="_blank" rel="noopener noreferrer">American Kennel Club · Chow Chow</a></p>

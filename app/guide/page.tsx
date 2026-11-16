@@ -51,6 +51,12 @@ export default function GuidePage() {
         </div>
         <div className="card" id="stage-panel" role="tabpanel" aria-labelledby={`tab-${tab}`}>
           <img className="pic" src={`/img/${stage.img}.png`} alt="" />
+          {stage.photo && (
+            <figure className="photo">
+              <img src={stage.photo.src} alt={stage.photo.alt} loading="lazy" />
+              <figcaption>{stage.photo.caption}</figcaption>
+            </figure>
+          )}
           {stage.topics.map(([h, t]) => (
             <div className="topic" key={h}><b>{h}</b><span>{t}</span></div>
           ))}

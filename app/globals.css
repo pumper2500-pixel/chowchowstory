@@ -296,3 +296,18 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .tr-group{font-size:15px;color:var(--orange);margin-top:10px}
 .facts-fun ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px}
 .facts{grid-template-columns:repeat(3,1fr)}
+
+/* รอยเท้าตามหลังน้อง */
+.trail{position:absolute;left:0;right:0;bottom:0;height:120px;z-index:3;pointer-events:none}
+.paw{position:absolute;width:13px;height:13px;margin-left:-6px;rotate:var(--r);animation:pawfade 3.2s ease-in forwards}
+.paw svg{width:100%;height:100%;fill:#8A5A2B;display:block}
+@keyframes pawfade{0%{opacity:.55;scale:.6}12%{opacity:.5;scale:1}100%{opacity:0;scale:1}}
+.scene.night .paw svg{fill:#6B4A86}
+@media (prefers-reduced-motion:reduce){.trail{display:none}}
+
+/* รูปจริงของน้อง */
+.cover{width:100%;border-radius:18px;border:3px solid var(--ink);display:block}
+.photo{margin:8px 0 4px}
+.photo img{width:100%;max-height:440px;object-fit:cover;border-radius:16px;display:block}
+.photo figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.story-card .thumb{width:76px;height:76px;object-fit:cover;border-radius:14px;flex-shrink:0}
