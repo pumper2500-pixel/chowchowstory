@@ -97,14 +97,15 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
           <button
             key={a.i}
             type="button"
-            className={`dog${a.enter ? " enter" : ""}`}
+            className={`dog${a.enter ? " enter" : ""}${DOGS[a.i].walk ? " has-walk" : ""}`}
             aria-label={`${DOGS[a.i].name} แตะเพื่อคุยกับน้อง`}
             style={{ bottom: a.y, zIndex: 10 - a.y, transform: `translateX(${a.x}px)` }}
             ref={(el) => { a.el = el; }}
             onClick={() => talk(a)}
           >
             <i className="shadow" />
-            <img src={`/img/${DOGS[a.i].img}.png`} alt="" />
+            <img className="sit" src={`/img/${DOGS[a.i].img}.png`} alt="" />
+            {DOGS[a.i].walk && <img className="go" src={`/img/${DOGS[a.i].walk}.png`} alt="" />}
             <span className="bubble" ref={(el) => { a.bub = el; }} />
           </button>
         ))}
