@@ -115,5 +115,6 @@ export function missionsFor(today: string): Mission[] {
     { key: "cost", label: "ลองคิดค่าใช้จ่ายต่อเดือน", pts: 5, href: "/tools/" },
     { key: "ready", label: "ติ๊กความพร้อมครบทุกข้อ", pts: 10, href: "/tools/" },
     { key: "memorial", label: "เขียนถึงน้องที่จากไป", pts: 20, href: "/memorial/" },
+    { key: "post", label: "ส่งรูปน้องเชาเชาของคุณ", sub: "ต้องเข้าสู่ระบบ", pts: 20, href: "/share/" },
   ];
 }

@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
 const SQL = readFileSync(new URL("./migrations/0001_init.sql", import.meta.url), "utf8");
+const SQL2 = readFileSync(new URL("./migrations/0002_posts.sql", import.meta.url), "utf8");
 
 const AUTH_STUB = `
   create role anon nologin; create role authenticated nologin;
@@ -16,6 +17,15 @@ const AUTH_STUB = `
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   grant execute on function auth.uid() to anon, authenticated;
+  create schema storage;
+  grant usage on schema storage to anon, authenticated;
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+  alter table storage.objects enable row level security;
+  grant select, insert, delete on storage.objects to anon, authenticated;
+  create function storage.foldername(name text) returns text[] language sql immutable as
+    $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+  grant execute on function storage.foldername(text) to anon, authenticated;
 `;
 
 const A = "11111111-1111-1111-1111-111111111111";
@@ -27,7 +37,9 @@ async function setup() {
   // ผู้ใช้ที่สมัครก่อนรัน migration ต้องได้โปรไฟล์ด้วย
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ('33333333-3333-3333-3333-333333333333','early@x.com','{"display_name":"มาก่อน"}')`);
   await db.exec(SQL);
+  await db.exec(SQL2);
   await db.exec(SQL); // รันซ้ำต้องไม่พัง
+  await db.exec(SQL2);
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1,'a@x.com','{"display_name":"ปั้ม"}'), ($2,'b@x.com','{}')`, [A, B]);
   return db;
 }
@@ -159,4 +171,80 @@ test("เคลมได้แม้ยังไม่มีโปรไฟล�
     const r = await db.query("select public.merge_rewards($1::text[]) as b", [["cost", "ready"]]);
     assert.equal(r.rows[0].b, 15);
   });
+});
+
+// ---------------- Milestone 03 ----------------
+const P = (uid) => `${uid}/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg`;
+const P2 = (uid, n) => `${uid}/aaaaaaaa-aaaa-aaaa-aaaa-${String(n).padStart(12, "0")}.jpg`;
+
+test("ส่งโพสต์: เข้าคิว pending และคนอื่นยังไม่เห็น", async () => {
+  const db = await setup();
+  await as(db, A, async () => {
+    await db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('ข้าวต้ม','วันแรกที่บ้าน',$1,true)", [P(A)]);
+    const own = await db.query("select status from public.dog_posts");
+    assert.deepEqual(own.rows, [{ status: "pending" }]);
+  });
+  await as(db, B, async () => assert.equal((await db.query("select * from public.dog_posts")).rows.length, 0));
+  await as(db, null, async () => assert.equal((await db.query("select * from public.dog_posts")).rows.length, 0));
+});
+
+test("ส่งโพสต์: กันส่งแทนคนอื่น อนุมัติตัวเอง ไม่ยืนยันสิทธิ์รูป และ path แปลก", async () => {
+  const db = await setup();
+  await as(db, A, async () => {
+    await assert.rejects(db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y',$1,true)", [P(B)]), "รูปในโฟลเดอร์คนอื่น");
+    await assert.rejects(db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo, status) values ('x','y',$1,true,'approved')", [P(A)]), "ตั้ง status เอง");
+    await assert.rejects(db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y',$1,false)", [P(A)]), "ไม่ยืนยันสิทธิ์รูป");
+    await assert.rejects(db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y','../../etc/passwd',true)"), "path แปลก");
+    await db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y',$1,true)", [P(A)]);
+    const n = await db.query("update public.dog_posts set status='approved' returning id");
+    assert.equal(n.rows.length, 0, "ไม่ใช่แอดมิน อัปเดตไม่ได้");
+  });
+});
+
+test("ส่งค้างอนุมัติได้ไม่เกิน 5 โพสต์", async () => {
+  const db = await setup();
+  await as(db, A, async () => {
+    for (let i = 1; i <= 5; i++) await db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y',$1,true)", [P2(A, i)]);
+    await assert.rejects(db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y',$1,true)", [P2(A, 6)]));
+  });
+});
+
+test("แอดมินเห็นคิว อนุมัติแล้วทุกคนเห็น", async () => {
+  const db = await setup();
+  await as(db, B, () => db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('บัวลอย','ชอบนอนหน้าแอร์',$1,true)", [P(B)]));
+  await db.query("update public.profiles set is_admin = true where id = $1", [A]);
+  await as(db, A, async () => {
+    const q = await db.query("select id from public.dog_posts where status='pending'");
+    assert.equal(q.rows.length, 1);
+    await db.query("update public.dog_posts set status='approved', reviewed_at=now(), reviewed_by=auth.uid() where id=$1", [q.rows[0].id]);
+    await assert.rejects(db.query("update public.dog_posts set caption='แก้แคปชันคนอื่น'"), "แอดมินแก้เนื้อหาไม่ได้ แค่อนุมัติ");
+  });
+  await as(db, null, async () => {
+    const r = await db.query("select dog_name from public.dog_posts");
+    assert.deepEqual(r.rows, [{ dog_name: "บัวลอย" }]);
+  });
+});
+
+test("ภารกิจส่งรูป: ได้ 20 เมื่อมีโพสต์จริงเท่านั้น", async () => {
+  const db = await setup();
+  await as(db, A, async () => {
+    let r = await db.query("select * from public.claim_reward('post')");
+    assert.equal(r.rows[0].gained, 0);
+    await db.query("insert into public.dog_posts (dog_name, caption, photo_path, owns_photo) values ('x','y',$1,true)", [P(A)]);
+    r = await db.query("select * from public.claim_reward('post')");
+    assert.deepEqual(r.rows[0], { bones: 20, gained: 20 });
+  });
+});
+
+test("Storage: อัปโหลดได้เฉพาะโฟลเดอร์ตัวเอง", async () => {
+  const db = await setup();
+  await as(db, A, async () => {
+    await db.query("insert into storage.objects (bucket_id, name) values ('dog-photos', $1)", [P(A)]);
+    await assert.rejects(db.query("insert into storage.objects (bucket_id, name) values ('dog-photos', $1)", [P(B)]));
+  });
+  await as(db, null, async () => {
+    await assert.rejects(db.query("insert into storage.objects (bucket_id, name) values ('dog-photos', 'x/y.jpg')"));
+  });
+  const b = await db.query("select public, file_size_limit, allowed_mime_types from storage.buckets where id='dog-photos'");
+  assert.deepEqual(b.rows[0], { public: true, file_size_limit: 2097152, allowed_mime_types: ["image/jpeg"] });
 });

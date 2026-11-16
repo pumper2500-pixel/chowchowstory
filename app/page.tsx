@@ -66,6 +66,7 @@ export default function Home() {
         <Tile href="/stories/" img="s39" title="เรื่องเล่า" sub="ตำนาน ประวัติ นิสัย" dot={!all(STORIES.map((s) => `story-${s.slug}`))} />
         <Tile href="/guide/" img="s8" title="คู่มือเลี้ยง" sub="แยกตามช่วงวัย" dot={!all(STAGES.map((s) => `guide-${s.id}`))} />
         <Tile href="/memorial/" img="s15" title="ความทรงจำ" sub="ถึงน้องที่จากไป" dot={!state.done.memorial} />
+        <Tile href="/share/" img="s27" title="ส่งรูปน้องเชาเชา" sub="ขึ้นแกลเลอรีหลังผ่านการตรวจ · +20 🦴" dot={!state.done.post} wide />
       </nav>
 
       <section className="missions">
@@ -93,6 +94,7 @@ export default function Home() {
           <span>ลองคิดค่าใช้จ่าย</span><b>+5</b>
           <span>ติ๊กความพร้อมครบทุกข้อ</span><b>+10</b>
           <span>เขียนถึงน้องที่จากไป</span><b>+20</b>
+          <span>ส่งรูปน้องเชาเชาครั้งแรก</span><b>+20</b>
         </div>
         <p className="lead" style={{ fontSize: 13 }}>{session ? "กระดูกเก็บในบัญชี เปิดเครื่องไหนก็เห็น" : "ตอนนี้กระดูกเก็บในเครื่องนี้ สมัครสมาชิกฟรีเพื่อเก็บข้ามเครื่อง"}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
@@ -106,9 +108,9 @@ export default function Home() {
   );
 }
 
-function Tile({ href, img, title, sub, dot }: { href: string; img: string; title: string; sub: string; dot: boolean }) {
+function Tile({ href, img, title, sub, dot, wide }: { href: string; img: string; title: string; sub: string; dot: boolean; wide?: boolean }) {
   return (
-    <Link href={href}>
+    <Link href={href} className={wide ? "wide" : undefined}>
       <img src={`/img/${img}.png`} alt="" />
       <span>{title}<small>{sub}</small></span>
       {dot && <i className="rd" />}

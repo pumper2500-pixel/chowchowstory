@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { PageHead } from "@/components/Chrome";
 import { STORIES } from "@/lib/content";
 import { supabase, type Article } from "@/lib/supabase";
+import Gallery from "@/components/Gallery";
 import { useGame } from "@/lib/game";
 
 export default function StoriesPage() {
@@ -41,6 +42,7 @@ export default function StoriesPage() {
             </details>
           );
         })}
+        <Gallery />
         <div className="slot stack">
           <img className="pic" src="/img/s27.png" alt="" />
           <h3>เรื่องของน้องของเรา</h3>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { PageHead } from "@/components/Chrome";
 import { supabase } from "@/lib/supabase";
 import { useGame } from "@/lib/game";
@@ -33,6 +34,15 @@ export default function AccountPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [editName, setEditName] = useState<string | null>(null);
   const [newPass, setNewPass] = useState("");
+  const [pending, setPending] = useState<number | null>(null);
+  useEffect(() => {
+    if (!session) { setPending(null); return; }
+    supabase.rpc("is_admin").then(async ({ data }) => {
+      if (!data) return;
+      const { count } = await supabase.from("dog_posts").select("id", { count: "exact", head: true }).eq("status", "pending");
+      setPending(count ?? 0);
+    });
+  }, [session]);
 
   const redirect = typeof window !== "undefined" ? `${window.location.origin}/account/` : undefined;
 
@@ -90,6 +100,10 @@ export default function AccountPage() {
             </div>
             <button className="btn signout" type="button" onClick={async () => { await supabase.auth.signOut(); showToast("ออกจากระบบแล้ว"); }}>ออกจากระบบ</button>
           </div>
+          {pending !== null && (
+            <Link href="/review/" className="card admin-link">🛠️ คิวรออนุมัติรูป <b>{pending}</b></Link>
+          )}
+          <Link href="/share/" className="card admin-link">📷 ส่งรูปน้อง / ดูรูปที่ฉันส่ง</Link>
           <div className="card mem-form">
             <label htmlFor="dn">ชื่อที่แสดง</label>
             {editName === null ? (
