@@ -11,15 +11,36 @@ import { AccountButton } from "@/components/Chrome";
 const TILE = 1600;          // ความกว้างหนึ่งช่วงฉาก (px) วนซ้ำต่อกันไม่รู้จบ
 const GROUND_SPEED = 46;    // px/วินาที ตอนเดิน
 const LAYERS = { cloud: 0.12, far: 0.3, mid: 0.65, ground: 1 } as const;
+const MID_TILE = 2600;      // ชั้นร้านริมทางยาวกว่า เพราะมีของเยอะ
+const TILE_OF: Record<keyof typeof LAYERS, number> = { cloud: TILE, far: TILE, mid: MID_TILE, ground: TILE };
 const W_DOG = 80;
 const GAP = 62;             // ระยะห่างระหว่างน้องที่เดินเรียงกัน
 
 const PAW = '<svg viewBox="0 0 20 20"><ellipse cx="10" cy="13.2" rx="5.2" ry="4.4"/><ellipse cx="4.2" cy="8" rx="1.9" ry="2.4"/><ellipse cx="8" cy="5.2" rx="1.9" ry="2.5"/><ellipse cx="12" cy="5.2" rx="1.9" ry="2.5"/><ellipse cx="15.8" cy="8" rx="1.9" ry="2.4"/></svg>';
 
+// ของกินที่วางบนหญ้า (วาดเองทั้งหมด)
+const S = 'stroke="#4A2A12" stroke-linecap="round" stroke-linejoin="round"';
+const BONE = (x1: number, y1: number, x2: number, y2: number) =>
+  `<path d="M${x1} ${y1}L${x2} ${y2}" stroke="#4A2A12" stroke-width="7.5" stroke-linecap="round"/><path d="M${x1} ${y1}L${x2} ${y2}" stroke="#F3E3C8" stroke-width="4" stroke-linecap="round"/>` +
+  `<circle cx="${x1 - 2}" cy="${y1 - 1}" r="3" fill="#F3E3C8" ${S} stroke-width="1.6"/><circle cx="${x1 + 1}" cy="${y1 + 2}" r="3" fill="#F3E3C8" ${S} stroke-width="1.6"/>`;
+const FOODS = [
+  { name: "ไส้กรอก", note: "ไส้กรอกเค็มและมันเยอะ ของจริงให้แค่ชิ้นเล็ก ๆ นาน ๆ ครั้งพอ",
+    svg: `<path d="M26 14c5-6 12-3 11 3-3-1-7 0-11-3z" fill="#7CC04B" ${S} stroke-width="2"/><rect x="3" y="15" width="32" height="13" rx="6.5" fill="#D9694A" ${S} stroke-width="2.4"/><path d="M11 18l-2 6M18 18l-2 6M25 18l-2 6" stroke="#A8432B" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="21" r=".9" fill="#F6D9A8"/><circle cx="21" cy="24" r=".9" fill="#F6D9A8"/>` },
+  { name: "น่องไก่", note: "กระดูกไก่สุกเปราะ แตกเป็นเสี้ยนได้ ของจริงห้ามให้นะ แกะเนื้อให้แทน",
+    svg: BONE(9, 32, 19, 22) + `<ellipse cx="25" cy="15" rx="12" ry="8.5" transform="rotate(-40 25 15)" fill="#D98A45" ${S} stroke-width="2.4"/><path d="M20 15l8-6M24 20l8-6" stroke="#A85E25" stroke-width="2" stroke-linecap="round"/>` },
+  { name: "เนื้อติดกระดูก", note: "เนื้อต้มไม่ปรุงรสให้เป็นรางวัลได้ แต่กระดูกสุกอย่าให้แทะ",
+    svg: BONE(7, 33, 33, 8) + `<ellipse cx="19" cy="21" rx="12.5" ry="10" transform="rotate(-40 19 21)" fill="#B83A2A" ${S} stroke-width="2.4"/><ellipse cx="25" cy="15" rx="4.5" ry="6.5" transform="rotate(-40 25 15)" fill="#F08A8A" ${S} stroke-width="1.6"/>` },
+  { name: "ไก่อบ", note: "ไก่อบหนังมันและเครื่องปรุงเยอะ ของจริงเลือกอกไก่ต้มเปล่าดีกว่า",
+    svg: `<path d="M14 18l-5-9M26 18l5-9" stroke="#4A2A12" stroke-width="7" stroke-linecap="round"/><path d="M14 18l-5-9M26 18l5-9" stroke="#E8964E" stroke-width="4" stroke-linecap="round"/><circle cx="8" cy="8" r="3" fill="#F3E3C8" ${S} stroke-width="1.6"/><circle cx="32" cy="8" r="3" fill="#F3E3C8" ${S} stroke-width="1.6"/><path d="M4 31q0-16 16-16t16 16z" fill="#E8964E" ${S} stroke-width="2.4"/><path d="M25 22q5 2 7 7" fill="none" ${S} stroke-width="1.6"/><circle cx="16" cy="21" r="1" fill="#4A2A12"/><circle cx="19" cy="23" r="1" fill="#4A2A12"/>` },
+];
+const POOP = `<svg viewBox="0 0 40 40"><path d="M7 34q-4-7 4-9q-2-7 7-8q0-7 7-9q-1 6 4 8q6 2 3 8q8 2 4 10z" fill="#8A5530" ${S} stroke-width="2.2"/><path d="M12 27q7 2 16 0M15 20q5 2 10 0" fill="none" stroke="#B07A4E" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+
+type Item = { x: number; kind: "food" | "poop"; food?: number; el: HTMLElement; done: boolean };
+
 type Walker = { i: number; side: 1 | -1; step: number; talk: number; el: HTMLButtonElement | null; bub: HTMLSpanElement | null; enter: boolean };
 
 export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () => void; hasMissions: boolean }) {
-  const { shownBones, ready, levelUpTick } = useGame();
+  const { shownBones, ready, levelUpTick, showToast } = useGame();
   const count = levelOf(shownBones) + 1;
   const [night, setNight] = useState(false);
   const [, force] = useState(0);
@@ -30,7 +51,10 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
   const walkers = useRef<Walker[]>([]);
   const lastCount = useRef(0);
   const countRef = useRef(count);
-  const world = useRef({ x: 0, walking: true, t: 6 + Math.random() * 6, speed: 0 });
+  const world = useRef({ x: 0, walking: true, t: 6 + Math.random() * 6, speed: 0, nextFood: 9 + Math.random() * 6, eating: false });
+  const items = useRef<Item[]>([]);
+  const toastRef = useRef(showToast);
+  toastRef.current = showToast;
   countRef.current = count;
 
   useEffect(() => {
@@ -68,16 +92,58 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
       if (!reduced) {
         // เดิน ↔ หยุดพัก (ค่อย ๆ ชะลอ/เร่ง)
         w.t -= dt;
-        if (w.t <= 0) { w.walking = !w.walking; w.t = w.walking ? 7 + Math.random() * 7 : 2 + Math.random() * 2.5; }
+        if (w.t <= 0) {
+          w.walking = !w.walking;
+          w.t = w.walking ? 7 + Math.random() * 7 : 2 + Math.random() * 2.5;
+          if (w.walking) w.eating = false;
+          // พักแล้วบางทีก็... ขอทำธุระ
+          else if (pawsRef.current && Math.random() < 0.35) {
+            const d = walkers.current[Math.floor(Math.random() * walkers.current.length)];
+            if (d) {
+              const a = anchor(d.i, W);
+              items.current.push(makePoop(pawsRef.current, w.x + a.x + 6, a.y + 2, () => toastRef.current("เก็บอึให้น้องแล้ว เจ้าของดีเด่น ✨")));
+              say(d, `${DOGS[d.i].name}: ขอทำธุระแป๊บนะ 💩`, 2.4);
+            }
+          }
+        }
+        // วางของกินไว้ข้างหน้า แล้วให้น้องตัวนำเดินไปเจอ
+        if (w.walking && pawsRef.current) {
+          w.nextFood -= dt;
+          if (w.nextFood <= 0) {
+            w.nextFood = 16 + Math.random() * 14;
+            const f = Math.floor(Math.random() * FOODS.length);
+            items.current.push(makeFood(pawsRef.current, w.x + W + 30, 6, f));
+          }
+        }
+        const lead = walkers.current[0];
+        if (lead) {
+          const front = w.x + anchor(0, W).x + W_DOG * 0.75;
+          for (const it of items.current) {
+            if (it.kind !== "food" || it.done || it.x > front) continue;
+            it.done = true;
+            it.el.classList.add("eaten");
+            w.walking = false; w.eating = true; w.t = 2.8;
+            const fd = FOODS[it.food!];
+            say(lead, `${DOGS[lead.i].name}: เจอ${fd.name}! 😋`, 2.6, true);
+            toastRef.current(`🐾 ${fd.note}`);
+          }
+        }
         const target = w.walking ? GROUND_SPEED : 0;
         w.speed += (target - w.speed) * Math.min(1, dt * 3);
         w.x += w.speed * dt;
       }
       for (const [k, f] of Object.entries(LAYERS)) {
         const el = layerRefs.current[k];
-        if (el) el.style.transform = `translateX(${-((w.x * f) % TILE)}px)`;
+        if (el) el.style.transform = `translateX(${-((w.x * f) % TILE_OF[k as keyof typeof LAYERS])}px)`;
       }
       if (pawsRef.current) pawsRef.current.style.transform = `translateX(${-w.x}px)`;
+      if (items.current.length) {
+        items.current = items.current.filter((it) => {
+          const gone = !it.el.isConnected || it.x < w.x - 140;
+          if (gone) it.el.remove();
+          return !gone;
+        });
+      }
 
       const moving = w.speed > 6;
       sceneRef.current?.classList.toggle("resting", !moving);
@@ -105,15 +171,10 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
   }, [count]);
 
-  const talk = (d: Walker) => {
-    if (!d.bub) return;
-    d.bub.textContent = `${DOGS[d.i].name}: ${TIPS[Math.floor(Math.random() * TIPS.length)]}`;
-    d.bub.classList.add("on");
-    d.talk = 3.2;
-  };
+  const talk = (d: Walker) => say(d, `${DOGS[d.i].name}: ${TIPS[Math.floor(Math.random() * TIPS.length)]}`, 3.2);
 
   const strip = (k: keyof typeof LAYERS, art: React.ReactNode) => (
-    <div className={`layer layer-${k}`} ref={(el) => { layerRefs.current[k] = el; }} aria-hidden="true">
+    <div className={`layer layer-${k}`} style={{ width: TILE_OF[k] * 2 }} ref={(el) => { layerRefs.current[k] = el; }} aria-hidden="true">
       {art}{art}
     </div>
   );
@@ -154,6 +215,48 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
       </div>
     </div>
   );
+}
+
+function say(d: Walker, text: string, secs: number, yum = false) {
+  if (!d.bub) return;
+  d.bub.textContent = text;
+  d.bub.classList.add("on");
+  d.talk = secs;
+  if (yum && d.el) {
+    const y = document.createElement("span");
+    y.className = "yum";
+    y.innerHTML = "<small>อร่อย</small>GOOD!";
+    d.el.appendChild(y);
+    y.addEventListener("animationend", () => y.remove());
+  }
+}
+
+function makeFood(layer: HTMLDivElement, x: number, bottom: number, food: number): Item {
+  const el = document.createElement("i");
+  el.className = "treat";
+  el.innerHTML = `<svg viewBox="0 0 40 40">${FOODS[food].svg}</svg>`;
+  el.style.left = `${x}px`;
+  el.style.bottom = `${bottom}px`;
+  layer.appendChild(el);
+  return { x, kind: "food", food, el, done: false };
+}
+
+function makePoop(layer: HTMLDivElement, x: number, bottom: number, onPick: () => void): Item {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "poop";
+  el.setAttribute("aria-label", "เก็บอึ");
+  el.innerHTML = POOP;
+  el.style.left = `${x}px`;
+  el.style.bottom = `${bottom}px`;
+  el.addEventListener("click", () => {
+    if (el.classList.contains("picked")) return;
+    el.classList.add("picked");
+    onPick();
+    setTimeout(() => el.remove(), 450);
+  }, { once: true });
+  layer.appendChild(el);
+  return { x, kind: "poop", el, done: false };
 }
 
 function dropPaw(layer: HTMLDivElement, worldX: number, bottom: number) {
@@ -214,7 +317,7 @@ function Tree({ x, s = 1 }: { x: number; s?: number }) {
 
 function Street() {
   return (
-    <svg {...svgProps}>
+    <svg width={MID_TILE} height={330} viewBox={`0 0 ${MID_TILE} 330`}>
       {/* 1) ร้านน้องเชา */}
       <g>
         <rect x="18" y="96" width="196" height="150" fill="#F28C28" stroke={INK} strokeWidth="3" />
@@ -288,6 +391,66 @@ function Street() {
         <rect x="1438" y="210" width="16" height="4" fill={INK} />
         <ellipse cx="1520" cy="236" rx="46" ry="20" className="leaf" stroke={INK} strokeWidth="3" />
         <circle cx="1504" cy="228" r="4" fill="#fff" /><circle cx="1536" cy="232" r="4" fill="#FF6F91" />
+      </g>
+
+      {/* 8) ร้านของชำ */}
+      <g>
+        <rect x="1612" y="108" width="208" height="138" fill="#FFF1C9" stroke={INK} strokeWidth="3" />
+        <rect x="1604" y="98" width="224" height="14" fill="#2E8B57" stroke={INK} strokeWidth="3" />
+        <Sign x={1641} y={118} w={150} text="ร้านของชำ" color="#2E7D32" />
+        <path d="M1606 156 h220 v16 h-220z" fill="#fff" stroke={INK} strokeWidth="3" />
+        <path d="M1606 156 h27 v16 h-27z M1660 156 h27 v16 h-27z M1714 156 h27 v16 h-27z M1768 156 h27 v16 h-27z" fill="#2E8B57" />
+        <rect x="1626" y="184" width="98" height="62" fill="#E9E2D6" stroke={INK} strokeWidth="3" />
+        <line x1="1626" y1="205" x2="1724" y2="205" stroke={INK} strokeWidth="2.5" /><line x1="1626" y1="226" x2="1724" y2="226" stroke={INK} strokeWidth="2.5" />
+        {[1634, 1648, 1662, 1676, 1690, 1704].map((x, k) => <rect key={x} x={x} y="191" width="8" height="14" rx="2" fill={["#D6403A", "#1DA8DA", "#FFD23F", "#2E8B57", "#F28C28", "#B5338A"][k]} stroke={INK} strokeWidth="1.5" />)}
+        {[1636, 1656, 1676, 1696].map((x, k) => <rect key={x} x={x} y="212" width="14" height="14" rx="2" fill={["#F28C28", "#fff", "#1DA8DA", "#FFD23F"][k]} stroke={INK} strokeWidth="1.5" />)}
+        <rect className="win" x="1742" y="184" width="60" height="62" stroke={INK} strokeWidth="3" />
+        <rect x="1748" y="226" width="40" height="20" fill="#C98A4B" stroke={INK} strokeWidth="2.5" />
+        <circle cx="1756" cy="224" r="5" fill="#F28C28" stroke={INK} strokeWidth="1.5" /><circle cx="1768" cy="223" r="5" fill="#F28C28" stroke={INK} strokeWidth="1.5" /><circle cx="1780" cy="224" r="5" fill="#9ACD32" stroke={INK} strokeWidth="1.5" />
+      </g>
+
+      {/* 9) Pet Shop */}
+      <g>
+        <rect x="1880" y="112" width="196" height="134" fill="#E6DBFF" stroke={INK} strokeWidth="3" />
+        <path d="M1872 112 h212 l-12 -22 h-188z" fill="#7B4FD1" stroke={INK} strokeWidth="3" />
+        <Sign x={1908} y={122} w={140} text="PET SHOP" color="#6A3FC0" />
+        <g transform="translate(2090 150)">
+          <line x1="0" y1="-14" x2="0" y2="0" stroke={INK} strokeWidth="2.5" />
+          <path d="M-18 4 a6 6 0 1 1 6 -6 h24 a6 6 0 1 1 6 6 a6 6 0 1 1 -6 6 h-24 a6 6 0 1 1 -6 -6z" fill="#fff" stroke={INK} strokeWidth="2.5" />
+        </g>
+        <rect className="win" x="1898" y="168" width="96" height="78" stroke={INK} strokeWidth="3" />
+        <path d="M1906 246 v-30 l6 -6 h16 l6 6 v30z" fill="#F28C28" stroke={INK} strokeWidth="2" />
+        <path d="M1940 246 v-24 l5 -5 h14 l5 5 v24z" fill="#1DA8DA" stroke={INK} strokeWidth="2" />
+        <circle cx="1920" cy="230" r="5" fill="#fff" /><circle cx="1952" cy="233" r="4" fill="#fff" />
+        <circle cx="1978" cy="232" r="9" fill="#FF6F91" stroke={INK} strokeWidth="2" />
+        <rect x="2012" y="176" width="46" height="70" fill="#FFD23F" stroke={INK} strokeWidth="3" />
+        <circle cx="2050" cy="214" r="3" fill={INK} />
+      </g>
+
+      {/* 10) สวนสาธารณะ */}
+      <g>
+        <rect x="2126" y="150" width="12" height="96" fill="#8A5A2B" stroke={INK} strokeWidth="2.5" />
+        <rect x="2268" y="150" width="12" height="96" fill="#8A5A2B" stroke={INK} strokeWidth="2.5" />
+        <path d="M2120 156 q83 -46 166 0" fill="none" stroke="#2E8B57" strokeWidth="8" />
+        <Sign x={2128} y={112} w={150} text="สวนสาธารณะ" color="#2E7D32" />
+        <Tree x={2206} s={0.75} />
+        <g fill="#fff" stroke={INK} strokeWidth="2">
+          {Array.from({ length: 13 }, (_, k) => <path key={k} d={`M${2290 + k * 22} 246 v-24 l5 -6 l5 6 v24z`} />)}
+          <rect x="2286" y="230" width="290" height="5" />
+        </g>
+        <g transform="translate(2370 246)">
+          <ellipse cx="0" cy="-8" rx="46" ry="10" fill="#BFE9F7" stroke={INK} strokeWidth="3" />
+          <rect x="-6" y="-52" width="12" height="44" fill="#E9E2D6" stroke={INK} strokeWidth="2.5" />
+          <ellipse cx="0" cy="-52" rx="18" ry="5" fill="#E9E2D6" stroke={INK} strokeWidth="2.5" />
+          <path className="spray" d="M-2 -58 q-18 -22 -30 4 M2 -58 q18 -22 30 4 M0 -58 v-16" fill="none" stroke="#1DA8DA" strokeWidth="3" strokeLinecap="round" />
+        </g>
+        <Tree x={2450} s={1.05} />
+        <Tree x={2560} s={0.85} />
+        <g transform="translate(2510 246)">
+          <rect x="-3" y="-44" width="6" height="44" fill="#5A5148" />
+          <rect x="-34" y="-62" width="68" height="22" rx="5" fill="#fff" stroke={INK} strokeWidth="2.5" />
+          <text x="0" y="-46" textAnchor="middle" fontFamily="Mitr,sans-serif" fontWeight="700" fontSize="11" fill="#2E7D32">ลานน้องหมา</text>
+        </g>
       </g>
     </svg>
   );
