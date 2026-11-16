@@ -136,3 +136,27 @@ test("ความทรงจำ: ส่วนตัวโดยค่าเร
     assert.deepEqual(r.rows, [{ dog_name: "ข้าวต้ม" }]);
   });
 });
+
+test("ยอดเพี้ยน (มีภารกิจแต่ยอดเป็น 0) ถูกซ่อมเมื่อรันไฟล์ซ้ำ และเมื่อเคลมครั้งถัดไป", async () => {
+  const db = await setup();
+  // จำลองเหตุการณ์จริง: บันทึกภารกิจไว้ แต่ยอดในโปรไฟล์ไม่ถูกบวก
+  await db.query("insert into public.profile_rewards (user_id,key,points) values ($1,'story-tongue',10),($1,'cost',5)", [A]);
+  await db.query("update public.profiles set bones = 0 where id = $1", [A]);
+  await db.exec(SQL);
+  let r = await db.query("select bones from public.profiles where id = $1", [A]);
+  assert.equal(r.rows[0].bones, 15);
+  await db.query("update public.profiles set bones = 0 where id = $1", [A]);
+  await as(db, A, async () => {
+    const c = await db.query("select * from public.claim_reward('ready')");
+    assert.deepEqual(c.rows[0], { bones: 25, gained: 10 });
+  });
+});
+
+test("เคลมได้แม้ยังไม่มีโปรไฟล์ (สร้างให้อัตโนมัติ)", async () => {
+  const db = await setup();
+  await db.query("delete from public.profiles where id = $1", [B]);
+  await as(db, B, async () => {
+    const r = await db.query("select public.merge_rewards($1::text[]) as b", [["cost", "ready"]]);
+    assert.equal(r.rows[0].b, 15);
+  });
+});

@@ -101,6 +101,19 @@ begin
   return 0;
 end $$;
 
+-- ยอดกระดูก = ผลรวมของภารกิจที่ทำจริง (คำนวณใหม่ทุกครั้ง ยอดไม่มีทางเพี้ยน)
+-- สร้างโปรไฟล์ให้ด้วยถ้ายังไม่มี
+create or replace function public.recompute_bones(p_uid uuid)
+returns integer language plpgsql security definer set search_path = '' as $$
+declare v integer;
+begin
+  select coalesce(sum(r.points), 0)::int into v from public.profile_rewards r where r.user_id = p_uid;
+  insert into public.profiles (id, bones) values (p_uid, v)
+  on conflict (id) do update set bones = excluded.bones;
+  return v;
+end $$;
+revoke execute on function public.recompute_bones(uuid) from public, anon, authenticated;
+
 create or replace function public.claim_reward(p_key text)
 returns table (bones integer, gained integer)
 language plpgsql security definer set search_path = '' as $$
@@ -116,12 +129,9 @@ begin
     insert into public.profile_rewards (user_id, key, points)
     values (v_uid, p_key, v_pts) on conflict do nothing;
     get diagnostics v_rows = row_count;
-    if v_rows > 0 then
-      update public.profiles p set bones = p.bones + v_pts where p.id = v_uid;
-      gained := v_pts;
-    end if;
+    if v_rows > 0 then gained := v_pts; end if;
   end if;
-  select p.bones into bones from public.profiles p where p.id = v_uid;
+  bones := public.recompute_bones(v_uid);
   return next;
 end $$;
 
@@ -132,8 +142,6 @@ declare
   v_uid uuid := auth.uid();
   v_key text;
   v_pts integer;
-  v_rows integer;
-  v_bones integer;
 begin
   if v_uid is null then raise exception 'not signed in' using errcode = '28000'; end if;
   if coalesce(array_length(p_keys, 1), 0) > 500 then raise exception 'too many keys'; end if;
@@ -142,14 +150,9 @@ begin
     if v_pts > 0 then
       insert into public.profile_rewards (user_id, key, points)
       values (v_uid, v_key, v_pts) on conflict do nothing;
-      get diagnostics v_rows = row_count;
-      if v_rows > 0 then
-        update public.profiles p set bones = p.bones + v_pts where p.id = v_uid;
-      end if;
     end if;
   end loop;
-  select p.bones into v_bones from public.profiles p where p.id = v_uid;
-  return v_bones;
+  return public.recompute_bones(v_uid);
 end $$;
 
 revoke execute on function public.claim_reward(text) from public, anon;
@@ -230,3 +233,7 @@ create policy "memorials: delete own" on public.memorials
 
 grant select on public.memorials to anon, authenticated;
 grant insert, update (dog_name, years, message, status), delete on public.memorials to authenticated;
+
+-- ซ่อมยอดกระดูกให้ตรงกับภารกิจที่ทำจริง (รันซ้ำได้)
+update public.profiles p
+set bones = coalesce((select sum(r.points) from public.profile_rewards r where r.user_id = p.id), 0);
