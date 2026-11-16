@@ -385,3 +385,112 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .scene.night .bulb{filter:drop-shadow(0 0 4px currentColor) brightness(1.25)}
 .scene.night .glare{opacity:.15}
 @media (prefers-reduced-motion:reduce){.ped svg,.ped .lg,.ped .arm{animation:none}}
+
+/* ===== ช่วงเวลา เช้า / กลางวัน / เย็น / กลางคืน + ฝนตก ===== */
+.scene .sky{transition:background .8s}
+.scene.phase-morning .sky{background:linear-gradient(#FFC8B4,#FFE9A8 70%,#FFF6D6)}
+.scene.phase-day .sky{background:linear-gradient(#6CCBFF,#BDEBFF 75%,#E6F8FF)}
+.scene.phase-evening .sky{background:linear-gradient(#6B4FB8,#FF7A8A 55%,#FFB45E)}
+.scene.night .sky{background:linear-gradient(#1F1A4D,#3E2F7A 70%,#5A3E8E)}
+.scene.rainy .sky{background:linear-gradient(#8B97AE,#B9C3D3 70%,#D3DAE4)}
+.scene.rainy.night .sky{background:linear-gradient(#1C1E33,#33385A)}
+.phase-morning .far{fill:#F2A27E;opacity:.45}.phase-day .far{fill:#7FB7D9;opacity:.5}
+.phase-evening .far{fill:#7B3F8C;opacity:.55}.rainy .far{fill:#7E889C;opacity:.55}
+.sky-body{position:absolute;width:86px;height:86px;padding:0;border:0;background:none;cursor:pointer;z-index:1;transition:left 1s,top 1s,opacity .6s;translate:-50% 0}
+.sky-body svg{width:100%;height:100%;overflow:visible;display:block}
+.phase-morning .sky-body{left:22%;top:118px}
+.phase-day .sky-body{left:50%;top:22px}
+.phase-evening .sky-body{left:76%;top:120px}
+.night .sky-body{left:64%;top:40px}
+.sky-body.hide{opacity:.25}
+.sun-disc{fill:#FFD93B}.rays2 rect{fill:#FFD93B}
+.phase-morning .sun-disc,.phase-morning .rays2 rect{fill:#FFC04D}
+.phase-evening .sun-disc,.phase-evening .rays2 rect{fill:#FF8A3D}
+.rays2{animation:spin 24s linear infinite;transform-origin:0 0}
+.moon{fill:#FFF3C4}
+.zz{animation:zz 2.6s ease-in-out infinite}
+@keyframes zz{0%{opacity:0;transform:translate(0,6px)}40%{opacity:1}100%{opacity:0;transform:translate(8px,-10px)}}
+.stars{position:absolute;inset:0;pointer-events:none}
+.stars svg{position:absolute;width:10px;height:10px;fill:#FFF3C4;animation:twinkle 2.4s ease-in-out infinite}
+@keyframes twinkle{50%{opacity:.25;transform:scale(.6)}}
+/* เมฆหน้ายิ้ม */
+.cloud-body{fill:#fff;stroke:#241C15;stroke-width:2.4}
+.cloud-face circle:not(.blush){fill:#241C15}.cloud-face path{stroke:#241C15}.cloud-face .blush{fill:#FF8FA3;opacity:.55}
+.cloud .m-sad{display:none}
+.phase-morning .cloud-body{fill:#FFF3EA}.phase-evening .cloud-body{fill:#FFD0DA}
+.night .cloud-body{fill:#6E62A8;stroke:#2A2250}.night .cloud-face{opacity:.6}
+.rainy .cloud-body{fill:#9BA3B5}.rainy .cloud .m-sad{display:inline}.rainy .cloud .m-happy{display:none}
+.scene.night .layer-cloud .cloud ellipse{opacity:1}
+/* ไฟเปิดตอนเย็นด้วย */
+.phase-evening .lamp{fill:#FFF3A0;filter:drop-shadow(0 6px 10px #FFE066)}
+.phase-evening .win{fill:#FFE6A3}
+.phase-evening .bulb{filter:drop-shadow(0 0 3px currentColor) brightness(1.2)}
+.phase-evening .lawn{fill:#79B656}.phase-evening .lawn-stripe rect{fill:#6EAA4C}
+.phase-morning .lawn{fill:#8FD064}.rainy .lawn{fill:#6FA352}.rainy .lawn-stripe rect{fill:#659A49}
+.clinic-sign{filter:none}.night .clinic-sign,.phase-evening .clinic-sign{filter:drop-shadow(0 0 8px #FF8080)}
+/* นก ผีเสื้อ หิ่งห้อย ฝน */
+.birds{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.birds svg{position:absolute;left:0;width:20px;height:10px;animation:fly linear infinite}
+.birds .wing{animation:flap .35s ease-in-out infinite alternate;transform-origin:12px 6px}
+@keyframes fly{from{transform:translateX(110vw)}to{transform:translateX(-40px)}}
+@keyframes flap{to{transform:scaleY(-.6)}}
+.night .birds,.rainy .birds{display:none}
+.critters{position:absolute;left:0;right:0;bottom:0;height:120px;pointer-events:none;z-index:3}
+.butterfly{position:absolute;width:20px;height:16px;animation:flutter 9s ease-in-out infinite}
+.bwing{animation:bflap .18s ease-in-out infinite alternate;transform-origin:0 0}
+.bwing.r{transform-origin:0 0}
+@keyframes bflap{to{transform:scaleX(.3)}}
+@keyframes flutter{0%,100%{transform:translate(0,0)}25%{transform:translate(40px,-18px)}50%{transform:translate(80px,4px)}75%{transform:translate(30px,14px)}}
+.firefly{position:absolute;width:5px;height:5px;border-radius:50%;background:#FFF59A;box-shadow:0 0 8px 3px #FFF06A;display:none;animation:glow 2.8s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.1;transform:translate(0,0)}50%{opacity:1;transform:translate(10px,-12px)}}
+.night .butterfly,.rainy .butterfly{display:none}.night .firefly{display:block}
+.rain{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}
+.rain i{position:absolute;top:-30px;width:2px;height:16px;border-radius:2px;background:rgba(255,255,255,.75);animation:drop linear infinite;rotate:12deg}
+@keyframes drop{to{transform:translate(-40px,380px)}}
+/* ของที่ขยับในเมือง */
+.smoke circle{fill:#fff;opacity:.6;animation:smoke 3s ease-out infinite}
+.smoke circle:nth-child(2){animation-delay:-1s}.smoke circle:nth-child(3){animation-delay:-2s}
+@keyframes smoke{from{transform:translate(0,10px);opacity:0}30%{opacity:.7}to{transform:translate(6px,-18px);opacity:0}}
+.bub-up circle{fill:#fff;stroke:#5CC8F5;stroke-width:2;animation:bubup 4s ease-in infinite}
+.bub-up circle:nth-child(2){animation-delay:-1.4s}.bub-up circle:nth-child(3){animation-delay:-2.7s}
+@keyframes bubup{from{transform:translateY(30px);opacity:0}20%{opacity:1}to{transform:translateY(-90px);opacity:0}}
+.wave{animation:wave 1.2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:0 100%}
+@keyframes wave{to{transform:rotate(-24deg)}}
+.cat-tail{animation:tail 1.6s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:0 100%}
+@keyframes tail{to{transform:rotate(18deg)}}
+.cloth{animation:sway 2.2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 0}
+@keyframes sway{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+.kite,.balloons{animation:kite 3s ease-in-out infinite alternate}
+@keyframes kite{to{transform:translate(4px,-6px)}}
+.fish{animation:fish 3s ease-in-out infinite alternate}
+@keyframes fish{to{transform:translateX(6px)}}
+.fflower{animation:none}
+.peek{animation:peek 4s ease-in-out infinite}
+@keyframes peek{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
+.rainy .smoke{display:none}
+/* คนเดิน: หัวโต + อีโมตลอย */
+.ped{width:42px;height:68px}
+.ped-in{width:100%;height:100%}
+.ped svg.custom{animation:pedbob .18s ease-in-out infinite alternate}
+.ped .wheel{animation:none}
+.ped .pup{animation:pedbob .22s ease-in-out infinite alternate}
+.ped .balloon{animation:kite 1.6s ease-in-out infinite alternate}
+.emote{position:absolute;left:50%;top:-14px;translate:-50% 0;font:700 15px/1 Mitr,sans-serif;color:#E2463F;-webkit-text-stroke:3px #fff;paint-order:stroke fill;opacity:0;pointer-events:none}
+.emote.on{animation:emote 1.8s ease-out}
+@keyframes emote{0%{opacity:0;transform:translateY(6px) scale(.4)}20%{opacity:1;transform:translateY(0) scale(1.2)}35%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
+/* น้องเดินเร็ว / ช้า */
+.dog.walk.fast img{animation-duration:.24s}
+.dog.walk.slow img{animation-duration:.55s}
+@media (prefers-reduced-motion:reduce){.birds,.critters,.rain,.smoke,.bub-up,.rays2,.zz,.stars svg,.wave,.cat-tail,.cloth,.kite,.balloons,.fish,.peek,.emote{animation:none!important}.birds,.critters,.rain{display:none}}
+/* ดวงอาทิตย์อยู่หลังตึก (ตึกเลื่อนผ่านหน้า) แต่ยังแตะได้ */
+.scene .layer{pointer-events:none}
+.sky-body{z-index:0;width:78px;height:78px}
+.phase-morning .sky-body{left:34%;top:14px}
+.phase-day .sky-body{left:50%;top:4px}
+.phase-evening .sky-body{left:64%;top:16px}
+.night .sky-body{left:50%;top:6px}
+.sky-body.hide{opacity:.35}
+.phase-morning .sky-body{left:30%;top:12px}
+.phase-day .sky-body{left:44%;top:2px}
+.phase-evening .sky-body{left:54%;top:16px}
+.night .sky-body{left:44%;top:6px}

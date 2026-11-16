@@ -5,7 +5,7 @@ import { DOGS, levelOf } from "@/lib/game-core.mjs";
 import { TIPS } from "@/lib/content";
 import { useGame } from "@/lib/game";
 import { AccountButton } from "@/components/Chrome";
-import { Street, MID_TILE, PedArt, PEDS } from "@/components/StreetArt";
+import { Street, MID_TILE, PedArt, PEDS, Sky, Birds, Critters, Rain, FlowerFace, type Phase } from "@/components/StreetArt";
 
 // ฉากเดินด้านข้าง: น้องเดินอยู่กับที่ ฉากเลื่อนผ่านเป็นชั้น ๆ (parallax)
 // ความเร็วของแต่ละชั้นเทียบกับพื้นหญ้า
@@ -14,8 +14,11 @@ const GROUND_SPEED = 46;    // px/วินาที ตอนเดิน
 const LAYERS = { cloud: 0.12, far: 0.3, mid: 0.65, ground: 1 } as const;
 const TILE_OF: Record<keyof typeof LAYERS, number> = { cloud: TILE, far: TILE, mid: MID_TILE, ground: TILE };
 const W_DOG = 80;
-const GAP = 150;            // ระยะห่างมากสุดระหว่างน้องแต่ละตัว
-const LANES = [8, 44, 24, 58, 14, 50]; // ความสูงจากขอบล่าง: ยิ่งสูง = ยิ่งอยู่ไกล (ตัวเล็กลง)
+const TOP = 62;             // น้องเดินได้สูงสุดกี่ px จากขอบล่าง (ยิ่งสูง = ยิ่งไกล ตัวเล็กลง)
+const PHASES: Phase[] = ["morning", "day", "evening", "night"];
+const PHASE_TH: Record<Phase, string> = { morning: "ตอนเช้า", day: "กลางวัน", evening: "ตอนเย็น", night: "กลางคืน" };
+const phaseOf = (h: number): Phase => (h >= 5 && h < 10 ? "morning" : h >= 10 && h < 16 ? "day" : h >= 16 && h < 19 ? "evening" : "night");
+const EMOTES = ["♥", "♪", "!", "☺", "♥", "✿"];
 
 const PAW = '<svg viewBox="0 0 20 20"><ellipse cx="10" cy="13.2" rx="5.2" ry="4.4"/><ellipse cx="4.2" cy="8" rx="1.9" ry="2.4"/><ellipse cx="8" cy="5.2" rx="1.9" ry="2.5"/><ellipse cx="12" cy="5.2" rx="1.9" ry="2.5"/><ellipse cx="15.8" cy="8" rx="1.9" ry="2.4"/></svg>';
 
@@ -40,13 +43,14 @@ type Item = { x: number; kind: "food" | "poop"; food?: number; el: HTMLElement; 
 
 type Walker = {
   i: number; side: 1 | -1; step: number; talk: number; el: HTMLButtonElement | null; bub: HTMLSpanElement | null; enter: boolean;
-  px: number; py: number; ox: number; oy: number; tx: number; ty: number; wt: number;
+  px: number; py: number; tx: number; ty: number; wt: number; pace: number; vx: number;
 };
 
 export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () => void; hasMissions: boolean }) {
   const { shownBones, ready, levelUpTick, showToast } = useGame();
   const count = levelOf(shownBones) + 1;
-  const [night, setNight] = useState(false);
+  const [phase, setPhase] = useState<Phase>("day");
+  const [rain, setRain] = useState(false);
   const [, force] = useState(0);
 
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -58,17 +62,30 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
   const world = useRef({ x: 0, walking: true, t: 6 + Math.random() * 6, speed: 0, nextFood: 9 + Math.random() * 6, eating: false });
   const items = useRef<Item[]>([]);
   // คนเดินบนทางเท้า: ตำแหน่งในพิกัดชั้นร้าน + ทิศ + ความเร็วของตัวเอง
-  const peds = useRef(PEDS.map((_, i) => ({
-    x: i * 92 + Math.random() * 30, dir: (i % 2 ? -1 : 1) as 1 | -1, speed: 14 + Math.random() * 14, el: null as HTMLDivElement | null,
+  const peds = useRef(PEDS.map((pd, i) => ({
+    x: i * 70 + Math.random() * 30, dir: (i % 2 ? -1 : 1) as 1 | -1, speed: (pd.speed ?? 18) * (0.8 + Math.random() * 0.4),
+    el: null as HTMLDivElement | null, inner: null as HTMLDivElement | null, emo: null as HTMLSpanElement | null, et: 2 + Math.random() * 8,
   })));
   const toastRef = useRef(showToast);
   toastRef.current = showToast;
   countRef.current = count;
 
   useEffect(() => {
-    const h = new Date().getHours();
-    setNight(h >= 19 || h < 6);
+    const now = new Date();
+    setPhase(phaseOf(now.getHours()));
+    // ฝนตกบางวัน (ราว 1 ใน 5 วัน สุ่มตามวันที่ ทุกคนเห็นเหมือนกันทั้งวัน)
+    const seed = now.getFullYear() * 372 + now.getMonth() * 31 + now.getDate();
+    setRain(((seed * 9301 + 49297) % 233280) / 233280 < 0.2);
   }, []);
+  // แตะดวงอาทิตย์/พระจันทร์ เพื่อเปลี่ยนช่วงเวลา: เช้า → กลางวัน → เย็น → กลางคืน → ฝนตก → ...
+  const cycleSky = () => {
+    if (rain) { setRain(false); setPhase("morning"); toastRef.current(`🌤 ${PHASE_TH.morning}`); return; }
+    const i = PHASES.indexOf(phase);
+    if (phase === "night") { setRain(true); setPhase("day"); toastRef.current("🌧 ฝนตก"); return; }
+    const nx = PHASES[i + 1];
+    setPhase(nx);
+    toastRef.current(`${nx === "night" ? "🌙" : nx === "evening" ? "🌇" : "☀️"} ${PHASE_TH[nx]}`);
+  };
 
   // จำนวนน้องในขบวน = เลเวล
   useEffect(() => {
@@ -76,7 +93,7 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
     const entering = lastCount.current > 0 && count > lastCount.current;
     const list = walkers.current.slice(0, count);
     for (let i = list.length; i < count; i++) list.push({ i, side: 1, step: Math.random() * 14, talk: 0, el: null, bub: null, enter: entering,
-      px: entering ? -90 : NaN, py: LANES[i % LANES.length], ox: 0, oy: 0, tx: 0, ty: 0, wt: Math.random() * 2 });
+      px: entering ? -90 : NaN, py: (i * 23) % TOP, tx: NaN, ty: (i * 23) % TOP, wt: 1 + Math.random() * 2, pace: 20, vx: 0 });
     walkers.current = list;
     lastCount.current = count;
     force((n) => n + 1);
@@ -84,41 +101,43 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
 
   useEffect(() => {
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // จัดตำแหน่งน้อง: กระจายเต็มสนาม คนละระดับความลึก แต่ละตัวเดินส่ายซ้าย-ขวา ขึ้น-ลงเองช้า ๆ
-    // แล้วดันออกจากกันถ้าเข้าใกล้เกินไป จะได้ไม่ซ้อนกัน
+    // จัดตำแหน่งน้อง: แต่ละตัวมีจุดหมายของตัวเองในสนาม เปลี่ยนทุก 3-6 วินาที
+    // บางช่วงเดินเร็วแซงขึ้นหน้า บางช่วงเดินช้าตกไปข้างหลัง ขึ้น-ลงสลับกันไปมา
+    // ตัวหน้าสุดไม่เกิน ~62% ของจอ และดันออกจากกันถ้าเข้าใกล้เกินไป
     const layout = (W: number, dt: number, moving: boolean) => {
       const list = walkers.current;
       const n = list.length;
-      const right = W - W_DOG - 14, left = 6;
-      const per = n > 1 ? Math.min(GAP, (right - left) / (n - 1)) : 0;
-      const pos = list.map((d) => {
-        d.wt -= dt;
+      const left = 6, right = Math.max(110, Math.min(W * 0.56 + n * 12, W - W_DOG - 30));
+      for (const d of list) {
+        if (Number.isNaN(d.tx)) d.tx = right - (d.i * (right - left)) / Math.max(1, n - 1 || 1) * (n > 1 ? 1 : 0);
+        if (Number.isNaN(d.px)) { d.px = d.tx; d.py = d.ty; }
+        d.wt -= dt * (moving ? 1 : 0.5);
         if (d.wt <= 0) {
-          d.wt = 2.5 + Math.random() * 3;
-          d.tx = (Math.random() * 2 - 1) * Math.min(28, per * 0.3 + 6);
-          d.ty = (Math.random() * 2 - 1) * 10;
+          d.wt = 3 + Math.random() * 3.5;
+          d.tx = left + Math.random() * (right - left);
+          d.ty = Math.random() * TOP;
+          d.pace = Math.random() < 0.5 ? 12 + Math.random() * 8 : 34 + Math.random() * 16; // ช้า / เร็ว
         }
-        const k = Math.min(1, dt * (moving ? 0.7 : 0.25));
-        d.ox += (d.tx - d.ox) * k; d.oy += (d.ty - d.oy) * k;
-        const y = Math.max(0, Math.min(64, LANES[d.i % LANES.length] + d.oy));
-        return { d, x: Math.max(left, Math.min(right, right - d.i * per + d.ox)), y };
-      });
+        const dx = d.tx - d.px, dy = d.ty - d.py, dist = Math.hypot(dx, dy);
+        const step = Math.min(dist, d.pace * (moving ? 1 : 0.45) * dt);
+        const mx = dist > 0.01 ? (dx / dist) * step : 0, my = dist > 0.01 ? (dy / dist) * step : 0;
+        d.px += mx; d.py += my;
+        d.vx += ((dt > 0 ? mx / dt : 0) - d.vx) * Math.min(1, dt * 4);
+      }
       for (let pass = 0; pass < 3; pass++) {
-        for (let a = 0; a < pos.length; a++) for (let b = a + 1; b < pos.length; b++) {
-          const A = pos[a], B = pos[b];
-          const dx = B.x - A.x, dy = Math.abs(B.y - A.y);
-          if (dy > 30) continue;
-          const need = 64 - dy * 0.9;
-          if (Math.abs(dx) >= need) continue;
-          const push = (need - Math.abs(dx)) / 2, sgn = dx >= 0 ? 1 : -1;
-          A.x -= push * sgn; B.x += push * sgn;
+        for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) {
+          const A = list[a], B = list[b];
+          const dx = B.px - A.px, dy = (B.py - A.py) * 1.7;
+          const dist = Math.hypot(dx, dy) || 0.01, need = 70;
+          if (dist >= need) continue;
+          const push = (need - dist) / 2;
+          const ux = dx / dist, uy = dy / dist / 1.7;
+          A.px -= ux * push; A.py -= uy * push; B.px += ux * push; B.py += uy * push;
         }
       }
-      for (const p of pos) {
-        const d = p.d;
-        if (Number.isNaN(d.px)) { d.px = p.x; d.py = p.y; }
-        const k = Math.min(1, dt * 2.2);
-        d.px += (p.x - d.px) * k; d.py += (p.y - d.py) * k;
+      for (const d of list) {
+        d.px = Math.max(left, Math.min(right + 20, d.px));
+        d.py = Math.max(0, Math.min(TOP, d.py));
       }
     };
     let raf = 0, last = 0;
@@ -153,7 +172,7 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
             items.current.push(makeFood(pawsRef.current, w.x + W + 30, 6, f));
           }
         }
-        const lead = walkers.current[0];
+        const lead = walkers.current.reduce<Walker | null>((m, d) => (!m || d.px > m.px ? d : m), null);
         if (lead) {
           const front = w.x + lead.px + W_DOG * 0.75;
           for (const it of items.current) {
@@ -179,7 +198,16 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
       for (const p of peds.current) {
         if (!reduced) p.x += p.dir * p.speed * dt;
         const sx = ((((p.x - w.x * LAYERS.mid) % span) + span) % span) - 80;
-        if (p.el) p.el.style.transform = `translateX(${sx.toFixed(1)}px) scaleX(${p.dir})`;
+        if (p.el) p.el.style.transform = `translateX(${sx.toFixed(1)}px)`;
+        if (p.inner) p.inner.style.transform = `scaleX(${p.dir})`;
+        if (!reduced && p.emo) {
+          p.et -= dt;
+          if (p.et <= 0) {
+            p.et = 5 + Math.random() * 9;
+            p.emo.textContent = EMOTES[Math.floor(Math.random() * EMOTES.length)];
+            p.emo.classList.remove("on"); void p.emo.offsetWidth; p.emo.classList.add("on");
+          }
+        }
       }
       if (items.current.length) {
         items.current = items.current.filter((it) => {
@@ -199,7 +227,11 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
           d.el.style.transform = `translateX(${a.x.toFixed(1)}px) scale(${sc.toFixed(3)})`;
           d.el.style.bottom = `${a.y.toFixed(1)}px`;
           d.el.style.zIndex = String(100 - Math.round(a.y));
-          d.el.classList.toggle("walk", moving);
+          const selfMove = Math.abs(d.vx) > 4;
+          d.el.classList.toggle("walk", moving || selfMove);
+          d.el.classList.toggle("fast", (moving && d.vx > 8) || (!moving && Math.abs(d.vx) > 14));
+          d.el.classList.toggle("slow", moving && d.vx < -4);
+          d.el.classList.toggle("flip", !moving && d.vx < -4);
         }
         if (d.talk > 0) { d.talk -= dt; if (d.talk <= 0) d.bub?.classList.remove("on"); }
         if (moving && pawsRef.current) {
@@ -227,19 +259,25 @@ export default function Scene({ onEarnClick, hasMissions }: { onEarnClick: () =>
   );
 
   return (
-    <div className={`scene${night ? " night" : ""}`} ref={sceneRef}>
+    <div className={`scene phase-${phase}${phase === "night" ? " night" : ""}${rain ? " rainy" : ""}`} ref={sceneRef}>
       <div className="sky" />
-      <div className="sun" aria-hidden="true"><i className="rays" /></div>
+      <Sky phase={phase} rain={rain} onTap={cycleSky} />
       {strip("cloud", <Clouds />)}
+      <Birds />
       {strip("far", <Far />)}
       {strip("mid", <Street />)}
       {strip("ground", <Lawn />)}
       <div className="peds" aria-hidden="true">
         {peds.current.map((p, i) => (
-          <div key={i} className="ped" ref={(el) => { p.el = el; }}><PedArt i={i} /></div>
+          <div key={i} className="ped" ref={(el) => { p.el = el; }}>
+            <div className="ped-in" ref={(el) => { p.inner = el; }}><PedArt i={i} /></div>
+            <span className="emote" ref={(el) => { p.emo = el; }} />
+          </div>
         ))}
       </div>
       <div className="paws-world" ref={pawsRef} aria-hidden="true" />
+      <Critters />
+      {rain && <Rain />}
 
       <a className="topbtn l" href="/" aria-label="ChowChowStory"><img src="/img/logo.png" alt="" /></a>
       <AccountButton className="topbtn r2" />
@@ -328,12 +366,19 @@ const INK = "#241C15";
 const svgProps = { width: TILE, height: 330, viewBox: `0 0 ${TILE} 330` };
 
 function Clouds() {
-  const c = (x: number, y: number, s: number) => (
-    <g key={x} transform={`translate(${x} ${y}) scale(${s})`} className="cloud">
-      <ellipse cx="0" cy="0" rx="34" ry="13" /><ellipse cx="24" cy="-8" rx="22" ry="14" /><ellipse cx="-20" cy="-4" rx="16" ry="10" />
+  // เมฆมีหน้า: วันฝนตกจะหน้าเศร้า
+  const c = (x: number, y: number, sc: number) => (
+    <g key={x} transform={`translate(${x} ${y}) scale(${sc})`} className="cloud">
+      <path className="cloud-body" d="M-40 8 q-12 0 -12 -10 q0 -11 13 -11 q2 -15 18 -15 q8 -12 22 -8 q12 -10 24 2 q16 -2 18 12 q12 2 11 14 q-1 16 -16 16z" />
+      <g className="cloud-face">
+        <circle cx="-8" cy="-2" r="2" /><circle cx="10" cy="-2" r="2" />
+        <path className="m-happy" d="M-3 4 q4 4 8 0" fill="none" strokeWidth="1.8" strokeLinecap="round" />
+        <path className="m-sad" d="M-4 7 q2 -3 4 0 q2 -3 4 0 q2 -3 4 0" fill="none" strokeWidth="1.6" strokeLinecap="round" />
+        <circle className="blush" cx="-14" cy="3" r="3" /><circle className="blush" cx="16" cy="3" r="3" />
+      </g>
     </g>
   );
-  return <svg {...svgProps}>{[c(120, 60, 1), c(480, 104, 0.7), c(820, 48, 1.2), c(1180, 92, 0.8), c(1450, 64, 1)]}</svg>;
+  return <svg {...svgProps}>{[c(130, 62, 0.9), c(500, 108, 0.6), c(840, 52, 1.05), c(1190, 96, 0.7), c(1460, 70, 0.85)]}</svg>;
 }
 
 function Far() {
@@ -362,6 +407,9 @@ function Lawn() {
         <g key={`${o}-${x}`} className="flower"><circle cx={x + o} cy={y} r="2.6" fill={c} /><circle cx={x + o} cy={y} r="1" fill="#FFD23F" /></g>
       )))}
       <line x1="0" y1="246" x2={TILE} y2="246" stroke={INK} strokeWidth="3" />
+      {[[180, 262, "#FF6F91"], [610, 258, "#FFD23F"], [1020, 264, "#fff"], [1390, 259, "#FF6F91"]].map(([x, y, c]) => (
+        <FlowerFace key={x as number} x={x as number} y={y as number} s={0.55} c={c as string} />
+      ))}
     </svg>
   );
 }
