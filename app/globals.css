@@ -323,3 +323,30 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .paw svg{fill:#5A3A1C}
 .scene.night .paw svg{fill:#C9B8E8}
 .dog .shadow{background:rgba(30,60,20,.25)}
+
+/* ===== ฉากเดินด้านข้าง (parallax) ===== */
+.scene .sky{position:absolute;inset:0;background:linear-gradient(#FFE66B,#FFC93C)}
+.scene.night .sky{background:linear-gradient(#2C2460,#5A3E8E)}
+.scene .sun{position:absolute;top:30px;right:22%;width:80px;height:80px;border-radius:50%;background:#FFF5C2;z-index:0}
+.scene .sun .rays{position:absolute;inset:-22px;border-radius:50%;border:5px dotted #FFF5C2;animation:spin 30s linear infinite}
+.scene.night .sun{background:#FFF3D6;box-shadow:-14px 6px 0 0 #E9DDF7 inset}
+.scene.night .sun .rays{display:none}
+.layer{position:absolute;left:0;top:0;height:330px;width:3200px;display:flex;will-change:transform}
+.layer svg{flex:none;display:block}
+.layer-cloud .cloud ellipse{fill:#fff;opacity:.85}
+.scene.night .layer-cloud .cloud ellipse{opacity:.25}
+.far{fill:#F5B83B;opacity:.55}
+.scene.night .far{fill:#3D2F6E;opacity:.9}
+.leaf{fill:#6CC24A}
+.scene.night .leaf{fill:#3F7A3A}
+.scene.night .lamp{fill:#FFF3A0;filter:drop-shadow(0 6px 10px #FFE066)}
+.paws-world{position:absolute;left:0;bottom:0;height:120px;width:1px;z-index:3;pointer-events:none;will-change:transform}
+.paws-world .paw{rotate:90deg}
+.scene .yard{z-index:4}
+.scene .dog{transition:bottom .3s}
+.dog img.go{display:none;position:absolute;inset:0}
+.dog.has-walk.walk img.go{display:block}
+.dog.has-walk.walk img.sit{visibility:hidden}
+.scene.resting .dog img{animation:none}
+@media (prefers-reduced-motion:reduce){.scene .sun .rays{animation:none}}
+.yard.many .dog{width:72px;height:72px}
