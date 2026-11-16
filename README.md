@@ -10,6 +10,7 @@
 npm install
 npm run dev        # http://localhost:3000
 npm test           # ทดสอบตรรกะเลเวล / กระดูก / เกณฑ์ความร้อน
+npm run test:db    # ทดสอบ SQL + RLS ของ Supabase บน Postgres จำลอง (PGlite)
 npm run build      # ได้ไฟล์ static ใน out/
 ```
 
@@ -41,7 +42,7 @@ public/img/     ตัวการ์ตูนเชาเชา (ลิขส�
 | # | งาน | สถานะ |
 |---|---|---|
 | 01 | App Structure: Next.js + Tailwind, 5 หน้า, ฉากน้องเดิน, ระบบกระดูก, build static | ✅ |
-| 02 | Supabase: ตาราง articles / profiles / memorials, สมัคร-เข้าสู่ระบบ, sync กระดูกข้ามเครื่อง | ⏳ |
+| 02 | Supabase: ตาราง articles / profiles / memorials, สมัคร-เข้าสู่ระบบ, sync กระดูกข้ามเครื่อง | 🧪 รอตรวจบนเว็บจริง |
 | 03 | Upload: ส่งรูปและเรื่องของน้อง, ย่อรูป, คิวอนุมัติ | |
 | 04 | หน้าอ่าน: URL บทความแยก, ค้นหา, กำแพงความทรงจำ, SEO | |
 | 05 | Studio: เขียนบทความ, อนุมัติโพสต์, สินค้า Affiliate, สถิติ | |
@@ -53,3 +54,24 @@ public/img/     ตัวการ์ตูนเชาเชา (ลิขส�
 - ทำภารกิจครบได้ 70 กระดูก = ผลรวมที่คาดไว้ เลเวลขึ้นแล้วมีน้องตัวที่ 2 เดินเข้ามา
 - รีโหลดแล้วกระดูกยังอยู่
 - เกณฑ์ความร้อนผ่าน unit test
+
+## ตั้งค่า Supabase (Milestone 02)
+
+1. Supabase › SQL Editor › New query › วางไฟล์ `supabase/migrations/0001_init.sql` ทั้งไฟล์ › Run
+2. Authentication › URL Configuration
+   - Site URL: `https://chowchowstory.vercel.app`
+   - Redirect URLs: `https://chowchowstory.vercel.app/**` และ `http://localhost:3000/**`
+3. ตั้งตัวเองเป็นแอดมิน (ใช้ใน Milestone 05) หลังสมัครแล้ว:
+   `update public.profiles set is_admin = true where id = (select id from auth.users where email = 'อีเมลของคุณ');`
+
+### ความปลอดภัย
+- โค้ดเว็บใช้แค่ publishable key ข้อมูลป้องกันด้วย RLS ทุกตาราง
+- กระดูกแก้ตรง ๆ ไม่ได้ ต้องผ่าน `claim_reward` / `merge_rewards` ที่ตรวจกติกาฝั่งเซิร์ฟเวอร์
+- ความทรงจำเป็นส่วนตัวโดยค่าเริ่มต้น ตั้งเป็น `approved` เองไม่ได้
+
+### ตรวจรับ M02
+- [x] SQL รันซ้ำได้ ผ่าน 7 test (RLS, กันแก้แต้ม, กันอนุมัติตัวเอง, คนอื่นมองไม่เห็นข้อมูล)
+- [x] แอปยังทำงานครบเมื่อออฟไลน์ / Supabase ล่ม (ใช้เนื้อหาในตัวแอปแทน)
+- [ ] สมัคร ยืนยันอีเมล เข้าสู่ระบบ ออกจากระบบ บนเว็บจริง
+- [ ] กระดูกที่สะสมก่อนสมัครย้ายเข้าบัญชี และเห็นตรงกันบนอีกเครื่อง
+- [ ] หน้าเรื่องเล่าโหลดจากตาราง articles

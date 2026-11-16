@@ -203,3 +203,19 @@ dialog.sheet::backdrop{background:rgba(20,16,12,.6)}
   .app{border-left:3px solid var(--ink);border-right:3px solid var(--ink);box-shadow:0 0 0 8px rgba(36,28,21,.06);min-height:100vh}
   .nav{left:50%;right:auto;width:560px;translate:-50% 0;border-radius:22px 22px 0 0;border:3px solid var(--ink);border-bottom:none}
 }
+
+/* ---- Milestone 02: บัญชี ---- */
+.acct-pill{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:#fff;border:2px solid var(--ink);border-radius:99px;padding:6px 14px;font-weight:600;font-size:14px;text-decoration:none;color:var(--ink);box-shadow:0 2px 0 var(--ink)}
+.acct-pill.in{border-color:var(--ok);color:var(--ok);box-shadow:none}
+.acct-row{display:flex;justify-content:space-between;gap:12px;font-size:15px;border-top:1px solid var(--line);padding-top:10px}
+.acct-row:first-child{border-top:none;padding-top:0}
+.acct-row span{color:var(--muted)}
+.acct-row b{text-align:right;word-break:break-all}
+.sync.synced{color:var(--ok)}.sync.error{color:var(--bad)}.sync.syncing{color:var(--warn)}
+.form-msg{font-size:14px;font-weight:600;border-radius:12px;padding:10px 12px}
+.form-msg.ok{background:#E5F5EC;color:#1E6B3F}
+.form-msg.bad{background:#FDE8E7;color:#9E2A24}
+.linkbtn{align-self:flex-start;background:none;border:none;padding:0;color:var(--magenta);font-weight:600;text-decoration:underline;font-size:14px}
+.btn:disabled{opacity:.6}
+.mem-list{display:flex;flex-direction:column;gap:12px}
+.mem-status{font-size:12.5px;font-weight:600;color:var(--muted)}

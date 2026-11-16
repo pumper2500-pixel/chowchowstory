@@ -8,7 +8,7 @@ import { useEarnOnMount, useGame } from "@/lib/game";
 import { STAGES, STORIES, missionsFor } from "@/lib/content";
 
 export default function Home() {
-  const { state, shownBones, preview, setPreview, today } = useGame();
+  const { state, shownBones, preview, setPreview, today, session, sync } = useGame();
   useEarnOnMount(`visit-${today}`, 5, "ยินดีต้อนรับกลับมา");
   const sheet = useRef<HTMLDialogElement>(null);
 
@@ -54,6 +54,11 @@ export default function Home() {
           ))}
           <span>เพื่อนในฉาก {li + 1}/6</span>
         </div>
+        <Link href="/account/" className={`acct-pill${session ? " in" : ""}`}>
+          {session
+            ? <>☁️ {sync === "error" ? "ซิงก์ไม่สำเร็จ แตะเพื่อดู" : sync === "syncing" ? "กำลังซิงก์…" : "กระดูกเก็บในบัญชีแล้ว"}</>
+            : <>💾 สมัครฟรี เก็บกระดูกไว้ทุกเครื่อง ›</>}
+        </Link>
       </section>
 
       <nav className="tiles" aria-label="ทางลัด">
@@ -89,7 +94,7 @@ export default function Home() {
           <span>ติ๊กความพร้อมครบทุกข้อ</span><b>+10</b>
           <span>เขียนถึงน้องที่จากไป</span><b>+20</b>
         </div>
-        <p className="lead" style={{ fontSize: 13 }}>ตอนนี้กระดูกเก็บในเครื่องนี้ เมื่อมีระบบสมาชิกจะเก็บข้ามเครื่องได้</p>
+        <p className="lead" style={{ fontSize: 13 }}>{session ? "กระดูกเก็บในบัญชี เปิดเครื่องไหนก็เห็น" : "ตอนนี้กระดูกเก็บในเครื่องนี้ สมัครสมาชิกฟรีเพื่อเก็บข้ามเครื่อง"}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
           <button className="btn" type="button" onClick={closeSheet}>เข้าใจแล้ว</button>
           <button className="btn ghost" type="button" onClick={() => { setPreview(!preview); closeSheet(); window.scrollTo(0, 0); }}>

@@ -7,14 +7,17 @@
     "build": "next build",
     "start": "npx serve out",
     "lint": "next lint",
-    "test": "node --test lib/*.test.mjs"
+    "test": "node --test lib/*.test.mjs",
+    "test:db": "node --test supabase/migrations.test.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
     "next": "15.5.29",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.3",
     "@tailwindcss/postcss": "4.1.11",
     "@types/node": "22.15.3",
     "@types/react": "19.1.8",

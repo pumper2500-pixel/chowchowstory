@@ -1,13 +1,20 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageHead } from "@/components/Chrome";
 import { STORIES } from "@/lib/content";
+import { supabase, type Article } from "@/lib/supabase";
 import { useGame } from "@/lib/game";
 
 export default function StoriesPage() {
   const { state, earn } = useGame();
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // เริ่มจากเนื้อหาในตัวแอป แล้วแทนด้วยของจากฐานข้อมูลเมื่อโหลดได้ (ออฟไลน์ก็ยังอ่านได้)
+  const [stories, setStories] = useState<Article[]>(STORIES);
+  useEffect(() => {
+    supabase.from("articles").select("slug,title,kind,minutes,body").eq("published", true).order("position")
+      .then(({ data, error }) => { if (!error && data && data.length) setStories(data as Article[]); });
+  }, []);
 
   // อ่านค้างไว้ 4 วินาทีถึงนับว่าอ่าน กันการกดเปิดปิดรัว ๆ เพื่อเก็บแต้ม
   const onToggle = (slug: string, open: boolean) => {
@@ -21,7 +28,7 @@ export default function StoriesPage() {
       <PageHead img="s39" eyebrow="เรื่องเล่า" title="เรื่องของหมาหน้าสิงโต" />
       <div className="pad stack">
         <p className="lead">แตะเพื่ออ่าน อ่านจบแต่ละเรื่องได้ 10 กระดูก</p>
-        {STORIES.map((s) => {
+        {stories.map((s) => {
           const read = !!state.done[`story-${s.slug}`];
           return (
             <details key={s.slug} className={`story${read ? " read" : ""}`} id={s.slug}
