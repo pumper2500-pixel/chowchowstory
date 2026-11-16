@@ -1,47 +1,23 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
+import type { Metadata } from "next";
 import { PageHead } from "@/components/Chrome";
-import { STORIES } from "@/lib/content";
-import { supabase, type Article } from "@/lib/supabase";
 import Gallery from "@/components/Gallery";
-import { useGame } from "@/lib/game";
+import StoryList from "@/components/StoryList";
+import { excerpt, getArticles } from "@/lib/articles";
 
-export default function StoriesPage() {
-  const { state, earn } = useGame();
-  const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  // เริ่มจากเนื้อหาในตัวแอป แล้วแทนด้วยของจากฐานข้อมูลเมื่อโหลดได้ (ออฟไลน์ก็ยังอ่านได้)
-  const [stories, setStories] = useState<Article[]>(STORIES);
-  useEffect(() => {
-    supabase.from("articles").select("slug,title,kind,minutes,body").eq("published", true).order("position")
-      .then(({ data, error }) => { if (!error && data && data.length) setStories(data as Article[]); });
-  }, []);
+export const metadata: Metadata = {
+  title: "เรื่องเล่าเชาเชา",
+  description: "ตำนานลิ้นสีน้ำเงิน ประวัติหมาสิงโตขนฟู และนิสัยของเชาเชา อ่านสั้น ๆ จบในสองนาที",
+  alternates: { canonical: "/stories/" },
+};
 
-  // อ่านค้างไว้ 4 วินาทีถึงนับว่าอ่าน กันการกดเปิดปิดรัว ๆ เพื่อเก็บแต้ม
-  const onToggle = (slug: string, open: boolean) => {
-    const key = `story-${slug}`;
-    clearTimeout(timers.current[key]);
-    if (open && !state.done[key]) timers.current[key] = setTimeout(() => earn(key, 10, "อ่านจบแล้ว"), 4000);
-  };
-
+export default async function StoriesPage() {
+  const articles = await getArticles();
+  const items = articles.map((a) => ({ slug: a.slug, title: a.title, kind: a.kind, minutes: a.minutes, excerpt: excerpt(a), text: a.body.join(" ") }));
   return (
     <>
       <PageHead img="s39" eyebrow="เรื่องเล่า" title="เรื่องของหมาหน้าสิงโต" />
       <div className="pad stack">
-        <p className="lead">แตะเพื่ออ่าน อ่านจบแต่ละเรื่องได้ 10 กระดูก</p>
-        {stories.map((s) => {
-          const read = !!state.done[`story-${s.slug}`];
-          return (
-            <details key={s.slug} className={`story${read ? " read" : ""}`} id={s.slug}
-              onToggle={(e) => onToggle(s.slug, (e.currentTarget as HTMLDetailsElement).open)}>
-              <summary>
-                <h3>{s.title}<span className="meta">{s.kind} · อ่าน {s.minutes} นาที</span></h3>
-                <span className="rw">{read ? "อ่านแล้ว ✓" : "+10 🦴"}</span>
-              </summary>
-              <div className="body">{s.body.map((p, i) => <p key={i}>{p}</p>)}</div>
-            </details>
-          );
-        })}
+        <StoryList items={items} />
         <Gallery />
         <div className="slot stack">
           <img className="pic" src="/img/s27.png" alt="" />

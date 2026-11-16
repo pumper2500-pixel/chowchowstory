@@ -17,6 +17,7 @@ export default function MemorialPage() {
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [wall, setWall] = useState<Memorial[] | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -27,6 +28,16 @@ export default function MemorialPage() {
 
   useEffect(() => { try { setLocal(JSON.parse(localStorage.getItem(KEY) || "null")); } catch {} }, []);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    supabase.from("memorials").select("id,dog_name,years,message,status,created_at").eq("status", "approved")
+      .order("reviewed_at", { ascending: false }).limit(30)
+      .then(({ data }) => setWall((data as Memorial[]) || []));
+  }, []);
+
+  const setStatus = async (id: string, status: "private" | "pending") => {
+    await supabase.from("memorials").update({ status }).eq("id", id);
+    load();
+  };
 
   // ล็อกอินแล้วมีข้อความที่เคยเขียนไว้ในเครื่อง → ย้ายเข้าบัญชีให้
   useEffect(() => {
@@ -74,12 +85,29 @@ export default function MemorialPage() {
           {mine.map((m) => (
             <Card key={m.id} name={m.dog_name} yrs={m.years} text={m.message}
               status={m.status === "approved" ? "ขึ้นกำแพงความทรงจำแล้ว" : m.status === "pending" ? "รออนุมัติขึ้นกำแพง" : "ส่วนตัว เห็นเฉพาะคุณ"}
-              onDelete={() => removeServer(m.id)} />
+              onDelete={() => removeServer(m.id)}
+              action={m.status === "private"
+                ? { label: "ขอขึ้นกำแพงความทรงจำ", run: () => setStatus(m.id, "pending") }
+                : { label: m.status === "pending" ? "ยกเลิกคำขอ" : "เอาออกจากกำแพง", run: () => setStatus(m.id, "private") }} />
           ))}
           {!session && local && (
             <Card name={local.name} yrs={local.yrs} text={local.text} status="เก็บในเครื่องนี้" onDelete={removeLocal} />
           )}
         </div>
+
+        {wall && wall.length > 0 && (
+          <section className="stack" aria-labelledby="wall-h">
+            <h2 id="wall-h" style={{ fontSize: 21 }}>กำแพงความทรงจำ</h2>
+            <div className="wall">
+              {wall.map((m) => (
+                <figure key={m.id} className="wall-card">
+                  <b>{m.dog_name}</b>{m.years && <small>{m.years}</small>}
+                  <p>{m.message}</p>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
 
         <form className="card mem-form" onSubmit={submit}>
           <div><label htmlFor="m-name">ชื่อน้อง</label><input id="m-name" maxLength={40} required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
@@ -88,7 +116,7 @@ export default function MemorialPage() {
           <button className="btn" type="submit" disabled={busy}>{busy ? "กำลังบันทึก…" : "บันทึกความทรงจำ"}</button>
           {err && <p className="form-msg bad" role="status">{err}</p>}
           <p className="lead" style={{ fontSize: 13 }}>
-            {session ? "เก็บในบัญชีของคุณ เป็นส่วนตัว เห็นเฉพาะคุณ"
+            {session ? "เก็บในบัญชีของคุณ เป็นส่วนตัวจนกว่าจะกดขอขึ้นกำแพง (ทีมงานจะอ่านก่อนเผยแพร่)"
               : <>ตอนนี้เก็บในเครื่องนี้เท่านั้น <Link href="/account/">สมัครสมาชิก</Link> เพื่อเก็บไว้ในบัญชี</>}
           </p>
         </form>
@@ -97,7 +125,7 @@ export default function MemorialPage() {
   );
 }
 
-function Card({ name, yrs, text, status, onDelete }: { name: string; yrs: string | null; text: string; status: string; onDelete: () => void }) {
+function Card({ name, yrs, text, status, onDelete, action }: { name: string; yrs: string | null; text: string; status: string; onDelete: () => void; action?: { label: string; run: () => void } }) {
   return (
     <div className="card mem-card stack">
       <img className="pic" src="/img/s35.png" alt="" />
@@ -105,7 +133,10 @@ function Card({ name, yrs, text, status, onDelete }: { name: string; yrs: string
       {yrs && <div className="yrs">{yrs}</div>}
       <p>{text}</p>
       <div className="mem-status">{status}</div>
-      <button className="btn ghost" type="button" onClick={onDelete}>ลบข้อความนี้</button>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {action && <button className="btn" type="button" onClick={action.run}>{action.label}</button>}
+        <button className="btn ghost" type="button" onClick={onDelete}>ลบข้อความนี้</button>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { PageHead } from "@/components/Chrome";
 import { useGame } from "@/lib/game";
-import { photoUrl, supabase, type DogPost } from "@/lib/supabase";
+import { photoUrl, supabase, type DogPost, type Memorial } from "@/lib/supabase";
 
 // คิวอนุมัติ — ฐานข้อมูลตรวจสิทธิ์แอดมินอีกชั้น (RLS) หน้านี้แค่ซ่อนจากคนทั่วไป
 export default function ReviewPage() {
@@ -11,13 +11,27 @@ export default function ReviewPage() {
   const [admin, setAdmin] = useState<boolean | null>(null);
   const [queue, setQueue] = useState<DogPost[]>([]);
   const [reason, setReason] = useState<Record<string, string>>({});
+  const [mems, setMems] = useState<Memorial[]>([]);
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("dog_posts")
       .select("id,dog_name,caption,photo_path,status,reject_reason,created_at,user_id")
       .eq("status", "pending").order("created_at");
     setQueue((data as DogPost[]) || []);
+    const m = await supabase.from("memorials").select("id,dog_name,years,message,status,created_at")
+      .eq("status", "pending").order("created_at");
+    setMems((m.data as Memorial[]) || []);
   }, []);
+
+  const decideMem = async (m: Memorial, status: "approved" | "private") => {
+    const { error } = await supabase.from("memorials").update({
+      status, reviewed_at: new Date().toISOString(),
+      reject_reason: status === "private" ? (reason[m.id] || "").trim().slice(0, 200) || null : null,
+    }).eq("id", m.id);
+    if (error) { showToast("บันทึกไม่สำเร็จ"); return; }
+    showToast(status === "approved" ? `ขึ้นกำแพง: ${m.dog_name}` : `ส่งกลับเป็นส่วนตัว: ${m.dog_name}`);
+    load();
+  };
 
   useEffect(() => {
     if (!session) { setAdmin(false); return; }
@@ -40,6 +54,7 @@ export default function ReviewPage() {
       <div className="pad stack">
         {admin === null && <p className="lead">กำลังตรวจสิทธิ์…</p>}
         {admin === false && <p className="lead">หน้านี้สำหรับแอดมินเท่านั้น</p>}
+        {admin && <h2 style={{ fontSize: 20 }}>รูปรออนุมัติ ({queue.length})</h2>}
         {admin && queue.length === 0 && (
           <div className="card stack"><img className="pic" src="/img/s23.png" alt="" /><p>ไม่มีรูปค้างในคิว</p></div>
         )}
@@ -57,6 +72,21 @@ export default function ReviewPage() {
             <div style={{ display: "flex", gap: 8 }}>
               <button className="btn" type="button" onClick={() => decide(p, "approved")}>อนุมัติ</button>
               <button className="btn ghost" type="button" onClick={() => decide(p, "rejected")}>ไม่ผ่าน</button>
+            </div>
+          </article>
+        ))}
+        {admin && <h2 style={{ fontSize: 20, marginTop: 8 }}>ความทรงจำขอขึ้นกำแพง ({mems.length})</h2>}
+        {admin && mems.length === 0 && <p className="lead">ไม่มีข้อความค้างในคิว</p>}
+        {admin && mems.map((m) => (
+          <article key={m.id} className="card stack review">
+            <h3>{m.dog_name} {m.years && <small className="lead">{m.years}</small>}</h3>
+            <p style={{ whiteSpace: "pre-wrap" }}>{m.message}</p>
+            <div className="review-checks"><span>ตรวจก่อนอนุมัติ: ไม่มีชื่อ-นามสกุลจริง เบอร์โทร หรือที่อยู่ · ไม่มีคำหยาบหรือโฆษณา</span></div>
+            <input aria-label="เหตุผลถ้าไม่ผ่าน" placeholder="เหตุผลถ้าไม่ผ่าน (ผู้เขียนจะเห็น)" maxLength={200}
+              value={reason[m.id] || ""} onChange={(e) => setReason({ ...reason, [m.id]: e.target.value })} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn" type="button" onClick={() => decideMem(m, "approved")}>ขึ้นกำแพง</button>
+              <button className="btn ghost" type="button" onClick={() => decideMem(m, "private")}>ไม่ผ่าน</button>
             </div>
           </article>
         ))}

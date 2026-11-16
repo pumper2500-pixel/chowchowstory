@@ -256,3 +256,25 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .review-img{width:100%;max-height:420px;object-fit:contain;border-radius:12px;background:var(--cream)}
 .review-checks{font-size:13px;background:#FFF1DA;border-radius:10px;padding:8px 10px}
 .review input{width:100%;border:2px solid var(--line);background:var(--cream);border-radius:12px;padding:9px 12px}
+
+/* ---- Milestone 04: หน้าอ่าน / ค้นหา / กำแพงความทรงจำ ---- */
+.search input{width:100%;border:2px solid var(--ink);background:#fff;border-radius:99px;padding:10px 18px;font-size:16px}
+.story-card{display:flex;gap:12px;align-items:flex-start;background:#fff;border:2px solid var(--line);border-radius:20px;padding:16px 18px;text-decoration:none;color:var(--ink)}
+.story-card:hover{border-color:var(--orange)}
+.story-card > div{flex:1;min-width:0}
+.story-card h3{font-size:19px}
+.story-card .meta{display:block;font-size:12.5px;color:var(--muted);margin:2px 0 6px}
+.story-card p{font-size:14.5px;color:var(--muted);line-height:1.6}
+.story-card .rw{font-family:var(--display);font-weight:700;font-size:13px;color:var(--orange);background:#FFF1DA;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.story-card.read .rw{color:var(--ok);background:#E5F5EC}
+.phead .eb a{color:inherit}
+.prose p{font-size:17px;line-height:1.9;max-width:62ch}
+.read-end{text-align:center;font-weight:700;color:var(--orange);background:#FFF1DA;border-radius:14px;padding:12px}
+.pn{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:600}
+.pn a{color:var(--magenta)}
+.wall{columns:2;column-gap:10px}
+.wall-card{break-inside:avoid;margin:0 0 10px;background:#fff;border:2px solid var(--line);border-left:6px solid var(--magenta);border-radius:14px;padding:12px 14px}
+.wall-card b{font-family:var(--display);font-size:17px;display:block}
+.wall-card small{color:var(--muted);font-size:12.5px}
+.wall-card p{white-space:pre-wrap;font-size:14.5px;margin-top:6px}
+@media (max-width:400px){.wall{columns:1}}

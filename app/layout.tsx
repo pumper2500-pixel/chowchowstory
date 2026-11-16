@@ -2,12 +2,16 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { GameProvider } from "@/lib/game";
 import { BottomNav, ToastHost } from "@/components/Chrome";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: { default: "ChowChowStory", template: "%s · ChowChowStory" },
   description: "เรื่องเล่าและคู่มือเลี้ยงเชาเชาในเมืองร้อน พร้อมน้องเชาเชาที่เดินเล่นอยู่ในแอป",
   icons: { icon: "/icon-512.png", apple: "/icon-512.png" },
   manifest: "/manifest.webmanifest",
+  metadataBase: new URL(SITE_URL),
+  openGraph: { siteName: SITE_NAME, locale: "th_TH", type: "website", images: ["/og.png"] },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

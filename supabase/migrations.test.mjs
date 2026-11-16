@@ -7,6 +7,7 @@ import { PGlite } from "@electric-sql/pglite";
 
 const SQL = readFileSync(new URL("./migrations/0001_init.sql", import.meta.url), "utf8");
 const SQL2 = readFileSync(new URL("./migrations/0002_posts.sql", import.meta.url), "utf8");
+const SQL3 = readFileSync(new URL("./migrations/0003_reading.sql", import.meta.url), "utf8");
 
 const AUTH_STUB = `
   create role anon nologin; create role authenticated nologin;
@@ -38,8 +39,10 @@ async function setup() {
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ('33333333-3333-3333-3333-333333333333','early@x.com','{"display_name":"มาก่อน"}')`);
   await db.exec(SQL);
   await db.exec(SQL2);
+  await db.exec(SQL3);
   await db.exec(SQL); // รันซ้ำต้องไม่พัง
   await db.exec(SQL2);
+  await db.exec(SQL3);
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1,'a@x.com','{"display_name":"ปั้ม"}'), ($2,'b@x.com','{}')`, [A, B]);
   return db;
 }
@@ -247,4 +250,39 @@ test("Storage: อัปโหลดได้เฉพาะโฟลเดอ�
   });
   const b = await db.query("select public, file_size_limit, allowed_mime_types from storage.buckets where id='dog-photos'");
   assert.deepEqual(b.rows[0], { public: true, file_size_limit: 2097152, allowed_mime_types: ["image/jpeg"] });
+});
+
+// ---------------- Milestone 04 ----------------
+test("บทความใหม่ในฐานข้อมูลได้แต้มอ่านจบ แต่ slug ที่ไม่มีจริงไม่ได้", async () => {
+  const db = await setup();
+  await db.query("insert into public.articles (slug,title,body) values ('summer-tips','ร้อนนี้ดูแลยังไง','{a}')");
+  await db.query("insert into public.articles (slug,title,body,published) values ('draft','ร่าง','{a}',false)");
+  await as(db, A, async () => {
+    assert.equal((await db.query("select * from public.claim_reward('story-summer-tips')")).rows[0].gained, 10);
+    assert.equal((await db.query("select * from public.claim_reward('story-nope')")).rows[0].gained, 0);
+    assert.equal((await db.query("select * from public.claim_reward('story-draft')")).rows[0].gained, 0, "ร่างที่ยังไม่เผยแพร่");
+  });
+});
+
+test("กำแพงความทรงจำ: ขอขึ้นกำแพง → แอดมินอนุมัติ → ทุกคนเห็น → แก้ข้อความแล้วต้องรออนุมัติใหม่", async () => {
+  const db = await setup();
+  await db.query("update public.profiles set is_admin = true where id = $1", [A]);
+  let id;
+  await as(db, B, async () => {
+    id = (await db.query("insert into public.memorials (dog_name, message) values ('ทองหยิบ','รักเสมอ') returning id")).rows[0].id;
+    await db.query("update public.memorials set status='pending' where id=$1", [id]);
+    await assert.rejects(db.query("update public.memorials set status='approved' where id=$1", [id]));
+  });
+  await as(db, A, async () => {
+    const q = await db.query("select id from public.memorials where status='pending'");
+    assert.equal(q.rows.length, 1, "แอดมินเห็นคิว");
+    await db.query("update public.memorials set status='approved', reviewed_at=now() where id=$1", [id]);
+  });
+  await as(db, null, async () => assert.equal((await db.query("select * from public.memorials")).rows.length, 1));
+  await as(db, B, async () => {
+    await db.query("update public.memorials set message='รักเสมอ ไม่เคยลืม' where id=$1", [id]);
+    const r = await db.query("select status from public.memorials where id=$1", [id]);
+    assert.equal(r.rows[0].status, "pending");
+  });
+  await as(db, null, async () => assert.equal((await db.query("select * from public.memorials")).rows.length, 0, "หลุดจากกำแพงจนกว่าจะอนุมัติใหม่"));
 });

@@ -39,8 +39,11 @@ export default function AccountPage() {
     if (!session) { setPending(null); return; }
     supabase.rpc("is_admin").then(async ({ data }) => {
       if (!data) return;
-      const { count } = await supabase.from("dog_posts").select("id", { count: "exact", head: true }).eq("status", "pending");
-      setPending(count ?? 0);
+      const [a, b] = await Promise.all([
+        supabase.from("dog_posts").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("memorials").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      ]);
+      setPending((a.count ?? 0) + (b.count ?? 0));
     });
   }, [session]);
 
@@ -102,7 +105,7 @@ export default function AccountPage() {
             <button className="btn signout" type="button" onClick={async () => { await supabase.auth.signOut(); showToast("ออกจากระบบแล้ว"); }}>ออกจากระบบ</button>
           </div>
           {pending !== null && (
-            <Link href="/review/" className="card admin-link">🛠️ คิวรออนุมัติรูป <b>{pending}</b></Link>
+            <Link href="/review/" className="card admin-link">🛠️ คิวรออนุมัติ (รูป + ความทรงจำ) <b>{pending}</b></Link>
           )}
           <Link href="/share/" className="card admin-link">📷 ส่งรูปน้อง / ดูรูปที่ฉันส่ง</Link>
           <div className="card mem-form">
