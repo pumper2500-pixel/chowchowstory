@@ -45,6 +45,12 @@ export default function AccountPage() {
           email, password, options: { data: { display_name: name.trim() || null }, emailRedirectTo: redirect },
         });
         if (error) throw error;
+        // Supabase ไม่บอกตรง ๆ ว่าอีเมลซ้ำ (กันการเดาอีเมล) แต่จะคืน user ที่ไม่มี identity และไม่ส่งอีเมล
+        if (data.user && (data.user.identities?.length ?? 0) === 0) {
+          setMode("signin");
+          setMsg({ ok: false, text: "อีเมลนี้สมัครไว้แล้ว ใส่รหัสผ่านแล้วกดเข้าสู่ระบบได้เลย (ถ้าลืมรหัส กด ลืมรหัสผ่าน)" });
+          return;
+        }
         if (!data.session) setMsg({ ok: true, text: `ส่งอีเมลยืนยันไปที่ ${email} แล้ว กดลิงก์ในอีเมลแล้วกลับมาเข้าสู่ระบบได้เลย กระดูกที่สะสมไว้จะย้ายเข้าบัญชีให้อัตโนมัติ` });
       } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
