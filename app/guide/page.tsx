@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHead } from "@/components/Chrome";
-import { STAGES, type Stage } from "@/lib/content";
+import { AKC_URL, STAGES, type Stage } from "@/lib/content";
 import { useGame } from "@/lib/game";
 
 export default function GuidePage() {
@@ -26,7 +26,11 @@ export default function GuidePage() {
           <div><b>20–32 กก.</b><span>น้ำหนักโตเต็มวัย</span></div>
           <div><b>43–51 ซม.</b><span>ความสูงถึงไหล่</span></div>
           <div><b>8–12 ปี</b><span>อายุขัยโดยเฉลี่ย</span></div>
+          <div><b>Non-Sporting</b><span>กลุ่มสายพันธุ์ (AKC)</span></div>
+          <div><b>2446</b><span>ปีที่ AKC รับรอง (ค.ศ. 1903)</span></div>
+          <div><b>5 สี</b><span>แดง ดำ บลู ซินนามอน ครีม</span></div>
         </div>
+        <p className="src">ขนาด อายุขัย กลุ่ม และสีมาตรฐาน: <a href={AKC_URL} target="_blank" rel="noopener noreferrer">American Kennel Club</a></p>
         <div className="tabs" role="tablist" aria-label="ช่วงวัย">
           {STAGES.map((s) => (
             <button key={s.id} role="tab" id={`tab-${s.id}`} aria-controls="stage-panel"
@@ -41,6 +45,7 @@ export default function GuidePage() {
         </div>
         <img className="pic" src="/img/s10.png" alt="" />
         <p className="note">ข้อมูลนี้เป็นความรู้ทั่วไปสำหรับเจ้าของ ไม่ใช่การวินิจฉัย ถ้าน้องมีอาการผิดปกติให้พาไปพบสัตวแพทย์</p>
+        <p className="src">เรียบเรียงจากประสบการณ์คนเลี้ยงในเมืองร้อน ร่วมกับคำแนะนำด้านสุขภาพ การแปรงขน การออกกำลัง การฝึก และอาหารของ <a href={AKC_URL} target="_blank" rel="noopener noreferrer">American Kennel Club</a></p>
       </div>
     </>
   );

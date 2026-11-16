@@ -8,6 +8,7 @@ import { PGlite } from "@electric-sql/pglite";
 const SQL = readFileSync(new URL("./migrations/0001_init.sql", import.meta.url), "utf8");
 const SQL2 = readFileSync(new URL("./migrations/0002_posts.sql", import.meta.url), "utf8");
 const SQL3 = readFileSync(new URL("./migrations/0003_reading.sql", import.meta.url), "utf8");
+const SQL4 = readFileSync(new URL("./migrations/0004_akc_article.sql", import.meta.url), "utf8");
 
 const AUTH_STUB = `
   create role anon nologin; create role authenticated nologin;
@@ -40,9 +41,11 @@ async function setup() {
   await db.exec(SQL);
   await db.exec(SQL2);
   await db.exec(SQL3);
+  await db.exec(SQL4);
   await db.exec(SQL); // รันซ้ำต้องไม่พัง
   await db.exec(SQL2);
   await db.exec(SQL3);
+  await db.exec(SQL4);
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1,'a@x.com','{"display_name":"ปั้ม"}'), ($2,'b@x.com','{}')`, [A, B]);
   return db;
 }
@@ -123,7 +126,7 @@ test("คนไม่ล็อกอินอ่านบทความได�
   const db = await setup();
   await as(db, null, async () => {
     const r = await db.query("select slug from public.articles order by position");
-    assert.deepEqual(r.rows.map((x) => x.slug), ["tongue", "history", "temper"]);
+    assert.deepEqual(r.rows.map((x) => x.slug), ["tongue", "history", "han-hunter", "temper"]);
     await assert.rejects(db.query("select * from public.claim_reward('cost')"));
     await assert.rejects(db.query("insert into public.articles (slug,title,body) values ('x','x','{a}')"));
   });
@@ -285,4 +288,9 @@ test("กำแพงความทรงจำ: ขอขึ้นกำแพ
     assert.equal(r.rows[0].status, "pending");
   });
   await as(db, null, async () => assert.equal((await db.query("select * from public.memorials")).rows.length, 0, "หลุดจากกำแพงจนกว่าจะอนุมัติใหม่"));
+});
+
+test("บทความ AKC ได้แต้มอ่านจบ", async () => {
+  const db = await setup();
+  await as(db, A, async () => assert.equal((await db.query("select * from public.claim_reward('story-han-hunter')")).rows[0].gained, 10));
 });

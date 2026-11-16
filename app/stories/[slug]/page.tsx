@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ReadReward from "@/components/ReadReward";
 import { AccountButton } from "@/components/Chrome";
 import { excerpt, getArticles } from "@/lib/articles";
+import { AKC_URL } from "@/lib/content";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -47,6 +48,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       </header>
       <div className="pad stack prose">
         {a.body.map((p, k) => <p key={k}>{p}</p>)}
+        {a.body.some((p) => p.includes("AKC")) && (
+          <p className="src">ที่มา: <a href={AKC_URL} target="_blank" rel="noopener noreferrer">American Kennel Club · Chow Chow</a></p>
+        )}
         <ReadReward slug={a.slug} />
         <nav className="pn" aria-label="เรื่องก่อนหน้าและถัดไป">
           {prev ? <Link href={`/stories/${prev.slug}/`}>‹ {prev.title}</Link> : <span />}

@@ -278,3 +278,6 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .wall-card small{color:var(--muted);font-size:12.5px}
 .wall-card p{white-space:pre-wrap;font-size:14.5px;margin-top:6px}
 @media (max-width:400px){.wall{columns:1}}
+
+.src{font-size:12.5px;color:var(--muted)}
+.src a{color:var(--magenta)}
