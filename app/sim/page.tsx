@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 
-// Chow Chow Live Simulator: ฝังเกมที่อยู่ใน /farm/ (ฟาร์ม 3D) และ /island/ (เกาะพิกเซล) ไว้ในแอป
+// Chow Chow Live Simulator: ฝังเกมเมืองเชาเชา 3D (/farm/) ไว้ในแอป
 const MODES = [
   { id: "farm", src: "/farm/", label: "🏡 เมืองเชาเชา 3D" },
-  { id: "island", src: "/island/", label: "🏝 เกาะพิกเซล" },
 ] as const;
 
 export default function SimPage() {
@@ -22,7 +21,7 @@ export default function SimPage() {
           <a className="sim-full" href={cur.src} aria-label="เปิดเต็มจอ">⛶</a>
         </div>
       </header>
-      <iframe key={cur.id} className="sim-frame" src={cur.src} title={`Chow Chow Live Simulator · ${cur.label}`} allow="fullscreen; autoplay" />
+      <iframe key={cur.id} className="sim-frame" src={cur.src} title={`Chow Chow Live Simulator · ${cur.label}`} allow="fullscreen; autoplay; gamepad" />
     </div>
   );
 }
