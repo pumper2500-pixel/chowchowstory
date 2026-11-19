@@ -507,3 +507,10 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
 .sim-modes button.on{background:#FFD23F;color:#241C15}
 .sim-frame{flex:1;width:100%;border:0;display:block;background:#bdebff}
 @media (min-width:600px){.sim{left:50%;right:auto;width:560px;translate:-50% 0}}
+/* มือถือแนวนอน: เกมเต็มจอ ทับเมนูล่าง ซ่อนแถบหัว (เหลือปุ่มออกเล็ก ๆ) */
+.sim-exit{display:none}
+@media (orientation:landscape) and (max-height:500px){
+  .sim{inset:0;bottom:0;left:0;width:100%;translate:none;z-index:40;padding:0 env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px);background:#000}
+  .sim-bar{display:none}
+  .sim-exit{display:grid;place-items:center;position:absolute;top:calc(50% - 15px);left:calc(6px + env(safe-area-inset-left,0px));z-index:2;width:30px;height:30px;border-radius:99px;background:rgba(20,16,12,.55);color:#FFD23F;text-decoration:none;font:700 15px var(--display)}
+}

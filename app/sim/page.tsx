@@ -28,6 +28,7 @@ export default function SimPage() {
           <a className="sim-full" href={src} aria-label="เปิดเต็มจอ">⛶</a>
         </div>
       </header>
+      <a className="sim-exit" href="/" aria-label="ออกจากเกม">✕</a>
       <iframe key={cur.id + (admin ? "-a" : "")} className="sim-frame" src={src} title={`Chow Chow Live Simulator · ${cur.label}`} allow="fullscreen; autoplay; gamepad" />
     </div>
   );
