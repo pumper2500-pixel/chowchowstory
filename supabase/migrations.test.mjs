@@ -10,6 +10,7 @@ const SQL2 = readFileSync(new URL("./migrations/0002_posts.sql", import.meta.url
 const SQL3 = readFileSync(new URL("./migrations/0003_reading.sql", import.meta.url), "utf8");
 const SQL4 = readFileSync(new URL("./migrations/0004_akc_article.sql", import.meta.url), "utf8");
 const SQL5 = readFileSync(new URL("./migrations/0005_covers.sql", import.meta.url), "utf8");
+const SQL6 = readFileSync(new URL("./migrations/0006_game_social.sql", import.meta.url), "utf8");
 
 const AUTH_STUB = `
   create role anon nologin; create role authenticated nologin;
@@ -44,11 +45,13 @@ async function setup() {
   await db.exec(SQL3);
   await db.exec(SQL4);
   await db.exec(SQL5);
+  await db.exec(SQL6);
   await db.exec(SQL); // รันซ้ำต้องไม่พัง
   await db.exec(SQL2);
   await db.exec(SQL3);
   await db.exec(SQL4);
   await db.exec(SQL5);
+  await db.exec(SQL6);
   await db.query(`insert into auth.users (id, email, raw_user_meta_data) values ($1,'a@x.com','{"display_name":"ปั้ม"}'), ($2,'b@x.com','{}')`, [A, B]);
   return db;
 }
@@ -303,4 +306,31 @@ test("บทความว่ายน้ำมีรูปปก และ cov
   const r = await db.query("select cover from public.articles where slug='swim'");
   assert.equal(r.rows[0].cover, "/photos/swim.jpg");
   await assert.rejects(db.query("update public.articles set cover='https://evil.example/x.jpg' where slug='swim'"));
+});
+
+test("เกม: รอยเท้าเงา/ข้อความบนพื้น อ่านได้ทุกคน เขียนได้เฉพาะคนล็อกอิน และกันสแปม", async () => {
+  const db = await setup();
+  const pts = JSON.stringify(Array.from({ length: 30 }, (_, i) => [i * 5, -i * 3]));
+  await as(db, null, async () => {
+    await assert.rejects(db.query("insert into public.ghost_walks (dog_name, coat, pts) values ('x','orange',$1::jsonb)", [pts]), "anon เขียนไม่ได้");
+    await assert.rejects(db.query("insert into public.paw_notes (dog_name, x, z, msg) values ('x',1,1,0)"));
+  });
+  await as(db, A, async () => {
+    await db.query("insert into public.ghost_walks (dog_name, coat, pts) values ('ข้าวต้ม','orange',$1::jsonb)", [pts]);
+    await assert.rejects(db.query("insert into public.ghost_walks (dog_name, coat, pts) values ('ข้าวต้ม','orange',$1::jsonb)", [pts]), "ถี่เกินไป");
+    await db.query("insert into public.paw_notes (dog_name, x, z, msg) values ('ข้าวต้ม', 3.5, -2, 4)");
+    await assert.rejects(db.query("insert into public.paw_notes (dog_name, x, z, msg) values ('ข้าวต้ม', 3.5, -2, 4)"), "ข้อความถี่เกินไป");
+    await assert.rejects(db.query("insert into public.paw_notes (dog_name, x, z, msg, user_id) values ('ปลอม', 1, 1, 1, $1)", [B]), "ปลอมเป็นคนอื่นไม่ได้");
+  });
+  await as(db, B, async () => {
+    await assert.rejects(db.query("insert into public.paw_notes (dog_name, x, z, msg) values ('ข้าวต้ม', 1, 1, 99)"), "ข้อความต้องอยู่ในชุดที่กำหนด");
+    await assert.rejects(db.query("insert into public.ghost_walks (dog_name, coat, pts) values ('สั้น','orange','[[1,2]]'::jsonb)"), "เส้นทางสั้นเกิน");
+  });
+  await as(db, null, async () => {
+    const g = await db.query("select dog_name, jsonb_array_length(pts) n from public.ghost_walks");
+    assert.deepEqual(g.rows, [{ dog_name: "ข้าวต้ม", n: 30 }]);
+    const n = await db.query("select dog_name, msg from public.paw_notes");
+    assert.deepEqual(n.rows, [{ dog_name: "ข้าวต้ม", msg: 4 }]);
+    await assert.rejects(db.query("select user_id from public.ghost_walks"), "ไม่เปิดเผย user_id");
+  });
 });
