@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGame } from "@/lib/game";
 import { supabase } from "@/lib/supabase";
 
@@ -17,6 +17,17 @@ export default function SimPage() {
   const [admin, setAdmin] = useState(false);
   useEffect(() => { if (!session) { setAdmin(false); return; } supabase.rpc("is_admin").then(({ data }) => setAdmin(!!data)); }, [session]);
   const src = admin ? `${cur.src}?admin=1` : cur.src;
+  // ส่งขอบรอยบาก (safe area) ให้เกมใน iframe — ใน iframe อ่านค่าเองไม่ได้ เกมเต็มจอแล้ว HUD จะได้ไม่จมใต้รอยบาก
+  const frame = useRef<HTMLIFrameElement>(null);
+  useEffect(() => {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
+    document.body.appendChild(probe);
+    const send = () => { const cs = getComputedStyle(probe); const v = (x: string) => parseFloat(x) || 0;
+      frame.current?.contentWindow?.postMessage({ type: "ccs-safe", t: v(cs.paddingTop), r: v(cs.paddingRight), b: v(cs.paddingBottom), l: v(cs.paddingLeft) }, location.origin); };
+    const iv = setInterval(send, 1500); addEventListener("resize", send); addEventListener("orientationchange", send); send();
+    return () => { clearInterval(iv); removeEventListener("resize", send); removeEventListener("orientationchange", send); probe.remove(); };
+  }, [src]);
   return (
     <div className="sim">
       <header className="sim-bar">
@@ -29,7 +40,7 @@ export default function SimPage() {
         </div>
       </header>
       <a className="sim-exit" href="/" aria-label="ออกจากเกม">✕</a>
-      <iframe key={cur.id + (admin ? "-a" : "")} className="sim-frame" src={src} title={`Chow Chow Live Simulator · ${cur.label}`} allow="fullscreen; autoplay; gamepad" />
+      <iframe ref={frame} onLoad={() => setTimeout(() => dispatchEvent(new Event("resize")), 300)} key={cur.id + (admin ? "-a" : "")} className="sim-frame" src={src} title={`Chow Chow Live Simulator · ${cur.label}`} allow="fullscreen; autoplay; gamepad" />
     </div>
   );
 }
