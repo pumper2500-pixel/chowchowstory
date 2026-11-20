@@ -1,0 +1,8 @@
+# Cloudflare Pages: ไฟล์เกม (โมเดล/เพลง) ให้หน้าเกมบน chowchowstory.vercel.app ดึงข้ามโดเมนได้
+/farm/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+/farm/cdn-ok.txt
+  Access-Control-Allow-Origin: *
+  Cache-Control: no-store
