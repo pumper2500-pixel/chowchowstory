@@ -1,0 +1,7 @@
+// Cloudflare Workers: เสิร์ฟเฉพาะไฟล์หนักของเกม (โมเดล/เพลง) จากโฟลเดอร์ cdn/ (สร้างด้วย scripts/build-cdn.sh)
+// ไม่มีโค้ดฝั่งเซิร์ฟเวอร์ · เว็บหลักยังอยู่บน Vercel
+{
+  "name": "chowchowstory-cdn",
+  "compatibility_date": "2025-09-01",
+  "assets": { "directory": "./cdn" }
+}
