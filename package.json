@@ -8,7 +8,8 @@
     "start": "npx serve out",
     "lint": "next lint",
     "test": "node --test lib/*.test.mjs",
-    "test:db": "node --test supabase/migrations.test.mjs"
+    "test:db": "node --test supabase/migrations.test.mjs",
+    "game": "node game/build.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
@@ -22,6 +23,7 @@
     "@types/node": "22.15.3",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
+    "esbuild": "^0.24.2",
     "tailwindcss": "4.1.11",
     "typescript": "5.8.3"
   }

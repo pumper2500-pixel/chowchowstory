@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ฟาร์มน้องเชา</title>
+<meta name="theme-color" content="#FFD23F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ฟาร์มน้องเชา">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@400;600&display=swap" rel="stylesheet">
+<style><!--STYLE--></style></head><body>
+<div id="app"></div>
+<div class="chip status" id="needsCard">
+  <div class="nhead"><span class="nav">🐶</span><b id="nName"></b><span class="tchip"><span id="clock"></span><span id="date"></span></span><span class="nlv" id="nLv"></span></div>
+  <div class="ngrid"><span id="needs"></span><span class="nmoney">💰 <span id="money">0</span></span></div>
+</div>
+<div class="qline"><div class="chip qchip" id="quest"></div><div class="chip qchip" id="jobChip"></div><div class="chip qchip" id="caseChip"></div><div class="chip qchip" id="sideChip"></div></div>
+<div class="hud">
+  <button class="chip btn" id="questBtn" aria-label="ภารกิจและความสามารถ">📋</button>
+  <button class="chip btn" id="moreBtn" aria-label="เมนูเพิ่มเติม" aria-expanded="false">☰</button>
+  <div class="more" id="more">
+    <button class="chip btn" id="friendsBtn">👥 เพื่อนในเมือง <span id="friends">0</span>♥</button>
+    <button class="chip btn" id="wardBtn" aria-label="แต่งตัว">👗</button>
+    <button class="chip btn" id="musicBtn" aria-label="เปิด/ปิดเพลง">🎵</button>
+    <button class="chip btn" id="qBtn" aria-label="คุณภาพภาพ">✨</button>
+    <button class="chip btn" id="camBtn" aria-label="รีเซ็ตกล้อง">🎥 รีเซ็ตกล้อง / น้องติด</button>
+    <button class="chip btn" id="noteBtn">🐾 ฝากข้อความตรงนี้</button>
+    <button class="chip btn" id="helpBtn">❔ วิธีเล่น</button>
+    <div class="chip small">⭐ <span id="score">0</span> · 🦴 <span id="bones">0</span></div>
+  </div>
+</div>
+<canvas id="mini" width="208" height="208"></canvas>
+<button id="act" class="hide"></button>
+<button id="jumpBtn" aria-label="กระโดด">⤴<small>กระโดด</small></button><button id="runBtn" aria-label="วิ่ง">🏃<small>วิ่ง</small></button>
+<button id="sniffBtn" aria-label="ดมกลิ่น">👃<small>ดม</small></button>
+<canvas id="scentCv"></canvas>
+<button id="poopBtn" aria-label="อึ">💩<small>อึ</small></button>
+<div id="sleepfx"></div>
+<div id="bar"></div>
+<div id="panel"><div class="card pcard"><div class="phead"><h2 id="ptitle"></h2><button id="pclose" aria-label="ปิด">✕</button></div><div id="pbody"></div></div></div>
+<div class="rain"></div><div id="flash"></div>
+<div class="zoom"><button id="zin" aria-label="ซูมเข้า">+</button><button id="zout" aria-label="ซูมออก">−</button><button id="cam3p" aria-label="มุมกล้องบุคคลที่สาม" style="font-size:18px">🎥</button></div>
+<div id="stick"><div id="knob"></div></div>
+<div class="hint">ลากซ้าย = เดิน · ลากขวา = หมุนกล้อง · ปุ่มเหลือง = ทำ · 👃 = ดมกลิ่น (N) · 📋 = ภารกิจ (C) · 🏃 = วิ่ง (Shift) · ปุ่มฟ้า = กระโดด<br><span class="padhint">🎮 จอย: Ⓐ ทำ · Ⓧ กระโดด · LT ดมกลิ่น · RT วิ่ง · Ⓨ แต่งตัว · ☰ ภารกิจ · LB/RB ซูม</span></div>
+<div id="bubble"></div><div id="toast"></div>
+<div id="menu"><div class="card">
+  <img src="icon-192.png" alt="" style="width:84px;height:84px;border-radius:22px;border:3px solid var(--ink)" onerror="this.remove()"><h1>เมืองน้องเชา</h1>
+  <p>ข้าวต้มกับลูก ๆ อีก 3 ตัวย้ายมาอยู่บ้านใหม่ในเมือง ฝึกร่างกายที่สนาม กินข้าวกินน้ำให้อิ่ม แต่งตัวสวย ๆ คีบตุ๊กตา และตามหาเพื่อนเชาเชาอีก 5 ตัว</p>
+  <ul>
+    <li>🕹 ลากนิ้วซ้ายล่าง = เดิน · ลากที่อื่น = หมุนกล้อง</li>
+    <li>🟡 ปุ่มเหลือง = คุย / ซื้อ / ฝึก / คีบตุ๊กตา · 🔵 ปุ่มฟ้า (J) = กระโดดข้ามรั้ว</li>
+    <li>🍖💧 ดูค่าความหิวบนหัวน้อง · 🏅 ฝึก 6 ด่านที่สนามข้างบ้านเพื่อเลื่อนเลเวล</li>
+    <li>💤 กลับไปนอนที่บ้านก่อนเที่ยงคืน · ☀️ร้อน 🌧ฝน ❄️หนาว ฤดูละ 5 วัน</li>
+    <li>⌨️ คอม: WASD เดิน · Q E หมุน · Space กระโดด · F/Enter ทำ · 🎮 จอย Xbox: A กระโดด · X ทำ · Y แต่งตัว · LB/RB ซูม</li>
+  </ul>
+  <div class="coats" id="coats"></div>
+  <button id="start">ออกเดิน 🐾</button>
+  <div class="load">กำลังสร้างเมือง…</div>
+</div></div>
+<div id="rotate"><div><span class="ph">📱</span><b>หมุนมือถือเป็นแนวนอน</b>เกมนี้เล่นแนวนอน กดปุ่มถนัดกว่า เห็นเมืองกว้างกว่า<small>ถ้าจอไม่หมุน: ปิด "ล็อกการหมุนจอ" ในศูนย์ควบคุมก่อน</small><button id="rotFull">⛶ เต็มจอแนวนอน</button></div></div>
+<script>(function(){var mb=document.getElementById('moreBtn'),mo=document.getElementById('more');mb.onclick=function(e){e.stopPropagation();var on=mo.classList.toggle('on');mb.classList.toggle('on',on);mb.setAttribute('aria-expanded',on)};mo.addEventListener('click',function(e){if(e.target.id!=='qBtn'&&e.target.id!=='musicBtn'){mo.classList.remove('on');mb.classList.remove('on')}});
+document.addEventListener('pointerdown',function(e){if(!mo.contains(e.target)&&e.target!==mb){mo.classList.remove('on');mb.classList.remove('on')}});
+var ht;function hint(ms){document.body.classList.add('showHint');clearTimeout(ht);ht=setTimeout(function(){document.body.classList.remove('showHint')},ms)}
+document.getElementById('helpBtn').onclick=function(){hint(6000)};document.getElementById('start').addEventListener('click',function(){var k='ccs-hintSeen';var seen=0;try{seen=localStorage.getItem(k)}catch(e){}if(!seen){hint(7000);try{localStorage.setItem(k,'1')}catch(e){}}});})();
+(function(){var f=document.getElementById('rotFull'),de=document.documentElement;if(!de.requestFullscreen&&!de.webkitRequestFullscreen)f.style.display='none';
+f.onclick=function(){var p=de.requestFullscreen?de.requestFullscreen({navigationUI:'hide'}):de.webkitRequestFullscreen&&de.webkitRequestFullscreen();Promise.resolve(p).then(function(){return screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape')}).catch(function(){})};})();</script>
+<!--IMG--><script><!--MAIN--></script>
+</body></html>
