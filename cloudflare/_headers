@@ -1,8 +1,7 @@
-# Cloudflare Pages: ไฟล์เกม (โมเดล/เพลง) ให้หน้าเกมบน chowchowstory.vercel.app ดึงข้ามโดเมนได้
+# Cloudflare (Workers static assets): ไฟล์เกม (โมเดล/เพลง) ให้หน้าเกมบน chowchowstory.vercel.app ดึงข้ามโดเมนได้
+# ห้ามมีกฎอื่นที่ตรงกับ /farm/... แล้วใส่ Access-Control-Allow-Origin ซ้ำ: Cloudflare จะรวมเป็น "*, *" แล้วเบราว์เซอร์บล็อก CORS
+# (cdn-ok.txt ไม่ต้องมีกฎแยก: เกมดึงด้วย fetch(..., {cache:"no-store"}) อยู่แล้ว ไม่โดนแคชเก่า)
 /farm/*
   Access-Control-Allow-Origin: *
   Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
-/farm/cdn-ok.txt
-  Access-Control-Allow-Origin: *
-  Cache-Control: no-store
