@@ -24,7 +24,10 @@ export default function SimPage() {
     probe.style.cssText = "position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
     document.body.appendChild(probe);
     const send = () => { const cs = getComputedStyle(probe); const v = (x: string) => parseFloat(x) || 0;
-      frame.current?.contentWindow?.postMessage({ type: "ccs-safe", t: v(cs.paddingTop), r: v(cs.paddingRight), b: v(cs.paddingBottom), l: v(cs.paddingLeft) }, location.origin); };
+      const T = v(cs.paddingTop), R = v(cs.paddingRight), B = v(cs.paddingBottom), L = v(cs.paddingLeft);
+      // แนวตั้งที่หมุนเกม 90°: ขอบบนจอ (รอยบาก) = ซ้ายของเกม, ขอบล่าง (แถบโฮม) = ขวาของเกม
+      const rot = matchMedia("(orientation: portrait) and (max-width: 600px)").matches;
+      frame.current?.contentWindow?.postMessage(rot ? { type: "ccs-safe", l: T, r: B, t: R, b: L } : { type: "ccs-safe", t: T, r: R, b: B, l: L }, location.origin); };
     const iv = setInterval(send, 1500); addEventListener("resize", send); addEventListener("orientationchange", send); send();
     return () => { clearInterval(iv); removeEventListener("resize", send); removeEventListener("orientationchange", send); probe.remove(); };
   }, [src]);

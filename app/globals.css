@@ -515,3 +515,12 @@ input[type=file]:focus-visible + *, #p-file:focus-visible{outline:none}
   .sim-bar{display:none}
   .sim-exit{display:grid;place-items:center;position:absolute;top:calc(50% - 15px);left:calc(6px + env(safe-area-inset-left,0px));z-index:2;width:30px;height:30px;border-radius:99px;background:rgba(20,16,12,.55);color:#FFD23F;text-decoration:none;font:700 15px var(--display)}
 }
+
+/* มือถือถือแนวตั้ง: หมุนเกมเป็นแนวนอนให้เองเลย (ไม่ต้องขึ้นข้อความให้หมุนจอ) — หมุน iframe 90° จอเกมด้านในยังเป็นแนวนอนปกติ แตะ/ลากตรงตำแหน่ง */
+@media (orientation:portrait) and (max-width:600px){
+  .sim{inset:0;bottom:0;z-index:40;background:#000;overflow:hidden;height:100dvh}
+  html:has(.sim),body:has(.sim){background:#000;overflow:hidden}
+  .sim-bar{display:none}
+  .sim-frame{position:absolute;top:0;left:100vw;width:100dvh;height:100vw;flex:none;transform-origin:0 0;transform:rotate(90deg)}
+  .sim-exit{display:grid;place-items:center;position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:calc(50% - 15px);z-index:2;width:30px;height:30px;border-radius:99px;background:rgba(20,16,12,.55);color:#FFD23F;text-decoration:none;font:700 15px var(--display);transform:rotate(90deg)}
+}
