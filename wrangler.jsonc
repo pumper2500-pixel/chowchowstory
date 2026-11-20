@@ -3,5 +3,6 @@
 {
   "name": "chowchowstory-cdn",
   "compatibility_date": "2025-09-01",
-  "assets": { "directory": "./cdn" }
+  "assets": { "directory": "./cdn" },
+  "workers_dev": true   // เปิดลิงก์ chowchowstory-cdn.pumper2500.workers.dev
 }
