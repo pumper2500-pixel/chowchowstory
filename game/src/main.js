@@ -45119,15 +45119,18 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         get pr() {
           return o;
         },
+        // v80: กันความละเอียดจอแกว่งขึ้น-ลง (เดิมลด/เพิ่มทุก 1.5–3 วิ แต่ละครั้ง setSize ใหม่ = จอกระตุกเป็นจังหวะ
+        // โดยเฉพาะในถูกจังมาร์ท/สวนสายรุ้งที่ fps ก้ำกึ่ง 50–58) — ลดเมื่อช้าจริง 2 รอบติด, ลดแล้วไม่เพิ่มคืนอย่างน้อย 30 วิ
         tick(a) {
-          if ((n++, (s += a), (r -= a), s < 1.5)) return;
+          if ((n++, (s += a), (r -= a), s < 2)) return;
           let c = n / s;
-          ((n = 0),
-            (s = 0),
-            !(r > 0) &&
-              (c < 50 && o > e
-                ? ((o = Math.max(e, o - (c < 35 ? 0.2 : 0.1))), t(o), (r = 1.5))
-                : c > 58 && o < i && ((o = Math.min(i, o + 0.05)), t(o), (r = 3))));
+          if (((n = 0), (s = 0), r > 0)) return;
+          c < 45 && o > e
+            ? (this.low = (this.low ?? 0) + 1) >= 2 &&
+              ((o = Math.max(e, o - (c < 30 ? 0.2 : 0.1))), t(o), (r = 30), (this.low = 0), (this.high = 0))
+            : c > 58 && o < i
+              ? (this.high = (this.high ?? 0) + 1) >= 5 && ((o = Math.min(i, o + 0.1)), t(o), (r = 10), (this.high = 0), (this.low = 0))
+              : ((this.low = 0), (this.high = 0));
         },
         reset(a) {
           ((i = a), (o = Math.min(o, i)), t(o));
@@ -52958,7 +52961,24 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (rn.ray.set(n, a.sub(n).normalize()), (rn.ray.far = c - 0.35), (rn.ray.near = 0.05));
         let l = [];
         for (let h of rn.fade.keys()) h.userData.restore && l.push(...h.children);
-        for (let h of rn.ray.intersectObjects(l.length ? [...rn.list, ...l] : rn.list, !1)) {
+        // v80: ในร้านยิงเรย์เฉพาะผนัง/ชั้นวางที่บังได้จริง (เดิมยิงใส่สินค้าที่รวมเมชแล้ว ~1 ล้านเหลี่ยม ทุก 0.08 วิ = กระตุก)
+        let h0 = rn.list;
+        if (Se) {
+          (rn.inL?.[0] !== Se || rn.inL[1] !== rn.list) &&
+            (rn.inL = [
+              Se,
+              rn.list,
+              rn.list.filter((d) => {
+                let u = d;
+                for (; u && u !== Se.group; ) u = u.parent;
+                if (!u) return !1;
+                let m = A6(d);
+                return !!(m.userData.occOK || KA(m));
+              }),
+            ]);
+          h0 = rn.inL[2];
+        }
+        for (let h of rn.ray.intersectObjects(l.length ? [...h0, ...l] : h0, !1)) {
           let f = !0;
           for (let m = h.object; m; m = m.parent)
             if (!m.visible) {
@@ -55364,7 +55384,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function UC() {
     let i = Se ? WE.get(Se) : null;
     i &&
-      ((qE = GE ? 6 : pa || si === "low" ? 0.8 : 0.3), // v79: มือถือวาดวิวนอกหน้าต่างร้านทุก 6 วิ (เดิม 0.3–0.8 วิ = วาดทั้งเมืองซ้ำในร้าน กระตุก)
+      ((qE = GE ? 6 : 1), // v79: มือถือวาดวิวนอกหน้าต่างร้านทุก 6 วิ (เดิม 0.3–0.8 วิ = วาดทั้งเมืองซ้ำในร้าน กระตุก)
       ha.position.copy(i.pos),
       (ha.fov = i.fov),
       (ha.aspect = i.aspect),
