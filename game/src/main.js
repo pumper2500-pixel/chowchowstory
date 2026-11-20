@@ -50079,7 +50079,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function TA() {
     if ((IH(), ze("grave_12"))) {
       for (let d = 0; d < yd; d++) T0(d);
-      PC();
+      (PC(), ccsMergeGarden());
     }
     if (ze("zfountain_0")) {
       let d = je("zfountain_0");
@@ -51216,6 +51216,51 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       (ii.intensity = n),
       e && K.remove(i.ins.group));
   }
+  // v79: เดินเข้าใกล้ประตูร้าน (<14 ม.) → ทยอยส่งโมเดล/ภาพในร้านขึ้นการ์ดจอทีละ 40 ชิ้นต่อเฟรม
+  // เข้าร้านแล้วจะไม่ค้าง (เดิมถูกจังมาร์ทต้องอัปโหลด ~400 เมช + 50 ภาพในเฟรมเดียวตอนเข้าประตู)
+  var cW = { shop: null, list: null, k: 0, rt: null, cam: null, done: new Set() };
+  function ccsWarmShop() {
+    let i = Le[0];
+    if (Se || !j.started || !i) return;
+    if (!cW.list) {
+      let a = null,
+        l = 14;
+      for (let c of zn) {
+        let h = c.door ? Math.hypot(i.pos.x - c.door.x, i.pos.z - c.door.z) : 1 / 0;
+        !cW.done.has(c) && h < l && ((a = c), (l = h));
+      }
+      if (!a) return;
+      ((cW.shop = a), (cW.list = []), (cW.k = 0));
+      a.inside.group.traverse((c) => {
+        (c.isMesh || c.isPoints || c.isSprite) && cW.list.push(c);
+      });
+      (cW.rt ?? (cW.rt = new qn(4, 4, { type: Zi })), cW.cam ?? (cW.cam = new Tn(60, 1, 0.1, 60)));
+      return;
+    }
+    let e = cW.shop.inside.group,
+      t = !e.parent,
+      n = cW.list.slice(cW.k, cW.k + 40),
+      s = new Set(n),
+      o = [],
+      r = dn.shadowMap.autoUpdate;
+    cW.k += 40;
+    try {
+      t && K.add(e);
+      for (let a of cW.list) (o.push([a, a.visible, a.frustumCulled]), s.has(a) ? (a.frustumCulled = !1) : (a.visible = !1));
+      (cW.cam.position.copy(e.position).add(new H(0, 3, 0)),
+        cW.cam.updateMatrixWorld(),
+        (dn.shadowMap.autoUpdate = !1),
+        dn.setRenderTarget(cW.rt),
+        dn.render(K, cW.cam));
+    } catch (a) {
+      (console.warn("warm shop", a), (cW.k = cW.list.length));
+    } finally {
+      (dn.setRenderTarget(null), (dn.shadowMap.autoUpdate = r));
+      for (let [a, c, l] of o) ((a.visible = c), (a.frustumCulled = l));
+      t && K.remove(e);
+    }
+    cW.k >= cW.list.length && (cW.done.add(cW.shop), (cW.list = null), console.log(`[perf] เตรียมร้าน ${cW.shop.def.name} ล่วงหน้าแล้ว`));
+  }
   function PA(i) {
     if (!Zc.length) return;
     let e = Zc.find((s) => !s.done);
@@ -51223,7 +51268,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       x6(e);
       return;
     }
-    if ((b6 -= i) > 0 || Se) return;
+    if ((b6 -= i) > 0 || Se || GE) return; // v79: มือถือไม่วาดภายในร้านลงหน้าต่างซ้ำทุก 1.2 วิ (ถูกจังมาร์ทล้านกว่าเหลี่ยม ทำให้กระตุกเป็นจังหวะ)
     b6 = 1.2;
     let t = Le[0];
     z3 = (z3 + 1) % Zc.length;
@@ -52782,7 +52827,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (MH(n, e), r4(), a4(n));
       }
     }
-    if ((Se && (qE -= e) < 0 && UC(), PA(e), HH(e, Le[0]?.pos), eC(Math.min(0.1, e)), nP(Math.min(0.1, e)), Le[0])) {
+    if ((Se && (qE -= e) < 0 && UC(), PA(e), ccsWarmShop(), HH(e, Le[0]?.pos), eC(Math.min(0.1, e)), nP(Math.min(0.1, e)), Le[0])) {
       let s = Math.min(0.1, e);
       (lC(s, Le[0]), pC(s, Le[0]), Q4(s, Le[0]), sT(s, Le[0]), FC(s, Le[0]), BC(s, Le[0]), oC(s), j.started && p0());
     }
@@ -54717,6 +54762,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       (r.rotation.x = Math.PI / 2),
       r.position.set(0, 0.12 + (n ? n.height + 0.08 : 0.3), n ? 0.12 : 0),
       (r.userData.halo = !0),
+      (r.userData.noMerge = !0),
       s.add(r),
       s
     );
@@ -54800,7 +54846,20 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let a = Jc(ds[i % ds.length], 5);
       (a.position.set(0, 0.06, 0), s.add(a));
     }
-    ((wn.plots[i] = s), wn.g.add(s));
+    (oo(s, !0), (wn.plots[i] = s), wn.g.add(s)); // v79: รวมเมชในแปลง (ดอกไม้/หิน/เทียน) ลด draw call
+  }
+  // v79: รวมเมชส่วนนิ่งของสวนสายรุ้ง (พุ่มไม้ 40 ลูก ดอกไม้ ซุ้มรุ้ง ต้นซากุระ โคมไฟ จิโซ) จาก ~190 draw call
+  // แปลงที่ระลึกกับดอกไม้ที่วางเองแยกไว้ เพราะสร้างใหม่ได้ระหว่างเล่น
+  function ccsMergeGarden() {
+    let i = wn.g,
+      e = [...wn.plots.filter(Boolean), ln.flowers].filter((t) => t.parent === i);
+    for (let t of e) i.remove(t);
+    try {
+      oo(i, !0);
+    } catch (t) {
+      console.warn("merge garden", t);
+    }
+    for (let t of e) i.add(t);
   }
   function PC() {
     let i = wn.g;
@@ -55079,6 +55138,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let n = Jc(ds[t % ds.length], 5);
       (n.position.set(i - hn.x, 0.02, e - hn.z), ln.flowers.add(n));
     }
+    oo(ln.flowers, !0);
   }
   function DC(i) {
     if (Se) return !1;
@@ -55304,11 +55364,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function UC() {
     let i = Se ? WE.get(Se) : null;
     i &&
-      ((qE = pa || si === "low" ? 0.8 : 0.3),
+      ((qE = GE ? 6 : pa || si === "low" ? 0.8 : 0.3), // v79: มือถือวาดวิวนอกหน้าต่างร้านทุก 6 วิ (เดิม 0.3–0.8 วิ = วาดทั้งเมืองซ้ำในร้าน กระตุก)
       ha.position.copy(i.pos),
       (ha.fov = i.fov),
       (ha.aspect = i.aspect),
       (ha.near = i.near),
+      (ha.far = GE ? 32 : 60), // v79: วิวนอกหน้าต่างเห็นแค่ถนนหน้าร้าน ไม่ต้องวาดทั้งเมือง (เดิม ~2,100 draw call ต่อครั้ง)
       ha.updateProjectionMatrix(),
       ha.lookAt(i.look),
       dn.setRenderTarget(VE),
@@ -55848,25 +55909,28 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     );
   }
   function ek() {
-    if (GE) return;
+    // v79: คอมไพล์ shader ล่วงหน้าทุกเครื่อง (รวมมือถือ) ทีละร้าน ให้สถานะไฟ/หมอกตรงกับตอนอยู่ในร้านจริง
+    // ไม่งั้นเข้าร้านครั้งแรกเกมค้าง (มือถือคอมไพล์ใหม่ ~70 shader ตอนเข้าถูกจังมาร์ท)
+    // compile ไม่อัปโหลดภาพ จึงไม่กินหน่วยความจำการ์ดจอ
     let i = performance.now(),
       e = 0;
     try {
-      for (let t of _r)
-        (K.add(t),
-          t.traverse((n) => {
-            let s = n;
-            if (s.isMesh) {
-              for (let o of Array.isArray(s.material) ? s.material : [s.material]);
-              e++;
-            }
-          }));
-      dn.compile(K, Lt);
+      e = dn.compile(K, Lt).size;
+      // ในร้านมี 3 แบบ: วาดลงจอ, วิวนอกหน้าต่างร้าน (UC → render target VE), ภาพภายในร้านบนกระจกหน้าร้าน (x6 → render target ไม่มีหมอก)
+      // render target ใช้สี linear + ไม่ tone map → shader คนละตัวกับวาดลงจอ ต้องคอมไพล์แยก
+      let t = K.fog,
+        n = (o) => {
+          (dn.setRenderTarget(VE), (e += dn.compile(K, o).size), (K.fog = null), (e += dn.compile(K, o).size), (K.fog = t), dn.setRenderTarget(null));
+        };
+      n(Lt);
+      for (let o of _r) {
+        let s = !o.parent;
+        (s && K.add(o), (e += dn.compile(K, Lt).size), n(Lt), s && K.remove(o));
+      }
     } catch (t) {
       console.warn("prewarm", t);
     }
-    for (let t of _r) K.remove(t);
-    console.log(`[perf] prewarm ${e} textures \xB7 ${(performance.now() - i) | 0}ms`);
+    console.log(`[perf] prewarm ${dn.info.programs.length} shaders (${e} materials) \xB7 ${(performance.now() - i) | 0}ms`);
   }
   var N6 = 0,
     tk = 0,
