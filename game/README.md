@@ -29,3 +29,7 @@
 `game/tools/pack.mjs` แปลงโมเดลต้นฉบับ (ต้องมี `@gltf-transform/*`, `meshoptimizer`, `sharp`, และแปลง FBX ด้วย `fbx2gltf` ก่อน) แล้ว `merge.mjs` รวมเป็นไฟล์เดียว
 - `rb_garden` สวนสายรุ้ง (CHOWCHOW_RAINBOW_GARDEN_v1 ของพี่ปั๊ม) แก้สีให้ตรง sRGB รวมเมชเหลือ ~7 ชิ้น
 - `lamp_rice` โคมกระดาษสา (ตัดสายยาวออก) · `lighthouse` ประภาคาร (ลดเหลือ ~12k เหลี่ยม ภาพ 256px)
+
+## v82 → `public/farm/r82.glb` + `public/farm/emoji3d.png`
+`game/tools/pack2.mjs` (ต้นไม้ Trees Set A, ใบไม้ร่วง, รุ้ง, ตุ๊กตา 5 ตัว, Porsche Macan, เรือซาชิมิ, ชั้นขนม) → `merge.mjs` รวมเป็น r82.glb
+`emoji3d.png` = อีโมจิ 3D จาก emojis_pack.glb เรนเดอร์เป็นตาราง 8×6 (ดู `ccsE3` ใน main.js ว่าช่องไหนคืออีโมจิตัวไหน)

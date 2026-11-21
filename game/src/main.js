@@ -37794,10 +37794,13 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       (k.position.set(x - 0.6, 0.72, b + 0.2), r.add(k));
     }
     for (let k of [-4, 0, 4]) {
-      let D = new R(new yt(0.45, 0.35, 16, 1, !0), Ve(i.trim, 0.6, { side: Ke }));
-      (D.position.set(k, l - 0.6, 0), r.add(D));
-      let L = new R(new we(0.14, 10, 8), new be({ color: 16773568 }));
-      (L.position.set(k, l - 0.75, 0), r.add(L));
+      // v82: โคมกระดาษสาแบบเดียวกับบ้านข้าวต้ม ทุกร้าน
+      if (!ccsRiceLamp(r, k, l, 0)) {
+        let D = new R(new yt(0.45, 0.35, 16, 1, !0), Ve(i.trim, 0.6, { side: Ke }));
+        (D.position.set(k, l - 0.6, 0), r.add(D));
+        let L = new R(new we(0.14, 10, 8), new be({ color: 16773568 }));
+        (L.position.set(k, l - 0.75, 0), r.add(L));
+      }
       let q = new En(16767392, 8, 12, 1.6);
       (q.position.set(k, l - 0.9, 0), r.add(q));
     }
@@ -39839,7 +39842,14 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       "Shark_01",
       "Unicorn_01",
     ],
+    // v82: ตุ๊กตาสะสมชุดใหม่ (ตู้คีบ + ร้าน)
+    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura"],
     Rp = {
+      plush_shiba: "ชิบะ",
+      plush_beaver: "บีเวอร์ฟันโต",
+      plush_penguin: "เพนกวินซานต้า",
+      plush_hound: "บาสเซ็ตฮาวนด์",
+      plush_gura: "ฉลามน้อยกุระ",
       Barney_01: "ไดโนเสาร์ม่วง",
       Bear_01: "หมี",
       Cat_01: "แมว",
@@ -39935,7 +39945,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
             He = -0.3 + he * 0.2 + (N ? 0.1 : 0);
           (ve < -0.12 && He > 0.12) || (N && (le === 4 || he === 2)) || w.push([ve, 1.03 + N * 0.13, He]);
         }
-    let v = [...sM, ...(ze("Barney_01") ? ["Barney_01", "Barney_01", "Barney_01"] : [])].sort(
+    let v = [...sM, ...ccsPlush.filter(ze), ...ccsPlush.filter(ze), ...(ze("Barney_01") ? ["Barney_01", "Barney_01", "Barney_01"] : [])].sort(
       () => Math.random() - 0.5,
     );
     w.forEach(([N, he, le], ve) => {
@@ -41894,19 +41904,9 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         S("Armchair_02", -2.6, -4.6, 0.4),
         S("Plants_15", -7.3, -5.3, 0));
     // v81: โคมไฟเพดานเป็นโคมกระดาษสา (Rice Paper Lamp) ห้อยสายจากเพดาน
-    let ccsL = ze("lamp_rice") ? new X({ color: 16775920, emissive: 16770238, emissiveIntensity: 0.85, roughness: 0.85, toneMapped: !1 }) : null;
     for (let M of [-4, 0, 4]) {
       let T = new En(16767392, 8, 12, 1.6);
-      if ((T.position.set(M, r - 0.75, 0), n.add(T), ccsL)) {
-        let A = je("lamp_rice", 0.62);
-        (A.traverse((I) => {
-          let D = I;
-          D.isMesh && ((D.castShadow = !1), (D.material = /M00/.test(D.material.name) ? ccsL : D.material));
-        }),
-          A.position.set(M, r - 0.42 - 0.62, 0),
-          n.add(A));
-        let k = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
-        (k.position.set(M, r - 0.21, 0), n.add(k));
+      if ((T.position.set(M, r - 0.75, 0), n.add(T), ccsRiceLamp(n, M, r, 0))) {
       } else {
         let A = new R(new we(0.16, 10, 8), new be({ color: 16773568 }));
         (A.position.set(M, r - 0.3, 0), n.add(A));
@@ -46663,11 +46663,18 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         0.2,
       ],
       [
+        "dk:sashimi",
+        "เรือซาชิมิรวม 🍣 (+110🍖 +20⚡)",
+        199,
+        "sashimi_boat",
+        0.5,
+      ],
+      [
         "dk:seafood",
         "ซีฟู้ดรวมถาด 🦀 (+80🍖 +20💧)",
         129,
-        "seafood_0",
-        0.5,
+        "Shrimp",
+        0.3,
       ],
       [
         "dk:drum",
@@ -46718,6 +46725,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         "คุกกี้ช็อกชิปมีช็อกโกแลต (ธีโอโบรมีน) ซึ่งเป็นพิษต่อหมา",
       "dk:seafood":
         "ซีฟู้ดมีเปลือกแข็งและอาจดิบ เสี่ยงติดคอและท้องเสีย",
+      "dk:sashimi":
+        "ปลาดิบอาจมีพยาธิ ซอสโชยุเค็มจัด และวาซาบิทำให้หมาระคายเคือง (ซื้อแบบลวกสุกที่แผงลุงทะเลจะปลอดภัยกว่า)",
       "dk:drum":
         "กระดูกไก่สุกแตกเป็นเสี้ยนแหลม ทิ่มคอหรือลำไส้ได้ (ร้านป้าอู้ดจะแกะกระดูกให้)",
       "dk:kitkat":
@@ -46763,6 +46772,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       "dk:melonpan": [35, 0, 10],
       "dk:cookie": [20, 0, 25],
       "dk:seafood": [80, 20, 0],
+      "dk:sashimi": [110, 0, 20],
       "dk:drum": [55, 0, 10],
       "dk:kitkat": [10, 0, 35],
       "dk:cola": [0, 45, 15],
@@ -46879,6 +46889,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               price: 180,
               make: () => je("Panda_01", 0.5),
             },
+            ...ccsPlush.filter(ze).map((e, t) => ({
+              key: "plush:" + e,
+              label: `ตุ๊กตา${Rp[e]} ${["🐕", "🦫", "🐧", "🐶", "🦈"][t]} (ใหม่!)`,
+              price: [260, 240, 220, 200, 280][t],
+              make: () => je(e, 0.5),
+            })),
             ...(ze("Barney_01")
               ? [
                   {
@@ -47964,6 +47980,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     S4 = { coconut_palm: 1, lptree_1: 1, lptree_2: 1 };
   function Zp(i, e) {
     let t = je(i, e * (S4[i] ?? 1));
+    // v82: ใบไม้ร่วงใต้ต้นไม้จริง (Autumn Leaves)
+    if (/^tree_r/.test(i) && ze("leaf_set")) {
+      let n = t.scale.x || 1;
+      for (let s = 0; s < 3; s++) {
+        let o = je("leaf_set", 1.1 + s * 0.35),
+          r = s * 2.1 + e;
+        (o.scale.multiplyScalar(1 / n), o.position.set((Math.cos(r) * (0.7 + s * 0.55)) / n, 0.03 / n, (Math.sin(r) * (0.7 + s * 0.55)) / n), (o.rotation.y = r * 1.7), (o.userData.noOcc = !0), t.add(o));
+      }
+    }
     return ((t.userData.tree = !0), /fabulous_tree/.test(i) && H4(t), t);
   }
   function Si(i, e, t, n = 0, s, o) {
@@ -48683,9 +48708,22 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       u = new R(f, h);
     return ((u.rotation.y = Math.PI), (u.position.z = -0.003), d.add(u), d);
   }
+  // v82: โมเดลสินค้าที่สแกนมาเละ/แตก/ภาพเบลอ — ไม่วางในร้าน (ตรวจด้วยภาพทีละชิ้นแล้ว)
+  var ccsBad = new Set([
+    "crabstall_0", "seafood_0", "beefpack_0",
+    "deli_5", "deli_6", "deli_7", "deli_21", "deli_30", "deli_34",
+    "meatpk_4", "meatpk_12", "meatpk_13",
+    "breadpk_11", "breadpk_12", "breadpk_28",
+    "sandw_0", "sandw_1", "sandw_2", "sandw_3", "sandw_4", "sandw_5", "sandw_7", "sandw_16",
+    "jbread_1", "jbread_2", "jbread_3", "jbread_9", "jbread_12",
+    "shelfu_4", "shelfu_5", "shelfu_6", "shelfu_7", "shelfu_8", "shelfu_9",
+    ...Array.from({ length: 21 }, (i, e) => "candybox_" + e),
+  ]);
   function F3(i, e) {
-    let t = i.filter((r) => ze(r)),
-      n = new Map();
+    let t = i.filter((r) => ze(r) && !ccsBad.has(r));
+    // ทั้งชุดเป็นของเสีย → ใช้ขนมกล่องญี่ปุ่น/ขนมแพ็กที่สวยแทน
+    t.length || !i.some((r) => ccsBad.has(r)) || (t = ["jcandy_0", "jcandy_1", "jcandy_2", "jcandy_3", "jcandy_5", "jcandy_6", "jcandy_7", "shelfu_12", "shelfu_13", "shelfu_15", "shelfu_17"].filter((r) => ze(r)));
+    let n = new Map();
     if (!t.length) return n;
     let s = new At(),
       o = new Yn();
@@ -48913,7 +48951,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                   size: 0.22,
                 });
           (L([...f("meatpk", [18, 19, 20, 22, 23, 24, 25, 26, 27]), "beefpack_0", "sushi_0", "meatpk_28"], $),
-            L(["seafood_0"], [{ p: new H(0.03, 0.8, 0), ry: 0.05, size: 0.78 }]));
+            L([ze("sashimi_boat") ? "sashimi_boat" : "seafood_0"], [{ p: new H(0.03, 0.74, 0), ry: 0, size: 1.15 }])); // v82: เรือซาชิมิ
         } else {
           for (let $ = 0; $ < 11; $++)
             for (let te of [-0.2, 0.2])
@@ -48956,7 +48994,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     };
     if (x) {
       (b("vfridge_1", n / 2 - 0.62, -5.2, -Math.PI / 2, 2.2, 0, [0.62, 1.12]),
-        b("crabstall_0", 8.3, -s / 2 + 0.6, 0, 1.5, 0, [0.6, 0.52]),
+        // (เอาแผงปูสแกนที่เละออก)
+        // v82: ชั้นขนม (snack_shelf) ชิดผนังหลังมุมขวา (ที่เดิมของแผงปู) หันเข้าร้าน
+        b("snack_shelf", 7.6, -s / 2 + 0.3, -Math.PI / 2, 2.45, 0, [0.98, 0.3]),
         b("breadpk_0", -3, -4.3, 0, 1.4, 0, [0.72, 0.72]));
       {
         let F = new R(
@@ -49812,10 +49852,70 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           K.add(d),
           pt.push({ x: xt.x + f, z: xt.z + s + 2.2, hw: 0.9, hd: 0.3 }));
       }
+    ccsFieldPath(s);
     let l = uA();
     K.add(l);
     let h = { m: l, pos: xt.clone(), vel: new H(), y: 0, vy: 0, r: 0.3 };
     (_d.push(h), (fo = { ball: h, score: [0, 0], cool: 0, out: 0, board: c, boardTex: a }), P4());
+  }
+  // v82: ทางเดินปูหินจากทางเท้าถนนใหญ่ เข้าช่องประตูสนามฝั่งใต้ + ป้ายทางเข้า
+  function ccsFieldPath(i) {
+    let e = xt.z + i - 0.3,
+      t = -Mt + 0.2,
+      n = t - e,
+      s = ss(128, 256, (a) => {
+        ((a.fillStyle = "#cfc6b4"), a.fillRect(0, 0, 128, 256));
+        for (let c = 0; c < 8; c++)
+          for (let l = 0; l < 4; l++) {
+            let h = (c % 2) * 16;
+            ((a.fillStyle = ["#d9d1bf", "#c4baa5", "#d3c9b3", "#bdb39e"][(c * 3 + l) % 4]), a.fillRect(l * 32 + h - 14, c * 32 + 2, 28, 28));
+          }
+      });
+    ((s.wrapS = s.wrapT = 1e3), s.repeat.set(1, n / 3), (s.anisotropy = 4));
+    let o = new R(new Te(3, n), new X({ map: s, roughness: 0.95 }));
+    ((o.rotation.x = -Math.PI / 2), o.position.set(xt.x, 0.035, (e + t) / 2), (o.receiveShadow = !0), (o.userData.noOcc = !0), K.add(o));
+    let r = new X({ color: 9605778, roughness: 0.9 });
+    for (let a of [-1.62, 1.62]) {
+      let c = new R(new ee(0.16, 0.12, n), r);
+      (c.position.set(xt.x + a, 0.06, (e + t) / 2), (c.userData.noOcc = !0), K.add(c));
+    }
+    let a = ro("⚽ สนามฟุตบอล ChowChowStory FC", 0, 3.2, 0.55);
+    a.position.set(xt.x + 2.6, 1.9, t - 0.8);
+    let c = new R(new re(0.05, 0.05, 1.9, 8), r);
+    (c.position.set(xt.x + 2.6 - 1.4, 0.95, t - 0.8), K.add(c));
+    let l = c.clone();
+    (l.position.x = xt.x + 2.6 + 1.4, K.add(l), K.add(a), pt.push({ x: xt.x + 2.6 - 1.4, z: t - 0.8, hw: 0.1, hd: 0.1 }, { x: xt.x + 2.6 + 1.4, z: t - 0.8, hw: 0.1, hd: 0.1 }));
+  }
+  // v82: เสียงนกหวีดกรรมการ (สังเคราะห์: นกหวีดมีลูกกลิ้ง = เสียงสูง ~3kHz สั่นรัวเร็ว + ลมหายใจ)
+  function ccsWhistle(i) {
+    let e = _i();
+    if (!e || z.sound === !1) return;
+    let t = e.currentTime + 0.02,
+      n = i === "goal" ? [[0, 0.22], [0.32, 0.22], [0.66, 1.1]] : i === "end" ? [[0, 0.5], [0.65, 0.5], [1.3, 1.4]] : [[0, 0.45]],
+      s = e.createGain();
+    ((s.gain.value = 0.16), s.connect(e.destination));
+    for (let [o, r] of n) {
+      let a = t + o,
+        c = e.createGain();
+      (c.gain.setValueAtTime(0, a), c.gain.linearRampToValueAtTime(1, a + 0.025), c.gain.setValueAtTime(1, a + r - 0.06), c.gain.linearRampToValueAtTime(0, a + r), c.connect(s));
+      for (let [l, h] of [
+        [2850, 0.7],
+        [3010, 0.45],
+      ]) {
+        let f = e.createOscillator(),
+          d = e.createGain(),
+          u = e.createOscillator(),
+          p = e.createGain();
+        ((f.type = "sine"), (f.frequency.value = l), (u.frequency.value = 38 + Math.random() * 6), (p.gain.value = 170), u.connect(p), p.connect(f.frequency), (d.gain.value = h), f.connect(d), d.connect(c), f.start(a), u.start(a), f.stop(a + r + 0.02), u.stop(a + r + 0.02));
+      }
+      let l = e.createBuffer(1, Math.ceil(e.sampleRate * r), e.sampleRate),
+        h = l.getChannelData(0);
+      for (let m = 0; m < h.length; m++) h[m] = Math.random() * 2 - 1;
+      let f = e.createBufferSource(),
+        d = e.createBiquadFilter(),
+        u = e.createGain();
+      ((f.buffer = l), (d.type = "bandpass"), (d.frequency.value = 3200), (d.Q.value = 2.5), (u.gain.value = 0.18), f.connect(d), d.connect(u), u.connect(c), f.start(a));
+    }
   }
   function P4() {
     if (!fo) return;
@@ -49848,6 +49948,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         P4(),
         (t.cool = 2.2),
         rt("⚽ โกล!!!", n.pos.clone().setY(2.2), "big"),
+        e.pos.distanceTo(n.pos) < 45 && ccsWhistle("goal"),
         r === 0 && Ai("goal"),
         ke("heart"),
         De(
@@ -49859,7 +49960,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         e.pos.distanceTo(n.pos) < 30 && Rs(r === 0 ? 8 : 3, e));
     }
     (t.cool > 0 && t.cool < 0.6 && (n.pos.copy(xt), n.vel.set(0, 0, 0), (n.vy = 2.5), (n.y = 0.5), (t.cool = 0)),
-      eb(n.pos, 1) ? (t.out = 0) : ((t.out += i), t.out > 12 && (n.pos.copy(xt), n.vel.set(0, 0, 0), (t.out = 0))));
+      eb(n.pos, 1)
+        ? ((t.out = 0), (t.wasIn = !0))
+        : (t.wasIn && t.cool <= 0 && ((t.wasIn = !1), e.pos.distanceTo(n.pos) < 45 && (ccsWhistle("out"), rt("📣 บอลออก!", n.pos.clone().setY(2), "bad"))),
+          (t.out += i),
+          t.out > 12 && (n.pos.copy(xt), n.vel.set(0, 0, 0), (t.out = 0))));
   }
   var pE = -0.75,
     ao = 0.93 + pE,
@@ -50106,7 +50211,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function ccsLighthouse() {
     if (ccsLH.g || !ze("lighthouse")) return;
     let i = new J();
-    (i.position.set(34, 0, Rt + 78), K.add(i));
+    (i.position.set(41, 0, Rt + 94), K.add(i)); // v82: ไกลออกไปอีก ~20%
     let e = (d, u) => {
         let p = d.attributes.position,
           m = new H();
@@ -50156,7 +50261,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ((c.width = 4), (c.height = 128));
     let l = c.getContext("2d"),
       h = l.createLinearGradient(0, 0, 0, 128);
-    (h.addColorStop(0, "#ffffff"), h.addColorStop(0.35, "#5a5a5a"), h.addColorStop(1, "#000000"), (l.fillStyle = h), l.fillRect(0, 0, 4, 128));
+    (h.addColorStop(0, "#ffffff"), h.addColorStop(0.3, "#4a4a4a"), h.addColorStop(0.72, "#000000"), h.addColorStop(1, "#000000"), (l.fillStyle = h), l.fillRect(0, 0, 4, 128));
     let f = new X({ color: 16775880, emissive: 16775880, emissiveIntensity: 1, alphaMap: new ut(c), transparent: !0, opacity: 0, depthWrite: !1, blending: $i, side: Ke, fog: !1, toneMapped: !1 }),
       g = new J();
     g.position.set(0, a, 0);
@@ -50507,7 +50612,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           g.material = Array.isArray(g.material) ? x : x[0];
         });
       },
-      o = { Car_sport: 3.6, Car_ev: 3.7, Car_4x4: 4.1, Car_suv: 3.8 },
+      o = { Car_sport: 3.6, Car_ev: 3.7, Car_4x4: 4.1, Car_suv: 3.8, car_macan: 3.9 },
       r = (d) => o[d] ?? (d === "Van" ? 4.1 : 3.5);
     ([
       "Car_06",
@@ -50516,6 +50621,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       "Car_16",
       "Car_19",
       "Futuristic_Car_1",
+      "car_macan", // v82: Porsche Macan (Kaban)
       "Car_13",
       "Car_06",
       "Car_16",
@@ -50576,9 +50682,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       }),
       (Cr = xM(K, -31, 15, -5, 34.5)),
       pt.push(...Cr.solids));
+    // v82: ต้นไม้การ์ตูน (tree_001 / fabulous_tree) → ต้นไม้จริงชุด Trees Set A
     let a = [
-      ["tree_001", 7],
-      ["fabulous_tree_001", 6.2],
+      [ze("tree_r1") ? "tree_r1" : "tree_001", 7],
+      [ze("tree_r4") ? "tree_r4" : "fabulous_tree_001", 6.5],
       ["lptree_1", 7.5],
       ["lptree_2", 8],
       ["coconut_palm", 8.5],
@@ -50586,7 +50693,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (
       (n1.forEach((d, u) => {
         let p = u < 48,
-          E = d.position.z > Rt - 16 ? 4 : p ? [2, 0, 3, 1][u % 4] : [0, 2, 1, 3, -1, 2, 3][u % 7];
+          E = d.position.z > Rt - 16 ? 4 : p ? [2, 0, 3, 1][u % 4] : [0, 2, 1, 3, 0, 2, 3][u % 7]; // v82: เปลี่ยนต้นไม้การ์ตูนทุกต้น (เดิมบางต้นข้าม = -1)
         if (E < 0) return;
         let [g, y] = a[E];
         if (!ze(g)) return;
@@ -50618,10 +50725,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     for (let [d, u, p, m, E] of [
       ["fabulous_mushroom_001", -40, 30, 0, 2.2],
       ["lptree_1", -54, -30, 0, 8],
-      ["fir_001", -48, -46, 1, 7],
+      [ze("tree_r2") ? "tree_r2" : "fir_001", -48, -46, 1, 7],
       ["lptree_2", -36, -40, 2, 8.4],
-      ["fabulous_tree_001", 20, 20, 0, 5.5],
-      ["big_fabulous_tree_001", 52, 22, 0, 8],
+      [ze("tree_r3") ? "tree_r3" : "fabulous_tree_001", 20, 20, 0, 5.5],
+      [ze("tree_r1") ? "tree_r1" : "big_fabulous_tree_001", 52, 22, 0, 8],
     ])
       Si(d, u, p, m, E) && lo.push(new H(u, 0, p));
     for (let [d, u, p, m] of [
@@ -50639,7 +50746,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         ((E.position.y = zo(d, u) - 0.05), lo.push(new H(d, 0, u)));
       }
     {
-      let d = ["lptree_1", "fir_001", "lptree_2", "fabulous_tree_001"],
+      let d = ze("tree_r1") ? ["lptree_1", "tree_r1", "lptree_2", "tree_r4", "tree_r3", "tree_r1", "tree_r2"] : ["lptree_1", "fir_001", "lptree_2", "fabulous_tree_001"],
         u = 0;
       for (let g = 0; g < 400 && u < 90; g++) {
         let y = (Math.sin(g * 12.9898) * 0.5 + 0.5) * 300 - 150,
@@ -52205,11 +52312,69 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       clearTimeout(w6),
       (w6 = setTimeout(() => D3.classList.remove("on"), e)));
   }
+  // v82: อีโมจิ 3D (จาก emojis_pack.glb เรนเดอร์เป็นแผ่นภาพ emoji3d.png 8×6 ช่อง) แทนอีโมจิตัวอักษรในกรอบคำพูด/ป้ายลอย
+  var ccsE3 = (() => {
+      let i = {},
+        e = [
+          "😀😁😄😆", "😕🫤", "😳", "🙄", "🤔", "🤪", "🤣", "😜", "😤😡😠💢", "😵", "🤨", "😮😯😲", "😨😰", "🥺", "🤕", "😎",
+          "🥵", "👍", "👎", "❤💖💗🧡💛💚💙💜", "⭐🌟✨", "💕💞💓", "🥳🎉", "🤤😋", "😊☺", "😴💤", "😛", "😅", "😱😭", "😢😞😔☹😿",
+          "🤯", "🥶", "😬🤢", "😉", "😘", "🤓", "😒", "🙂😃", "😗", "😍🥰", "😂", "💩", "😐😑", "🥴", "😌",
+        ];
+      return (e.forEach((t, n) => [...t].forEach((s) => (i[s] = n))), i);
+    })(),
+    ccsE3re = /(\p{Extended_Pictographic})️?/gu;
+  function emoHTML(i) {
+    let e = String(i).replace(/[&<>"]/g, (t) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[t]);
+    return e.replace(ccsE3re, (t, n) => {
+      let s = ccsE3[n];
+      return s === void 0 ? t : `<i class="e3d" style="background-position:${((s % 8) / 7) * 100}% ${(Math.floor(s / 8) / 5) * 100}%"></i>`;
+    });
+  }
+  // ชาวเมืองพูด: ถ้าประโยคยังไม่มีอีโมจิ ใส่ให้ตามอารมณ์ของประโยค
+  function emoMood(i) {
+    if (ccsE3re.test(i)) return ((ccsE3re.lastIndex = 0), i);
+    ccsE3re.lastIndex = 0;
+    let e = [
+      [/อร่อย|หิว|กิน|ขนม|ปลา|ไก่|ข้าว/, "😋"],
+      [/ร้อน|แดด/, "🥵"],
+      [/หนาว|เย็น/, "🥶"],
+      [/ง่วง|นอน|เหนื่อย/, "😴"],
+      [/รัก|น่ารัก|ชอบ/, "😍"],
+      [/คิดถึง|เศร้า|เสียใจ/, "🥺"],
+      [/ว้าว|เจ๋ง|เท่|สุดยอด/, "😎"],
+      [/ฮ่า|555|ตลก|ขำ/, "😂"],
+      [/ระวัง|อันตราย|ตกใจ/, "😱"],
+      [/\?|ไหม|หรือยัง|อะไร/, "🤔"],
+      [/ขอบคุณ|ยินดี/, "😊"],
+    ];
+    for (let [t, n] of e) if (t.test(i)) return `${n} ${i}`;
+    return Math.random() < 0.5 ? `${["😊", "🙂", "😄", "😉", "😌"][Math.floor(Math.random() * 5)]} ${i}` : i;
+  }
+  // v82: น้องหมาแสดงอารมณ์เป็นอีโมจิ 3D เหนือหัว ตามค่าสถานะ (ทุก ~20–35 วิ)
+  var dogMoodT = 12;
+  function ccsDogMood(i) {
+    let e = Le[0];
+    if (!e || !j.started || j.sleeping || (dogMoodT -= i) > 0) return;
+    dogMoodT = 20 + Math.random() * 15;
+    let t = z.hunger ?? 100,
+      n = z.thirst ?? 100,
+      s = z.energy ?? 100,
+      o = z.clean ?? 100,
+      r =
+        t < 25 ? ["🥺", "🤤"] :
+        n < 25 ? ["🥵", "😮"] :
+        s < 20 ? ["😴", "🥴"] :
+        o < 30 ? ["😬", "🙄"] :
+        inGarden(e.pos) ? ["😌", "🥺", "❤"] :
+        t > 70 && s > 60 ? ["😊", "😍", "😄", "😛", "😎"] :
+        ["🙂", "🤔", "😗"];
+    rt(r[Math.floor(Math.random() * r.length)], e.pos.clone().setY(1.5));
+  }
   function rt(i, e, t = "") {
     let n = e.clone().setY(2.2).project(Lt),
       s = document.createElement("span");
     ((s.className = `pop ${t}`),
-      (s.textContent = i),
+      (s.innerHTML = emoHTML(i)),
       (s.style.left = `${(n.x * 0.5 + 0.5) * innerWidth}px`),
       (s.style.top = `${(-n.y * 0.5 + 0.5) * innerHeight}px`),
       document.body.appendChild(s),
@@ -52931,7 +53096,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (MH(n, e), r4(), a4(n));
       }
     }
-    if ((Se && (qE -= e) < 0 && UC(), PA(e), ccsWarmShop(), ccsLighthouseTick(e), HH(e, Le[0]?.pos), eC(Math.min(0.1, e)), nP(Math.min(0.1, e)), Le[0])) {
+    if ((Se && (qE -= e) < 0 && UC(), PA(e), ccsWarmShop(), ccsLighthouseTick(e), ccsDogMood(e), ccsHeldTick(), HH(e, Le[0]?.pos), eC(Math.min(0.1, e)), nP(Math.min(0.1, e)), Le[0])) {
       let s = Math.min(0.1, e);
       (lC(s, Le[0]), pC(s, Le[0]), Q4(s, Le[0]), sT(s, Le[0]), FC(s, Le[0]), BC(s, Le[0]), oC(s), j.started && p0());
     }
@@ -54907,6 +55072,21 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     return e;
   }
+  // โคมกระดาษสาห้อยเพดาน (ใช้ทั้งบ้านและทุกร้าน) · คืน false ถ้าโมเดลยังไม่มา
+  var ccsLampM = null;
+  function ccsRiceLamp(i, e, t, n) {
+    if (!ze("lamp_rice")) return !1;
+    ccsLampM ?? (ccsLampM = new X({ color: 16775920, emissive: 16770238, emissiveIntensity: 0.85, roughness: 0.85, toneMapped: !1 }));
+    let s = je("lamp_rice", 0.62);
+    (s.traverse((r) => {
+      let a = r;
+      a.isMesh && ((a.castShadow = !1), /M00/.test(a.material.name) && (a.material = ccsLampM));
+    }),
+      s.position.set(e, t - 0.42 - 0.62, n),
+      i.add(s));
+    let o = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
+    return (o.position.set(e, t - 0.21, n), i.add(o), !0);
+  }
   // ป้ายชื่อแนวนอนสำหรับแผ่นทองเหลืองบนหินแต่ละแปลง
   function ccsPlaque(i) {
     let e = document.createElement("canvas");
@@ -55026,11 +55206,32 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     };
     ((wn.petals = e(70, 16758479, 0.09, 15, 15)), (wn.flies = e(46, 16774560, 0.12, 14, 15)));
   }
+  // v82: รูปปั้นอนุสาวรีย์น้องข้าวต้ม (โมเดลเชาเชาตัวจริง) สีหินเทา ใหญ่กว่าตัวจริง 2 เท่า บนแท่นกลางสวน
+  // (โมเดลน้องอาจโหลดเสร็จทีหลัง → เรียกซ้ำจากลูปสวนจนกว่าจะสร้างได้)
+  function ccsGardenStatue() {
+    if (wn.statue || !wn.model) return;
+    try {
+      if (Fc()) {
+        let e = ui(z.coat ?? "orange", 1.6),
+          t = new X({ color: 10988712, roughness: 0.88, metalness: 0.02 }),
+          n = new X({ color: 6974056, roughness: 0.8 });
+        (e.root.traverse((s) => {
+          let o = s;
+          o.isMesh && ((o.material = /eye|nose|tongue|mouth/i.test(o.material?.name ?? "") ? n : t), (o.castShadow = !0), (o.userData.noMerge = !0));
+        }),
+          e.root.position.set(0, 0.62 * ccsGS + 0.06 * ccsGS, -10 * ccsGS),
+          wn.g.add(e.root),
+          (wn.statue = e));
+      }
+    } catch (e) {
+      console.warn("garden statue", e);
+    }
+  }
   // วางโมเดลสวน (เรียกหลังโหลดโมเดลเสร็จ) · โมเดลรวมเมชมาแล้ว: ทั้งสวน ~6 draw call
   function ccsGardenModel() {
     if (!ze("rb_garden") || wn.model) return;
     let i = vp.rb_garden.clone(!0);
-    (i.scale.setScalar(ccsGS), (i.position.y = 0.012));
+    (i.scale.setScalar(ccsGS), (i.position.y = 0.012 + 0.06 * ccsGS)); // โมเดลถูกกดลงตามขนาดผิวเพื่อกันกระพริบ ยกกลับขึ้นตรงนี้
     i.traverse((e) => {
       let t = e;
       if (!t.isMesh) return;
@@ -55042,8 +55243,18 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         : /rbg_(static|tall)/.test(n.name) && ((n.vertexColors = !0), (n.roughness = 0.92));
       n.map && (n.map.anisotropy = 4);
     });
-    // ต้นไม้/รูปปั้น/โคมให้เงา (เฉพาะคุณภาพสูง)
     ((wn.model = i), wn.g.add(i));
+    ccsGardenStatue();
+    // v82: รุ้งโมเดลใหม่ (Rainbow) แทนซุ้มรุ้งเดิม คร่อมหลังรูปปั้น
+    if (ze("rainbow_arc")) {
+      let e = je("rainbow_arc", 8.2 * ccsGS);
+      (e.position.set(0, 0.02, -10.9 * ccsGS),
+        e.traverse((t) => {
+          let n = t;
+          n.isMesh && ((n.castShadow = !1), (n.userData.noMerge = !0));
+        }),
+        wn.g.add(e));
+    }
   }
   function FC(i, e) {
     if (!wn.petals) return;
@@ -55066,6 +55277,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       }
     }
     if (((wn.g.visible = t && !Se), !t)) return;
+    wn.statue || ccsGardenStatue();
     let n = 1 - Math.min(1, Math.max(0, (Math.sin((j.time - 0.25) * Math.PI * 2) + 0.15) * 3));
     for (let r of wn.lanterns) r.emissiveIntensity = 0.1 + n * 2.4;
     let s = wn.petals.geometry.attributes.position;
@@ -56030,6 +56242,31 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     X6 = null,
     j3 = [],
     $3 = { body: null };
+  // v82: ตะกร้า/ถุงช้อปปิ้งติดมือจริง — ทุกเฟรมย้ายหูหิ้วไปที่ตำแหน่งกระดูกมือ (ตัวของตั้งตรงเสมอ)
+  var ccsHeld = [],
+    ccsHV = new H();
+  function ccsHoldAdd(i, e, t) {
+    let n = i.hands ?? (i.hands = {});
+    if (!(t in n)) {
+      let s = null;
+      (i.root.traverse((o) => {
+        o.isBone && (o.name.endsWith(t + "Prop") ? (s = o) : !s && o.name.endsWith(t) && (s = o));
+      }),
+        (n[t] = s));
+    }
+    n[t] && ccsHeld.push({ rig: i, obj: e, bone: n[t] });
+  }
+  function ccsHeldTick() {
+    for (let i = ccsHeld.length - 1; i >= 0; i--) {
+      let { rig: e, obj: t, bone: n } = ccsHeld[i];
+      if (t.parent !== e.root) {
+        ccsHeld.splice(i, 1);
+        continue;
+      }
+      if (!e.root.visible) continue;
+      (e.root.updateMatrixWorld(), n.getWorldPosition(ccsHV), e.root.worldToLocal(ccsHV), t.position.copy(ccsHV), (t.position.y -= 0.035 / (e.root.scale.y || 1)));
+    }
+  }
   function ok() {
     let i = new J(),
       e = $3.body ?? ($3.body = new X({ color: 15073298, roughness: 0.6 })),
@@ -56263,7 +56500,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             o.pos.copy(n.exit).add(new H((Math.random() - 0.5) * 1.2, 0, -0.3)),
             (o.fadeIn = 0),
             (r.fade = 0),
-            j6(n) && ((r.basket = ok()), r.basket.position.set(-0.3, 0.62, 0.05), o.rig.root.add(r.basket)));
+            j6(n) && ((r.basket = ok()), r.basket.position.set(-0.3, 0.62, 0.05), o.rig.root.add(r.basket), ccsHoldAdd(o.rig, r.basket, "LeftHand")));
           let f = n.wares.slice().sort(() => Math.random() - 0.5);
           ((r.spots = f
             .slice(0, 3 + Math.floor(Math.random() * 3))
@@ -56370,6 +56607,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 (r.bag = ak()),
                 r.bag.position.set(0.3, 0.62, 0.05),
                 o.rig.root.add(r.bag),
+                ccsHoldAdd(o.rig, r.bag, "RightHand"),
                 (r.stage = "exit"),
                 (r.path = jh(n, o.pos, n.exit))))
             : r.stage === "exit" && ((r.stage = "out"), (r.fade = 0.7));
@@ -58890,6 +59128,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function RT(i) {
     if (i === "breast") return id("food_breast");
     if (i === "liver") return id("food_skewer");
+    if (i === "sashimi") return id("sashimi");
     if (i === "wing" || i === "thigh" || i === "rice" || i === "drum") return id("food_" + i);
     if (Q3[i]) return Q3[i];
     let e = document.createElement("canvas");
@@ -59572,6 +59811,20 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       },
     ],
     Yk = [
+      {
+        icon: "🍣",
+        pic: "sashimi",
+        name: "เรือซาชิมิ (ลวกสุกให้น้อง)",
+        price: 159,
+        food: 95,
+        energy: 25,
+        note: "ปลาหลายชนิดจัดเต็มลำเรือ ลุงลวกสุก ไม่ใส่วาซาบิ",
+        lines: [
+          "เรือซาชิมิลำใหญ่ ปลาสดจากทะเลเช้านี้!",
+          "ลุงลวกสุกให้น้องแล้ว ไม่มีก้าง ไม่มีวาซาบิ",
+          "กินช้า ๆ นะ ของดีมีลำเดียว",
+        ],
+      },
       {
         icon: "🐟",
         pic: "saba",
@@ -60376,7 +60629,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   var e1 = null,
     NE = 0;
   function Ln(i, e) {
-    ((e1 = i), (NE = 3), (cd.textContent = e), cd.classList.add("on"));
+    ((e1 = i), (NE = 3), (cd.innerHTML = emoHTML(emoMood(e))), cd.classList.add("on"));
     let t = [
         ...y0.map((o) => o.rig).filter((o) => !!o),
         ...zn.map((o) => o.keeper),
@@ -60402,7 +60655,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       }
     ((n.who = i),
       (n.t = t),
-      (n.el.textContent = e),
+      (n.el.innerHTML = emoHTML(emoMood(e))),
       n.el.classList.add("on"),
       Zg(i.rig, Math.min(4, 0.9 + e.length * 0.06)));
   }
@@ -60524,6 +60777,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r56")),
         bn(Zt("r56b")),
         bn(Zt("r81")),
+        bn(Zt("r82")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
@@ -60541,6 +60795,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     gT = new Pp(K, ET);
     let i = (n) =>
         inGarden(n, 1.2) ||
+        (Math.abs(n.x - xt.x) < 2.4 && n.z < -Mt + 1 && n.z > xt.z + td / 2) ||
         eb(n, 1) ||
         Math.abs(n.z) < Mt + 0.6 ||
         (Math.abs(n.x + 46) < 3.5 && n.z > -12 && n.z < 48) ||
@@ -60716,6 +60971,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           ensureDigs: q4,
         },
         gardenPlot: T0,
+        emo: (i) => emoHTML(emoMood(i)),
+        pop: (i) => rt(i, Le[0].pos.clone().setY(1.5), "big"),
+        modelKeys: () => Object.keys(vp),
+        modelClone: (n, e) => je(n, e),
+        held: () => ccsHeld.map((i) => [i.bone.name, i.obj.position.toArray().map((e) => +e.toFixed(2))]),
         simStep: (n, s) => {
           for (let o = 0; o < n; o++) (w4(s, Le[0]), pT(s, Le[0]), T4(s, Le[0]));
         },

@@ -14,6 +14,17 @@ async function garden() {
   const mStatic = doc.createMaterial('rbg_static').setRoughnessFactor(0.92).setMetallicFactor(0);
   const mTall = doc.createMaterial('rbg_tall').setRoughnessFactor(0.91).setMetallicFactor(0);
   const mGlow = doc.createMaterial('rbg_glow').setRoughnessFactor(0.6).setMetallicFactor(0).setEmissiveFactor([1, 0.86, 0.55]);
+  // v82: เอาหมี+รุ้งเดิมออก (ใช้รูปปั้นข้าวต้ม + รุ้งโมเดลใหม่ในเกมแทน)
+  for (const n of root.listNodes()) if (/^(RAINBOW_BRIDGE|RAINBOW_PYLONS|CHOW_|STATUE_HEART)/.test(n.getName())) n.dispose();
+  // v82: กันภาพกระพริบ (z-fighting) — ผิวที่ทับระนาบเดียวกัน ชิ้นใหญ่ลดต่ำลงกว่าชิ้นเล็กนิดหนึ่ง
+  for (const n of root.listNodes()) {
+    const m = n.getMesh(); if (!m) continue;
+    let mn = [1e9, 1e9], mx = [-1e9, -1e9]; const v = [];
+    for (const p of m.listPrimitives()) { const a = p.getAttribute('POSITION'); for (let i = 0; i < a.getCount(); i++) { a.getElement(i, v); mn[0] = Math.min(mn[0], v[0]); mn[1] = Math.min(mn[1], v[2]); mx[0] = Math.max(mx[0], v[0]); mx[1] = Math.max(mx[1], v[2]); } }
+    const area = Math.max(1e-3, (mx[0] - mn[0]) * (mx[1] - mn[1]));
+    const dy = -(Math.min(10, Math.max(-7, Math.log2(area))) + 7) * 0.0035;
+    for (const p of m.listPrimitives()) { const a = p.getAttribute('POSITION'); const arr = a.getArray().slice(); for (let i = 1; i < arr.length; i += 3) arr[i] += dy; a.setArray(arr); }
+  }
   for (const n of root.listNodes()) {
     const m = n.getMesh(); if (!m) continue;
     const glow = /^(LANTERN_LIGHT|TRIBUTE_CANDLES|FIREFLY_ORBS)/.test(n.getName());
