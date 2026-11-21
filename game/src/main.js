@@ -35525,7 +35525,7 @@ vObj = position;`,
               `#include <map_fragment>
       { vec3 c0 = diffuseColor.rgb;
         float l = dot(c0, vec3(0.3, 0.59, 0.11));
-        bool tongue = uChow > 0.5 && vPosM.y < uNoseY - 0.05 * uH && vPosM.z > uNoseZ - 0.26 * uL && c0.r > 0.3 && c0.r > c0.g + 0.07 && c0.b > c0.g - 0.04;
+        bool tongue = uChow > 0.5 && vPosM.y < uNoseY - 0.05 * uH && vPosM.z > uNoseZ - 0.26 * uL && c0.r > 0.35 && c0.r > c0.g + 0.12 && c0.b > c0.g + 0.01;
         if (tongue) diffuseColor.rgb = vec3(0.075, 0.045, 0.13) * (0.7 + c0.r * 0.5);   // v87: ลิ้นเชาเชาสีม่วงอมดำ (blue-black)
         else if (uRecolor > 0.5 && l > 0.035) diffuseColor.rgb = mix(uDark, uLight, smoothstep(0.05, 0.7, l));
         float shade = 0.78 + 0.3 * smoothstep(0.03, 0.55, l);
@@ -41654,13 +41654,12 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       let T = new R(new ee(0.18, 0.2, o), Ae(13208139, 0.7));
       (T.position.set(M * 2.2, r - 0.1, 0), n.add(T));
     }
-    let f = g3("บ้านข้าวต้ม", !0);
+    let f = ccsSlideDoor(); // v88: ประตูบานเลื่อนไม้แบบเดียวกับด้านนอก
     // v87: ประตู/หน้าต่างด้านในให้ตรงกับบ้านด้านนอก (มองจากในบ้าน: หน้าต่างใหญ่ฝั่ง -x, ประตูเยื้องไป +x, ช่องกระจกข้างประตู)
     const DX = 1.4;
     (f.position.set(DX, -0.18, o / 2 + 0.02),
       n.add(f),
-      Ep(n, s, o, r, t, 16777215, 7317688, NaN, -4.6, 3.4),
-      Ep(n, s, o, r, t, 16777215, 7317688, NaN, 3.55, 1.2));
+      Ep(n, s, o, r, t, 16777215, 7317688, NaN, -4.6, 3.4));
     for (let M of [-4.6]) {
       for (let A of [-1, 1]) {
         let F = new R(new ee(0.5, 2.5, 0.08), Ae(A < 0 ? 9425888 : 16777215, 0.95));
@@ -41740,7 +41739,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         let I = T.intersectObject(M, !0)[0];
         I && (A = Math.min(A, I.point.y));
       }
-      ((E = A < 9 ? A + 0.07 : 0.2), (g = 1.06), (y = 0.86)); // v87: ยกตัวขึ้นนอนบนผิวเบาะ (เดิมจม)
+      ((E = A < 9 ? A + 0.01 : 0.2), (g = 1.06), (y = 0.86)); // v87: ยกตัวขึ้นนอนบนผิวเบาะ (เดิมจม)
       let F = new R(
         new Te(1.4, 0.32),
         new be({
@@ -49060,7 +49059,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         // (เอาแผงปูสแกนที่เละออก)
         // v82: ชั้นขนม (snack_shelf) ชิดผนังหลังมุมขวา (ที่เดิมของแผงปู) หันเข้าร้าน
         b("snack_shelf", 7.6, -s / 2 + 0.3, -Math.PI / 2, 2.45, 0, [0.98, 0.3]),
-        ccsMeatCase(e, i, t, -3.95, -4.3)); // v85: เอาตู้ขนมออก → ตู้แช่เนื้อสดแบบดองกิ
+        ccsMeatCase(e, i, t, -1.9, -0.9)); // v88: ย้ายตู้แช่เนื้อมากลางโซนหน้าชั้นหลัง เดินรอบได้ (เดิมชนปลายชั้นวาง)
       {
         let F = new R(
           new ee(1.7, 0.72, 0.8),
@@ -49117,7 +49116,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         Math.PI / 2,
       ],
       ["เครื่องดื่ม", "DRINKS", 8.3, 1.6, Math.PI / 2],
-      ["เนื้อสด", "FRESH MEAT", -4.0, -4.3, 0],
+      ["เนื้อสด", "FRESH MEAT", -1.9, -0.9, 0],
       ["เบเกอรี่", "BAKERY", -1.0, -4.3, 0],
       ["ซีฟู้ด สดทุกวัน", "SEAFOOD", 8.3, -6, 0],
       ["ของแช่แข็ง", "FROZEN", 7.25, -2.9, Math.PI / 2],
@@ -53019,7 +53018,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           (j.jy > 0 || j.vy > 0) &&
             ((j.vy -= 24 * e), (j.jy = Math.max(0, j.jy + j.vy * e)), (j.jt += e), j.jy === 0 && (j.vy = 0)));
       Ed = !1;
-      let E = Se ? (Rn && Se === Rn && (j.sleeping || $H(n.pos)) ? Rn.bedY : 0) : x4(n.pos, n.rig.yaw, b4);
+      let E = Se ? (Rn && Se === Rn && (j.sleeping || $H(n.pos)) ? Rn.bedY + ccsBedLift(n) : 0) : x4(n.pos, n.rig.yaw, b4);
       E >= j.gy ? (j.gy = E) : (j.gy = Math.max(E, j.gy - e * 5));
       let g = Se ? 0 : go(n.pos.x, n.pos.z);
       if (((j.wade += (g - j.wade) * Math.min(1, e * 6)), g > 0.12 && j.started)) {
@@ -53140,7 +53139,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           }
           continue;
         }
-        (E4(b, b.pos.distanceTo(n.pos) < 3 ? n.pos : null, 1.8, 8, e), Qp(b, e), Se && Se === Rn && $H(b.pos) && (b.rig.root.position.y = Rn.bedY)); // v87: เพื่อนขึ้นไปนอนบนเบาะ ไม่จมเตียง
+        (E4(b, b.pos.distanceTo(n.pos) < 3 ? n.pos : null, 1.8, 8, e), Qp(b, e), Se && Se === Rn && $H(b.pos) && (b.rig.root.position.y = Rn.bedY + ccsBedLift(b))); // v87: เพื่อนขึ้นไปนอนบนเบาะ ไม่จมเตียง
       }
       for (let b of z4) {
         if (!b.alive) {
@@ -55213,6 +55212,47 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       i.add(s));
     let o = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
     return (o.position.set(e, t - 0.21, n), i.add(o), !0);
+  }
+  // v88: ยกตัวน้องบนเบาะให้ส่วนที่ต่ำสุดของท่านอน/ท่ายืนอยู่บนผิวเบาะพอดี (ไม่จม ไม่เห็นเงาทะลุเบาะ)
+  var ccsLiftBox = null;
+  function ccsBedLift(i) {
+    let e = performance.now();
+    if (i._blT && e - i._blT < 400) return i._bl ?? 0;
+    i._blT = e;
+    ccsLiftBox || (ccsLiftBox = new mt());
+    let t = i.rig.root,
+      n = t.position.y;
+    (t.position.y = 0, t.updateMatrixWorld(!0), ccsLiftBox.setFromObject(t, !0), (t.position.y = n), t.updateMatrixWorld(!0));
+    let s = ccsLiftBox.isEmpty() ? 0 : -ccsLiftBox.min.y;
+    return ((i._bl = Math.max(0, Math.min(0.45, s - 0.03))), i._bl);
+  }
+  // v88: ประตูบานเลื่อนไม้ (บานไม้ทึบ + บานกระจกกรอบไม้ บนรางเลื่อน) ให้ตรงกับประตูบ้านด้านนอก
+  function ccsSlideDoor() {
+    let i = new J(),
+      e = new X({ map: Cn(9070127, "#5a3a1c"), roughness: 0.75 }),
+      t = new X({ color: 13152156, roughness: 0.7 }),
+      n = new X({ color: 2763306, roughness: 0.6, metalness: 0.5 }),
+      s = new X({ color: 4870217, roughness: 0.15, metalness: 0.1, transparent: !0, opacity: 0.55 }),
+      o = 2.4,
+      r = 2.45,
+      a = (c, l, h, f, d, u, p) => {
+        let m = new R(new ee(c, l, h), f);
+        return (m.position.set(d, u, p), i.add(m), m);
+      };
+    // วงกบ
+    (a(o + 0.24, 0.14, 0.16, t, 0, r + 0.25, -0.1), a(0.12, r + 0.1, 0.16, t, -o / 2 - 0.06, 0.18 + r / 2, -0.1), a(0.12, r + 0.1, 0.16, t, o / 2 + 0.06, 0.18 + r / 2, -0.1));
+    // รางบน/ล่าง
+    (a(o + 0.1, 0.05, 0.08, n, 0, r + 0.16, -0.2), a(o + 0.1, 0.03, 0.1, n, 0, 0.2, -0.2));
+    // บานไม้ทึบ (ซ้ายเมื่อมองจากในบ้าน = +x)
+    let c = o / 2 + 0.04;
+    a(c, r - 0.06, 0.05, e, o / 4, 0.18 + r / 2, -0.17);
+    for (let l of [0.75, 1.55]) a(c - 0.12, 0.03, 0.02, t, o / 4, 0.18 + l, -0.2);
+    a(0.04, 0.32, 0.05, n, 0.1, 1.25, -0.21);
+    // บานกระจกกรอบไม้
+    let l = -o / 4;
+    (a(c, 0.1, 0.06, e, l, 0.25, -0.13), a(c, 0.1, 0.06, e, l, r + 0.1, -0.13), a(0.1, r - 0.06, 0.06, e, l - c / 2 + 0.05, 0.18 + r / 2, -0.13), a(0.1, r - 0.06, 0.06, e, l + c / 2 - 0.05, 0.18 + r / 2, -0.13));
+    let h = new R(new ee(c - 0.18, r - 0.26, 0.015), s);
+    return (h.position.set(l, 0.18 + r / 2, -0.13), i.add(h), a(0.04, 0.32, 0.05, n, l + c / 2 - 0.14, 1.25, -0.08), i);
   }
   // v85: กระดูกแทะสำหรับน้องหมา (ทรงกระดูกการ์ตูนสีครีม ไม่ใช่กล่อง)
   function ccsBone(i) {
@@ -61362,6 +61402,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         openWardrobe: () => OE(),
         shopIds: () => zn.map((t) => t.def.id),
         enterHome: () => JE(),
+        sleepNow: () => qH(),
         P: () => ({ od, hn, xt, Rt, shops: zn.map((t) => [t.def.id, t.def.name, t.pos ?? t.door ?? null]) }),
         openFood: (i) => dd("food", i === "fish" ? Yk : i === "chick" ? Xk : DE, null, ""),
         emo: (i) => emoHTML(emoMood(i)),
