@@ -46691,6 +46691,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         "jcandy_5",
         0.24,
       ],
+      ["dk:ribeye", "ริบอายวากิวแพ็ก (ย่างสุกให้) 🥩 (+95🍖 +10⚡)", 159, "meatpk_12", 0.34],
+      ["dk:tbone", "สเต๊กเนื้อแพ็กถาด (แกะกระดูกให้) 🍖 (+90🍖)", 139, "meatpk_6", 0.34],
+      ["dk:shabu", "เนื้อสไลซ์ชาบู (ลวกสุกให้) 🍲 (+60🍖 +10💧)", 79, "meatpk_10", 0.34],
+      ["dk:chkpk", "อกไก่สดแพ็ก (ต้มสุกให้) 🐔 (+55🍖)", 49, "meatpk_18", 0.3],
+      ["dk:porkpk", "หมูสันในแพ็ก (ต้มสุกให้) 🐖 (+65🍖)", 65, "meatpk_24", 0.3],
+      ["dk:salmonpk", "แซลมอนสดแพ็ก (นึ่งสุกให้) 🐟 (+60🍖 +15⚡)", 99, "meatpk_22", 0.3],
+      ["dk:wholechk", "ไก่สดทั้งตัว (ต้มแกะกระดูกให้) 🐓 (+120🍖)", 149, "meatpk_28", 0.34],
+      ["dk:roastchk", "ไก่อบไม่ปรุงรส (แกะกระดูกให้) 🍗 (+100🍖)", 129, "roast", 0.32],
+      ["dk:sausage", "ไส้กรอกหมูรมควัน 🌭 (+40🍖 +10⚡)", 35, "Sausage", 0.26],
       [
         "dk:cola",
         "โคล่ากระป๋องเย็น 🥤 (+45💧 +15⚡)",
@@ -46732,6 +46741,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         "กระดูกไก่สุกแตกเป็นเสี้ยนแหลม ทิ่มคอหรือลำไส้ได้ (ร้านป้าอู้ดจะแกะกระดูกให้)",
       "dk:kitkat":
         "ช็อกโกแลตและชาเขียวมีธีโอโบรมีน/คาเฟอีน เป็นพิษต่อหมา",
+      "dk:sausage":
+        "ไส้กรอกรมควันเค็มจัดและมีไนไตรท์ ไม่ควรให้หมากิน",
       "dk:cola":
         "โคล่ามีคาเฟอีนและน้ำตาลสูง ทำให้หมาใจสั่น กระสับกระส่าย",
     },
@@ -46744,6 +46755,14 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         "แอปเปิ้ลหั่น เอาเมล็ดและแกนออกก่อน",
       "dk:beefpk":
         "ต้มสุก ไม่ปรุงรส แล้วหั่นเป็นชิ้น",
+      "dk:ribeye": "ย่างสุกไม่ใส่เกลือ หั่นชิ้นพอดีคำ",
+      "dk:tbone": "แกะกระดูกออกแล้ว ปลอดภัย",
+      "dk:shabu": "ลวกสุก ไม่จิ้มน้ำจิ้ม",
+      "dk:chkpk": "อกไก่ต้มสุก โปรตีนสูงไขมันต่ำ",
+      "dk:porkpk": "หมูต้องสุกทั่วถึงเสมอนะ",
+      "dk:salmonpk": "นึ่งสุก แกะก้างแล้ว ขนสวยเงา",
+      "dk:wholechk": "แกะกระดูกไก่ออกหมดแล้ว",
+      "dk:roastchk": "สูตรไม่ปรุงรส แกะกระดูกแล้ว",
     };
   for (let [i, e] of m4.map((t) => [t[0], t[1]]))
     if (s1[i]) {
@@ -46777,6 +46796,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       "dk:drum": [55, 0, 10],
       "dk:kitkat": [10, 0, 35],
       "dk:cola": [0, 45, 15],
+      "dk:ribeye": [95, 0, 10],
+      "dk:tbone": [90, 0, 0],
+      "dk:shabu": [60, 10, 0],
+      "dk:chkpk": [55, 0, 0],
+      "dk:porkpk": [65, 0, 0],
+      "dk:salmonpk": [60, 0, 15],
+      "dk:wholechk": [120, 0, 0],
+      "dk:roastchk": [100, 0, 0],
+      "dk:sausage": [40, 0, 10],
     },
     LH = (i, e) =>
       s1[i]
@@ -46843,7 +46871,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             label:
               "กระดูกแทะชิ้นใหญ่ 🦴 (+50⚡)",
             price: 70,
-            make: () => je("dk_fc_18", 0.32),
+            make: () => ccsBone(0.32),
           },
           {
             key: "chick",
@@ -49008,7 +49036,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         // (เอาแผงปูสแกนที่เละออก)
         // v82: ชั้นขนม (snack_shelf) ชิดผนังหลังมุมขวา (ที่เดิมของแผงปู) หันเข้าร้าน
         b("snack_shelf", 7.6, -s / 2 + 0.3, -Math.PI / 2, 2.45, 0, [0.98, 0.3]),
-        b("breadpk_0", -3, -4.3, 0, 1.4, 0, [0.72, 0.72]));
+        ccsMeatCase(e, i, t, -3.95, -4.3)); // v85: เอาตู้ขนมออก → ตู้แช่เนื้อสดแบบดองกิ
       {
         let F = new R(
           new ee(1.7, 0.72, 0.8),
@@ -49065,7 +49093,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         Math.PI / 2,
       ],
       ["เครื่องดื่ม", "DRINKS", 8.3, 1.6, Math.PI / 2],
-      ["เบเกอรี่", "BAKERY", -2.1, -4.3, 0],
+      ["เนื้อสด", "FRESH MEAT", -4.0, -4.3, 0],
+      ["เบเกอรี่", "BAKERY", -1.0, -4.3, 0],
       ["ซีฟู้ด สดทุกวัน", "SEAFOOD", 8.3, -6, 0],
       ["ของแช่แข็ง", "FROZEN", 7.25, -2.9, Math.PI / 2],
       ["ผักผลไม้", "FRESH", 8.2, 5.6, 0],
@@ -55146,6 +55175,88 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       i.add(s));
     let o = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
     return (o.position.set(e, t - 0.21, n), i.add(o), !0);
+  }
+  // v85: กระดูกแทะสำหรับน้องหมา (ทรงกระดูกการ์ตูนสีครีม ไม่ใช่กล่อง)
+  function ccsBone(i) {
+    let e = new J(),
+      t = new X({ color: 16247236, roughness: 0.55 }),
+      n = new R(new re(0.09, 0.09, 0.62, 14), t);
+    ((n.rotation.z = Math.PI / 2), e.add(n));
+    for (let o of [-0.33, 0.33]) for (let r of [-0.08, 0.08]) {
+      let a = new R(new we(0.12, 14, 10), t);
+      (a.position.set(o, 0, r), e.add(a));
+    }
+    let s = new J();
+    return ((e.position.y = 0.12), (e.rotation.y = 0.5), s.add(e), s.scale.setScalar(i / 0.9), s);
+  }
+  // v85: ตู้แช่เนื้อสดเปิดหน้า 2 ชั้น (แบบซูเปอร์ญี่ปุ่น/ดองกิ) วางแพ็กเนื้อจริงเต็มตู้
+  function ccsMeatCase(e, i, t, x, z) {
+    let n = 3.2,
+      s = 0.95,
+      o = new J();
+    o.position.set(x, 0, z);
+    let r = new X({ color: 15264495, roughness: 0.35, metalness: 0.4 }),
+      a = new X({ color: 2831424, roughness: 0.8 }),
+      c = new R(new ee(n, 0.8, s), r);
+    (c.position.y = 0.4), o.add(c);
+    let l = new R(new ee(n - 0.08, 0.03, s - 0.08), new X({ color: 13429237, roughness: 0.6 }));
+    ((l.position.y = 0.815), o.add(l));
+    let h = new R(new ee(n, 0.12, 0.04), a);
+    ((h.position.set(0, 0.06, s / 2 - 0.02), o.add(h)));
+    // ป้ายแดงหน้าตู้
+    let f = ss(1024, 64, (q) => {
+        ((q.fillStyle = "#c8102e"), q.fillRect(0, 0, 1024, 64), (q.fillStyle = "#fff"), (q.font = "700 40px Mitr, sans-serif"), (q.textBaseline = "middle"));
+        for (let D = 0; D < 3; D++) q.fillText(["🥩 เนื้อสด", "🐔 ไก่สด", "🐟 ปลาสด"][D] + " · ถูกจัง!", 20 + D * 340, 34);
+      }),
+      d = new R(new ee(n, 0.14, 0.02), [a, a, a, a, new be({ map: f }), a]);
+    (d.position.set(0, 0.68, s / 2 + 0.005), o.add(d));
+    // ชั้นบนด้านหลัง (ขั้นบันได) + ขอบกระจกกันละออง + ไฟเย็นสีฟ้าขาว
+    let u = new R(new ee(n, 0.38, 0.32), r);
+    (u.position.set(0, 0.82 + 0.19, -s / 2 + 0.16), o.add(u));
+    let m = new R(new ee(n - 0.1, 0.02, 0.3), new X({ color: 13429237, roughness: 0.6 }));
+    (m.position.set(0, 1.215, -s / 2 + 0.16), o.add(m));
+    let E = new R(new ee(n, 0.02, 0.5), new X({ color: 14544639, transparent: !0, opacity: 0.25, roughness: 0.05, depthWrite: !1 }));
+    (E.position.set(0, 1.62, -s / 2 + 0.25), o.add(E));
+    for (let D of [-n / 2 + 0.02, n / 2 - 0.02]) {
+      let q = new R(new ee(0.04, 0.82, 0.04), r);
+      (q.position.set(D, 1.22, -s / 2 + 0.05), o.add(q));
+    }
+    let g = new R(new ee(n - 0.1, 0.03, 0.06), new be({ color: 14743551 }));
+    (g.position.set(0, 1.6, -s / 2 + 0.25), o.add(g));
+    // แพ็กเนื้อ: ชั้นล่าง 2 แถว, ชั้นบน 1 แถว
+    let y = ["meatpk_23", "meatpk_18", "meatpk_24", "meatpk_22", "meatpk_25", "meatpk_19", "meatpk_26", "meatpk_20", "meatpk_27"],
+      w = ["meatpk_5", "meatpk_6", "meatpk_7", "meatpk_9", "meatpk_10", "meatpk_4", "meatpk_8"],
+      v = 0;
+    for (let [D, q, L, W, Z] of [
+      [0.18, 0.83, y, 8, 0.34],
+      [-0.16, 0.83, y.slice().reverse(), 8, 0.34],
+      [-s / 2 + 0.16, 1.225, w, 6, 0.46],
+    ]) {
+      let G = (n - 0.25) / W;
+      for (let N = 0; N < W; N++) {
+        let A = L[(N + v) % L.length];
+        if (!ze(A)) continue;
+        let F = je(A, Z);
+        (F.position.set(-n / 2 + 0.12 + G * (N + 0.5), q, D), (F.rotation.y = (N % 2 ? 0.08 : -0.06) + (Z > 0.4 ? 0 : Math.PI / 2)), o.add(F));
+      }
+      v += 3;
+    }
+    // ชิ้นใหญ่วางหัวท้ายตู้ + ไก่ทั้งตัว
+    for (let [D, q, L] of [["meatpk_12", -n / 2 - 0.05, 0.5], ["meatpk_13", n / 2 + 0.05, 0.5]]) {
+      if (!ze(D)) continue;
+      let W = je(D, L);
+      (W.position.set(q * 0.82, 1.23, -s / 2 + 0.16), o.add(W));
+    }
+    // ป้ายราคาเล็ก ๆ
+    for (let D = 0; D < 4; D++) {
+      let q = ro(["฿59", "฿79", "฿99", "฿149"][D], 0, 0.22, 0.1);
+      (q.position.set(-n / 2 + 0.45 + D * 0.78, 0.79, s / 2 + 0.03), o.add(q));
+    }
+    (o.traverse((D) => {
+      D.isMesh && ((D.castShadow = !0), (D.receiveShadow = !1));
+    }),
+      e.add(o),
+      i.solids.push({ x: t.x + x, z: t.z + z, hw: n / 2 + 0.05, hd: s / 2 + 0.05 }));
   }
   // v84: พื้นผิวแสงไฟหน้ารถ (พัดแสงจากกันชน กว้างขึ้นตามระยะ จางลงตามระยะ)
   var ccsBeamTex = null;
