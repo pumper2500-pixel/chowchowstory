@@ -41893,11 +41893,24 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         S("Toy_03", -1.2, -0.8, -0.6, 0, !1),
         S("Armchair_02", -2.6, -4.6, 0.4),
         S("Plants_15", -7.3, -5.3, 0));
+    // v81: โคมไฟเพดานเป็นโคมกระดาษสา (Rice Paper Lamp) ห้อยสายจากเพดาน
+    let ccsL = ze("lamp_rice") ? new X({ color: 16775920, emissive: 16770238, emissiveIntensity: 0.85, roughness: 0.85, toneMapped: !1 }) : null;
     for (let M of [-4, 0, 4]) {
       let T = new En(16767392, 8, 12, 1.6);
-      (T.position.set(M, r - 0.6, 0), n.add(T));
-      let A = new R(new we(0.16, 10, 8), new be({ color: 16773568 }));
-      (A.position.set(M, r - 0.3, 0), n.add(A));
+      if ((T.position.set(M, r - 0.75, 0), n.add(T), ccsL)) {
+        let A = je("lamp_rice", 0.62);
+        (A.traverse((I) => {
+          let D = I;
+          D.isMesh && ((D.castShadow = !1), (D.material = /M00/.test(D.material.name) ? ccsL : D.material));
+        }),
+          A.position.set(M, r - 0.42 - 0.62, 0),
+          n.add(A));
+        let k = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
+        (k.position.set(M, r - 0.21, 0), n.add(k));
+      } else {
+        let A = new R(new we(0.16, 10, 8), new be({ color: 16773568 }));
+        (A.position.set(M, r - 0.3, 0), n.add(A));
+      }
     }
     return (
       Lo(n),
@@ -44822,9 +44835,9 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       "ร้านของชำมีน้ำขวดใหญ่ขายนะ",
       "ไปลองตู้คีบตุ๊กตาหรือยัง",
       "พี่คีบได้ตุ๊กตาหมีมาเมื่อวานล่ะ",
-      "แซลมอนบนเรือลุงทะเลอร่อยนะ",
-      "ขึ้นเรือไปดูวิวมาหรือยัง",
-      "ลมบนเรือเย็นสบายมาก",
+      "แซลมอนแผงลุงทะเลริมหาดอร่อยนะ",
+      "ไปเดินเล่นบนสะพานไม้มาหรือยัง",
+      "ลมริมหาดเย็นสบายมาก",
       "ลุงปั้มอบขนมปังใหม่ทุกเช้าเลยนะ",
       "เพรทเซลลุงปั้มสูตรน้องหมาด้วย",
       "ป้าอู้ดย่างไก่ไม่ใส่เกลือให้น้อง ๆ",
@@ -45491,13 +45504,8 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
   oi.ship.position.set(fd, -0.85, _1);
   oi.moor.baseY = -0.85;
   oi.moor.amp = 0.08;
-  K.add(oi.ship);
-  var ba = (i, e) => {
-      let t = (e - _1) / is,
-        n = -(i - fd) / is,
-        s = oi.deckLocal(t, n);
-      return s === null ? null : oi.ship.position.y + s * is + 0.02;
-    },
+  // v81: เอาเรือลุงทะเลออก (ไม่ใส่ลงฉาก) · ร้านปลาย้ายไปตั้งบนหาดหน้าสะพานไม้
+  var ba = (i, e) => null,
     Lp = (jE + oi.L / 2) / oi.L,
     H3 = _1 + jE * is,
     il = [
@@ -45506,6 +45514,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       new H(fd - oi.halfW(Lp) * 0.62 * is, -0.85 + (oi.deckY(Lp) - 0.25) * is + 0.02, H3),
     ];
   function Rd(i, e) {
+    return null;
     for (let t = 0; t < il.length - 1; t++) {
       let n = il[t],
         s = il[t + 1],
@@ -45528,7 +45537,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       s = Math.hypot(t, n),
       o = e.y - i.y,
       r = new J();
-    (r.position.copy(i), (r.rotation.y = Math.atan2(t, n)), K.add(r));
+    (r.position.copy(i), (r.rotation.y = Math.atan2(t, n)));
     let a = Math.atan2(o, s),
       c = Math.hypot(s, o),
       l = new R(new ee(1, 0.1, c + 0.25), new X({ color: 11039807, roughness: 0.8 }));
@@ -45971,19 +45980,17 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
   ].forEach(([i, e], t) => f4(i, e, 0.9 + (t % 3) * 0.15));
   var pt = [],
     S1 = (i, e) => new H(fd - e * is, 0, _1 + i * is);
-  for (let i of oi.obstacles) {
-    let e = S1(i.x, i.z);
-    pt.push({ x: e.x, z: e.z, hw: i.hd * is, hd: i.hw * is });
-  }
+  // (เรือถูกเอาออก: ไม่มีจุดชนของเรือแล้ว)
   var Sr = { x: 2.6, z: -1.05 },
-    od = S1(Sr.x, Sr.z),
-    vH = S1(Sr.x, Sr.z + 1.15);
+    od = new H(-4.6, 0, Rt - 4.4),
+    vH = new H(od.x + 1.25, 0, od.z),
+    ccsStall = null;
   {
-    let i = SM(),
-      e = (Sr.x + oi.L / 2) / oi.L;
-    (i.position.set(Sr.x, oi.deckY(e) - 0.25, Sr.z),
-      i.scale.setScalar(1 / is),
-      oi.ship.add(i),
+    let i = SM();
+    (i.position.copy(od),
+      (i.rotation.y = Math.PI / 2),
+      K.add(i),
+      (ccsStall = i),
       pt.push({ x: od.x, z: od.z, hw: 0.95 / 2 + 0.05, hd: 2.1 / 2 + 0.05 }));
   }
   var YE = [],
@@ -49403,6 +49410,21 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if ((_.position.set(0, n - 0.75, -i.D / 2 + 0.07), e.add(_), (i.W ?? 0) > 15)) {
       let S = g6(e);
       for (let M of [...e.children]) M.userData.occOK && (S += g6(M));
+      // หลังรวมเมช: ชิ้นที่ทั้งก้อนลอยอยู่กลางทางเดินกลางร้าน (รางเขียว + ผลไม้) → ลบทิ้ง
+      {
+        let M = new mt(),
+          T = [];
+        (e.updateMatrixWorld(!0),
+          e.traverse((A) => {
+            if (!A.isMesh || A.isInstancedMesh) return;
+            M.setFromObject(A);
+            let F = M.min.clone().sub(e.position),
+              C = M.max.clone().sub(e.position);
+            F.x > -1.3 && C.x < 1.3 && F.z > -0.3 && C.z < 0.8 && F.y > 0.4 && C.y < 1.1 && T.push(A);
+          }));
+        for (let A of T) A.parent?.remove(A);
+        T.length && console.log(`[fix] เอาของลอยกลางร้านออก ${T.length} ชิ้น`);
+      }
       console.log(
         `[perf] ร้านถูกจัง: รวมสินค้า ${S} ชิ้น`,
       );
@@ -50079,10 +50101,89 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         i("k_shells", t + (o - 0.5) * 3, s + 2.6, o * 6, 4.2));
     });
   }
+  // v81: ประภาคารบนเกาะเล็กกลางทะเล (โมเดล Lighthouse) · ลำแสงหมุนตอนกลางคืน
+  var ccsLH = { g: null, beam: null, glow: null, lampM: null, t: 0 };
+  function ccsLighthouse() {
+    if (ccsLH.g || !ze("lighthouse")) return;
+    let i = new J();
+    (i.position.set(34, 0, Rt + 78), K.add(i));
+    let e = (d, u) => {
+        let p = d.attributes.position,
+          m = new H();
+        for (let E = 0; E < p.count; E++) (m.fromBufferAttribute(p, E), m.y > -7 && (m.x += (Math.sin(E * 12.9898) * 43758.5453 % 1) * u, m.z += (Math.cos(E * 78.233) * 12543.123 % 1) * u), p.setXYZ(E, m.x, m.y, m.z));
+        return (d.computeVertexNormals(), d);
+      },
+      t = new R(e(new re(6.2, 9.5, 9, 16, 3), 0.6), new X({ color: 8483924, roughness: 0.95, flatShading: !0 }));
+    ((t.position.y = -3.6), i.add(t));
+    let n = new R(new re(8.6, 9.2, 0.6, 28), new X({ color: 15125412, roughness: 1 }));
+    ((n.position.y = 0.05), i.add(n));
+    let s = new R(e(new re(5.4, 6.3, 1.2, 16, 1), 0.25), new X({ color: 7380820, roughness: 0.95, flatShading: !0 }));
+    ((s.position.y = 1.0), i.add(s));
+    let o = new X({ color: 9078660, roughness: 0.9, flatShading: !0 });
+    for (let d = 0; d < 11; d++) {
+      let u = (d / 11) * Math.PI * 2 + Math.sin(d * 3.1) * 0.3,
+        p = 6.4 + Math.sin(d * 7.7) * 1.2,
+        m = new R(new Ps(0.7 + Math.abs(Math.sin(d * 2.3)) * 1.1, 0), o);
+      (m.position.set(Math.cos(u) * p, 0.3, Math.sin(u) * p), m.rotation.set(d, d * 2, d * 3), m.scale.y = 0.7, i.add(m));
+    }
+    // ต้นมะพร้าว 2 ต้น (ใช้โมเดลในเกมถ้ามี)
+    for (let [d, u, p] of [
+      [-3.2, 2.4, 0.4],
+      [3.4, -2.2, 2.1],
+    ])
+      if (ze("coconut_palm")) {
+        let m = je("coconut_palm", 5.5);
+        (m.position.set(d, 1.6, u), (m.rotation.y = p), i.add(m));
+      }
+    let r = je("lighthouse", 15);
+    (r.position.set(0, 1.55, 0), i.add(r));
+    let a = 0;
+    (r.updateMatrixWorld(!0),
+      r.traverse((d) => {
+        let u = d;
+        if (!u.isMesh) return;
+        ((u.castShadow = !1), (u.receiveShadow = !1));
+        for (let p of Array.isArray(u.material) ? u.material : [u.material])
+          /LampGlass|Window/.test(p.name) && ((p.emissive = new ae(16766336)), (p.emissiveIntensity = 0.2), (p.toneMapped = !1), /LampGlass/.test(p.name) && (ccsLH.lampM = p));
+        if (u.name === "Lamp" || /LampGlass/.test(u.material?.name ?? "")) {
+          let p = new mt().setFromObject(u);
+          a = Math.max(a, (p.min.y + p.max.y) / 2 - i.position.y);
+        }
+      }));
+    a || (a = 1.55 + 15 * 0.74);
+    // ลำแสง: กรวยใส 2 อัน หันออกคนละทาง หมุนรอบเสา
+    let c = document.createElement("canvas");
+    ((c.width = 4), (c.height = 128));
+    let l = c.getContext("2d"),
+      h = l.createLinearGradient(0, 0, 0, 128);
+    (h.addColorStop(0, "#ffffff"), h.addColorStop(0.35, "#5a5a5a"), h.addColorStop(1, "#000000"), (l.fillStyle = h), l.fillRect(0, 0, 4, 128));
+    let f = new X({ color: 16775880, emissive: 16775880, emissiveIntensity: 1, alphaMap: new ut(c), transparent: !0, opacity: 0, depthWrite: !1, blending: $i, side: Ke, fog: !1, toneMapped: !1 }),
+      g = new J();
+    g.position.set(0, a, 0);
+    for (let d of [1, -1]) {
+      let u = new re(0.25, 5.5, 75, 20, 1, !0);
+      u.translate(0, -37.5, 0);
+      let p = new R(u, f);
+      ((p.rotation.z = (d * Math.PI) / 2), (p.rotation.x = 0), (p.userData.noOcc = !0), (p.frustumCulled = !1), g.add(p));
+    }
+    i.add(g);
+    let y = new zi(new vi({ map: CC, color: 16771776, transparent: !0, opacity: 0.9, depthWrite: !1, blending: $i, fog: !1 }));
+    (y.scale.setScalar(7), y.position.set(0, a, 0), (y.userData.noOcc = !0), i.add(y));
+    ((ccsLH.g = i), (ccsLH.beam = g), (ccsLH.beamM = f), (ccsLH.glow = y));
+  }
+  function ccsLighthouseTick(i) {
+    if (!ccsLH.g) return;
+    let e = 1 - Math.min(1, Math.max(0, (Math.sin((j.time - 0.25) * Math.PI * 2) + 0.15) * 3));
+    ((ccsLH.t += i), (ccsLH.beam.rotation.y = ccsLH.t * 0.7), (ccsLH.beam.visible = e > 0.02 && !Se), (ccsLH.beamM.opacity = 0.42 * e));
+    ((ccsLH.glow.material.opacity = 0.25 + e * 0.75 * (0.8 + 0.2 * Math.sin(ccsLH.t * 6))), ccsLH.glow.scale.setScalar(4 + e * 6));
+    ccsLH.lampM && (ccsLH.lampM.emissiveIntensity = 0.2 + e * 2.5);
+  }
   function TA() {
-    if ((IH(), ze("grave_12"))) {
+    (ccsLighthouse(), ccsStall && Cr && ((ccsStall.position.y = Math.max(0, Cr.heightAt(od.x, od.z))), (od.y = ccsStall.position.y)));
+    if ((IH(), ze("rb_garden"))) {
+      ccsGardenModel();
       for (let d = 0; d < yd; d++) T0(d);
-      (PC(), ccsMergeGarden());
+      PC();
     }
     if (ze("zfountain_0")) {
       let d = je("zfountain_0");
@@ -50314,8 +50415,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               "Hat_01",
             ])
           : Ic(Sh[3]),
-        u = S1(Sr.x - 0.2, Sr.z - 0.85);
-      ((u.y = ba(u.x, u.z) ?? 1.8),
+        u = new H(od.x - 0.85, 0, od.z + 0.2);
+      ((u.y = ccsStall?.position.y ?? 0),
         d.root.position.copy(u),
         (d.yaw = -Math.PI / 2),
         K.add(d.root),
@@ -50333,7 +50434,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             "ปลาทูนึ่งแกะก้างให้น้องหมา",
             "แซลมอนย่างหอม ๆ ไม่ใส่เกลือ",
             "กุ้งลวกแกะเปลือกแล้วนะ",
-            "ขึ้นเรือมาเที่ยวเหรอหนู",
+            "มาเที่ยวทะเลเหรอหนู",
           ],
         }));
     }
@@ -52830,7 +52931,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (MH(n, e), r4(), a4(n));
       }
     }
-    if ((Se && (qE -= e) < 0 && UC(), PA(e), ccsWarmShop(), HH(e, Le[0]?.pos), eC(Math.min(0.1, e)), nP(Math.min(0.1, e)), Le[0])) {
+    if ((Se && (qE -= e) < 0 && UC(), PA(e), ccsWarmShop(), ccsLighthouseTick(e), HH(e, Le[0]?.pos), eC(Math.min(0.1, e)), nP(Math.min(0.1, e)), Le[0])) {
       let s = Math.min(0.1, e);
       (lC(s, Le[0]), pC(s, Le[0]), Q4(s, Le[0]), sT(s, Le[0]), FC(s, Le[0]), BC(s, Le[0]), oC(s), j.started && p0());
     }
@@ -54589,7 +54690,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (ke("pop"), _0());
       }));
   }
-  var No = z,
+  var ccsGS = 0.68,
+    No = z,
     yd = 8,
     ds = [16748465, 16765503, 16777215, 11832575, 16743001, 9425919],
     AC = [
@@ -54606,12 +54708,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       ["beast:doberman", "โดเบอร์แมน"],
       ["beast:chihuahua", "ชิวาวา"],
     ],
+    // v81: สวนสายรุ้งใหม่ (โมเดลของพี่ปั๊ม CHOWCHOW_RAINBOW_GARDEN_v1) · หน่วยในโมเดล × ccsGS = เมตรในเกม
+    // แปลงที่ระลึก 8 แปลง ซ้าย/ขวาทางเดินกลาง ประตูอยู่ฝั่ง +z (หันเข้าเมือง)
     kr = Array.from({ length: yd }, (i, e) => {
-      let t = Math.PI * (0.1 + (e / (yd - 1)) * 0.8),
-        n = e % 2 ? 5.3 : 4.3,
-        s = Math.cos(t) * n,
-        o = -Math.sin(t) * n * 0.82 + 0.4;
-      return { x: hn.x + s, z: hn.z + o, ry: Math.atan2(-s, 3.5 - o) };
+      let t = e < 4 ? -1 : 1,
+        n = [7.1, 2.7, -1.7, -6.1][e % 4];
+      return { x: hn.x + t * 6.55 * ccsGS, z: hn.z + n * ccsGS, ry: (-t * Math.PI) / 2, side: t, gx: t * 6.55, gz: n };
     }),
     wn = { g: new J(), plots: [], petals: null, flies: null, lanterns: [], t: 0 };
   function z6(i) {
@@ -54805,68 +54907,68 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     return e;
   }
+  // ป้ายชื่อแนวนอนสำหรับแผ่นทองเหลืองบนหินแต่ละแปลง
+  function ccsPlaque(i) {
+    let e = document.createElement("canvas");
+    ((e.width = 512), (e.height = 320));
+    let t = e.getContext("2d");
+    ((t.fillStyle = "#8a6a40"), t.fillRect(0, 0, 512, 320));
+    let n = t.createLinearGradient(0, 0, 0, 320);
+    (n.addColorStop(0, "#fbf3df"), n.addColorStop(1, "#efe2c4"), (t.fillStyle = n), t.beginPath(), t.roundRect(16, 16, 480, 288, 22), t.fill());
+    ((t.strokeStyle = "#c9a227"), (t.lineWidth = 4), t.beginPath(), t.roundRect(28, 28, 456, 264, 16), t.stroke());
+    ((t.textAlign = "center"), (t.fillStyle = "#4e3d30"), (t.font = "700 64px Mitr, sans-serif"), t.fillText(i.name.slice(0, 16), 256, 118, 440));
+    ((t.font = "400 30px Mitr, sans-serif"), (t.fillStyle = "#8a7766"), i.years && t.fillText(i.years.slice(0, 20), 256, 164, 440));
+    ((t.fillStyle = "#5a4a3e"), (t.font = "400 28px Mitr, sans-serif"));
+    let s = i.msg.slice(0, 60),
+      o = [],
+      r = "",
+      a = (() => {
+        try {
+          return [...new Intl.Segmenter("th", { granularity: "word" }).segment(s)].map((c) => c.segment);
+        } catch {
+          return [...s];
+        }
+      })();
+    for (let c of a) r && t.measureText(r + c).width > 420 ? (o.push(r.trim()), (r = c.trimStart())) : (r += c);
+    (r && o.push(r.trim()), o.slice(0, 2).forEach((c, l) => t.fillText(c, 256, 214 + l * 36, 440)), (t.font = "26px sans-serif"), t.fillText("🌈", 256, 290));
+    let c = new ut(e);
+    return ((c.colorSpace = Ye), (c.anisotropy = 4), c);
+  }
+  // แปลง i: กลุ่มอยู่กลางแปลงในโมเดล หมุนให้ +z ชี้เข้าทางเดินกลาง, หน่วยข้างในเป็นหน่วยโมเดล (scale ccsGS)
   function T0(i) {
     let e = kr[i],
       t = No.memorials?.[i] ?? null,
       n = wn.plots[i];
     n && wn.g.remove(n);
     let s = new J();
-    (s.position.set(e.x - hn.x, 0, e.z - hn.z), (s.rotation.y = e.ry));
-    let o = new R(new re(0.75, 0.8, 0.06, 28), new X({ color: 7031346, roughness: 1 }));
-    ((o.scale.z = 0.7), (o.position.y = 0.03), (o.receiveShadow = !0), s.add(o));
-    let r = ze("grave_12") && ze("grave_5");
-    if ((r && (o.visible = !1), t && r)) {
-      let a = je(i % 2 ? "grave_13" : "grave_12", 0.98);
-      ((a.rotation.y = Math.PI / 2),
-        a.position.set(0, 0, -0.42),
-        a.traverse((m) => {
-          ((m.castShadow = !0), (m.receiveShadow = !0));
-        }),
-        s.add(a));
-      let c = new mt().setFromObject(a).getSize(new H()),
-        l = new R(
-          new Te(c.x * 0.72, c.y * 0.6),
-          new X({ map: z6(t), roughness: 0.5, transparent: !0, polygonOffset: !0, polygonOffsetFactor: -2 }),
-        );
-      (l.position.set(0, c.y * 0.47, -0.42 + c.z / 2 + 0.004), s.add(l));
-      let h = je(i % 2 ? "grave_2" : "grave_5", i % 2 ? 1.25 : 1.2);
-      ((h.rotation.y = Math.PI / 2),
-        h.position.set(0, 0, 0.32),
-        h.traverse((m) => {
-          ((m.castShadow = !0), (m.receiveShadow = !0));
-        }),
-        s.add(h));
-      let f = new mt().setFromObject(h).max.y,
-        d = Jc(ds[t.flower % ds.length], Math.min(14, 4 + t.flowers * 2));
-      (d.position.set(0, f - 0.04, 0.15), s.add(d));
-      let u = L6(t.kind);
-      (u.position.set(0.72, 0, 0.1), (u.rotation.y = -0.5), s.add(u));
-      let p = D6(t.lit);
-      (p.position.set(-0.62, 0, 0.25), p.scale.setScalar(1.6), s.add(p));
-    } else if (!t && r) {
-      let a = je("grave_5", 0.9);
-      ((a.rotation.y = Math.PI / 2),
-        a.position.set(0, -0.06, 0.1),
-        a.traverse((l) => {
-          l.receiveShadow = !0;
-        }),
-        s.add(a));
-      let c = Jc(ds[i % ds.length], 5);
-      (c.position.set(0, 0.06, 0.1), s.add(c));
-    } else if (t) {
-      let a = kC(z6(t));
-      ((a.position.z = -0.25), s.add(a));
-      let c = Jc(ds[t.flower % ds.length], Math.min(14, 4 + t.flowers * 2));
-      (c.position.set(0, 0.06, 0.2), s.add(c));
-      let l = L6(t.kind);
-      (l.position.set(0.55, 0, 0.05), (l.rotation.y = -0.5), s.add(l));
-      let h = D6(t.lit);
-      (h.position.set(-0.5, 0.06, 0.2), h.scale.setScalar(1.6), s.add(h));
-    } else {
-      let a = Jc(ds[i % ds.length], 5);
-      (a.position.set(0, 0.06, 0), s.add(a));
+    (s.position.set(e.x - hn.x, 0.012, e.z - hn.z), (s.rotation.y = e.ry), s.scale.setScalar(ccsGS));
+    // แปลงพิกัดโมเดล (gx, gz) → พิกัดในแปลง
+    let o = (h, f, d) => {
+        let u = h - e.gx,
+          p = d - e.gz;
+        return new H(e.side * p, f, -e.side * u);
+      },
+      r = 1 / ccsGS;
+    if (t) {
+      // แผ่นชื่อบนหน้าหิน (NAMEPLATE ในโมเดล)
+      let h = new R(
+        new Te(0.86, 0.54),
+        new X({ map: ccsPlaque(t), roughness: 0.5, metalness: 0.05, polygonOffset: !0, polygonOffsetFactor: -2 }),
+      );
+      (h.position.copy(o(e.side * 6.645, 0.94, e.gz - 0.58)), s.add(h));
+      // ดอกไม้ที่วางให้น้อง (ยิ่งวางมาก ยิ่งเยอะ) หน้าหิน
+      let f = Jc(ds[t.flower % ds.length], Math.min(14, 4 + t.flowers * 2));
+      (f.position.copy(o(e.side * 6.2, 0.26, e.gz - 0.58)), f.scale.setScalar(r * 1.1), (f.rotation.y = Math.PI / 2), s.add(f));
+      // รูปปั้นน้อง
+      let d = L6(t.kind);
+      (d.position.copy(o(e.side * 5.75, 0.26, e.gz + 0.75)), d.scale.setScalar(r * 0.95), (d.rotation.y = 0.4), s.add(d));
+      // เทียน: จุดแล้วมีเปลวไฟบนเทียนในโมเดล
+      if (t.lit) {
+        let u = D6(!0);
+        (u.position.copy(o(e.side * 5.17, 0.3, e.gz + 0.46)), u.scale.setScalar(r * 1.3), s.add(u));
+      }
     }
-    (oo(s, !0), (wn.plots[i] = s), wn.g.add(s)); // v79: รวมเมชในแปลง (ดอกไม้/หิน/เทียน) ลด draw call
+    (oo(s, !0), (wn.plots[i] = s), wn.g.add(s));
   }
   // v79: รวมเมชส่วนนิ่งของสวนสายรุ้ง (พุ่มไม้ 40 ลูก ดอกไม้ ซุ้มรุ้ง ต้นซากุระ โคมไฟ จิโซ) จาก ~190 draw call
   // แปลงที่ระลึกกับดอกไม้ที่วางเองแยกไว้ เพราะสร้างใหม่ได้ระหว่างเล่น
@@ -54882,199 +54984,87 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     for (let t of e) i.add(t);
   }
   function PC() {
-    let i = wn.g;
-    if ((hb(), ze("jizo_0")))
-      for (let [e, t, n, s] of [
-        [-1.05, 5.95, 0, 0.72],
-        [1.05, 5.95, 0, 0.72],
-        [0.75, 0.75, 0.5, 0.62],
-        [-0.8, 0.7, -0.5, 0.55],
-      ]) {
-        let o = je("jizo_0", s);
-        (o.position.set(e, 0, t),
-          (o.rotation.y = n),
-          o.traverse((a) => {
-            ((a.castShadow = !0), (a.receiveShadow = !0));
-          }),
-          i.add(o));
-        let r = new R(
-          new re(s * 0.2, s * 0.27, s * 0.2, 14, 1, !0, -Math.PI * 0.55, Math.PI * 1.1),
-          new X({ color: 14034984, roughness: 0.8, side: Ke }),
-        );
-        (r.position.set(e, s * 0.52, t),
-          (r.rotation.y = n),
-          i.add(r),
-          pt.push({ x: hn.x + e, z: hn.z + t, hw: 0.2, hd: 0.2 }));
-      }
+    hb();
   }
+  // จุดชน (พิกัดโมเดล: x, z, กว้าง, ลึก)
+  var GC0 = [
+    [-2.45, 11.3, 0.72, 0.72], [2.45, 11.3, 0.72, 0.72], [-3.6, 11.25, 1, 1], [3.6, 11.25, 1, 1],
+    [-4.46, 10.12, 0.3, 0.3], [4.6, 10.98, 0.3, 0.3], [-3.5, 9.45, 1.24, 1.24], [3.5, 9.45, 1.24, 1.24],
+    [0, -10, 2.4, 2.4], [0, -11.28, 2.3, 0.5], [-3.82, -9.55, 0.8, 0.85], [3.82, -9.55, 0.8, 0.85],
+    [-4.35, -8.85, 1.8, 0.8], [4.35, -8.85, 1.8, 0.8],
+    [-9.75, 4.8, 1.1, 1.05], [9.75, 4.8, 1.1, 1.05], [-9.75, -4.9, 1.1, 1.05], [9.75, -4.9, 1.1, 1.05],
+    [-10.14, 9.1, 0.55, 0.55], [10.16, 9.1, 0.55, 0.55], [-10.34, 0.4, 0.55, 0.55], [10.36, 0.4, 0.55, 0.55], [-10.09, -9.4, 0.55, 0.55], [10.11, -9.4, 0.55, 0.55],
+    [-2.25, 7, 0.3, 0.3], [2.25, 2.7, 0.3, 0.3], [-2.25, -1.7, 0.3, 0.3], [2.25, -6.1, 0.3, 0.3],
+  ];
   function IC() {
     let i = wn.g;
     (i.position.copy(hn), K.add(i));
-    let e = new R(new gt(8.2, 64), new X({ color: 9425002, roughness: 1 }));
-    ((e.rotation.x = -Math.PI / 2), (e.position.y = 0.012), (e.scale.y = 0.85), (e.receiveShadow = !0), i.add(e));
-    let t = new X({ color: 14472134, roughness: 0.9 });
-    for (let d = 0; d < 9; d++) {
-      let u = new R(new re(0.34 + (d % 2) * 0.05, 0.36, 0.05, 16), t);
-      (u.position.set(Math.sin(d * 1.3) * 0.25, 0.025, 6.6 - d * 0.78),
-        (u.scale.z = 0.8),
-        (u.receiveShadow = !0),
-        i.add(u));
-    }
-    let n = new R(new rr(1.25, 2.1, 48), t);
-    ((n.rotation.x = -Math.PI / 2), (n.position.y = 0.02), i.add(n));
-    let s = new X({ color: 4165445, roughness: 0.9 });
-    for (let d = 0; d < 44; d++) {
-      let u = (d / 44) * Math.PI * 2;
-      if (Math.abs(Math.atan2(Math.sin(u), Math.cos(u)) - Math.PI / 2) < 0.28) continue;
-      let p = new R(new we(0.62, 12, 9), s);
-      if (
-        (p.scale.set(1, 0.72, 1),
-        p.position.set(Math.cos(u) * 7.7, 0.38, Math.sin(u) * 7.7 * 0.85),
-        (p.castShadow = !0),
-        i.add(p),
-        pt.push({ x: hn.x + p.position.x, z: hn.z + p.position.z, hw: 0.45, hd: 0.45 }),
-        d % 3 === 0)
-      ) {
-        let m = Jc(ds[d % ds.length], 3);
-        (m.position.set(Math.cos(u) * 7, 0, Math.sin(u) * 7 * 0.85), i.add(m));
-      }
-    }
-    let o = [16739179, 16755021, 16766011, 6937468, 5090295, 7639036, 11638780],
-      r = new J();
-    (r.position.set(0, 0, 6.65),
-      o.forEach((d, u) => {
-        let p = 2 - u * 0.11,
-          m = new R(
-            new vt(p, 0.055, 10, 48, Math.PI),
-            new X({ color: d, roughness: 0.4, emissive: d, emissiveIntensity: 0.25 }),
-          );
-        ((m.position.y = 0), r.add(m));
-      }));
-    for (let d of [-1, 1]) {
-      let u = new R(new re(0.09, 0.11, 0.5, 12), M0);
-      (u.position.set(d * 1.67, 0.25, 0),
-        r.add(u),
-        pt.push({ x: hn.x + d * 1.67, z: hn.z + 6.65, hw: 0.14, hd: 0.14 }));
-    }
-    ((r.position.y = 0),
-      r.children.forEach((d, u) => {
-        u < o.length && (d.position.y = 0.45);
-      }),
-      i.add(r));
-    let a = new R(
-      new Te(1.5, 0.5),
-      new X({
-        map: (() => {
-          let d = document.createElement("canvas");
-          ((d.width = 384), (d.height = 128));
-          let u = d.getContext("2d");
-          ((u.fillStyle = "#fff8ec"),
-            u.beginPath(),
-            u.roundRect(4, 4, 376, 120, 40),
-            u.fill(),
-            (u.strokeStyle = "#c9a227"),
-            (u.lineWidth = 6),
-            u.stroke(),
-            (u.fillStyle = "#6a4fb0"),
-            (u.font = "700 46px Mitr, sans-serif"),
-            (u.textAlign = "center"),
-            u.fillText("สวนสายรุ้ง 🌈", 192, 66),
-            (u.fillStyle = "#8a7766"),
-            (u.font = "400 22px Mitr, sans-serif"),
-            u.fillText(
-              "ที่ระลึกของน้องที่รัก",
-              192,
-              102,
-            ));
-          let p = new ut(d);
-          return ((p.colorSpace = Ye), p);
-        })(),
-        transparent: !0,
-        roughness: 0.6,
-      }),
-    );
-    (a.position.set(0, 2.62, 6.68), i.add(a));
-    let c = new X({ color: 7029808, roughness: 0.9 }),
-      l = new R(new re(0.16, 0.3, 2.4, 10), c);
-    ((l.position.y = 1.2), (l.rotation.z = 0.06), (l.castShadow = !0), i.add(l));
-    for (let [d, u] of [
-      [0.6, 1.1],
-      [2.4, 1],
-      [4.1, 1.2],
+    for (let [e, t, n, s] of GC0) pt.push({ x: hn.x + e * ccsGS, z: hn.z + t * ccsGS, hw: (n / 2) * ccsGS, hd: (s / 2) * ccsGS });
+    // หินแต่ละแปลง
+    for (let e of kr) pt.push({ x: hn.x + e.side * 6.88 * ccsGS, z: hn.z + (e.gz - 0.58) * ccsGS, hw: 0.3 * ccsGS, hd: 0.62 * ccsGS });
+    // ไฟโคม 4 ดวง (ใช้ระบบไฟกลางคืนรวมของเมือง)
+    for (let [e, t] of [
+      [-2.25, 7],
+      [2.25, 2.7],
+      [-2.25, -1.7],
+      [2.25, -6.1],
     ]) {
-      let p = new R(new re(0.06, 0.11, u, 7), c);
-      (p.position.set(Math.cos(d) * 0.35, 2.3, Math.sin(d) * 0.35),
-        p.rotation.set(Math.sin(d) * 0.7, 0, -Math.cos(d) * 0.7),
-        i.add(p));
+      let n = new En(16763274, 0, 7, 1.6);
+      (n.position.set(hn.x + e * ccsGS, 1.37 * ccsGS, hn.z + t * ccsGS), K.add(n), H0.push({ l: n, on: 6 }));
     }
-    let h = [16761046, 16757708, 16766693, 16752320];
-    for (let d = 0; d < 26; d++) {
-      let u = Math.random() * Math.PI * 2,
-        p = Math.random() * 1.5,
-        m = 2.6 + Math.random() * 1.1 - p * 0.25,
-        E = new R(new Ps(0.42 + Math.random() * 0.3, 1), new X({ color: h[d % 4], roughness: 0.8, flatShading: !0 }));
-      (E.position.set(Math.cos(u) * p, m, Math.sin(u) * p), (E.castShadow = !0), i.add(E));
-    }
-    if ((pt.push({ x: hn.x, z: hn.z, hw: 0.35, hd: 0.35 }), ze("table_bench")))
-      for (let d of [-1, 1]) {
-        let u = je("table_bench");
-        (u.scale.set(1.1, 0.6, 1.1), u.position.set(d * 2.6, 0, 2.6), (u.rotation.y = d * 0.5), i.add(u));
-      }
-    for (let [d, u] of [
-      [-2.1, 5.9],
-      [2.1, 5.9],
-      [-5.6, -1.5],
-      [5.6, -1.5],
-    ]) {
-      let p = new J();
-      p.position.set(d, 0, u);
-      let m = new R(new re(0.16, 0.2, 0.7, 8), M0);
-      ((m.position.y = 0.35), p.add(m));
-      let E = new X({ color: 16773583, emissive: 16762218, emissiveIntensity: 0.1, roughness: 0.5, toneMapped: !1 });
-      wn.lanterns.push(E);
-      let g = new R(new ee(0.3, 0.26, 0.3), E);
-      ((g.position.y = 0.84), p.add(g));
-      let y = new R(new yt(0.3, 0.2, 4), M0);
-      ((y.position.y = 1.07),
-        (y.rotation.y = Math.PI / 4),
-        p.add(y),
-        i.add(p),
-        pt.push({ x: hn.x + d, z: hn.z + u, hw: 0.22, hd: 0.22 }));
-      let x = new En(16763274, 0, 7, 1.6);
-      (x.position.set(hn.x + d, 0.95, hn.z + u), K.add(x), H0.push({ l: x, on: 6 }));
-    }
-    let f = (d, u, p) => {
-      let m = new Float32Array(d * 3);
-      for (let y = 0; y < d; y++)
-        ((m[y * 3] = (Math.random() - 0.5) * 9),
-          (m[y * 3 + 1] = Math.random() * 3.6),
-          (m[y * 3 + 2] = (Math.random() - 0.5) * 8));
-      let E = new qe();
-      E.setAttribute("position", new Je(m, 3));
-      let g = new bs(
-        E,
-        new ls({
-          color: u,
-          size: p,
-          transparent: !0,
-          opacity: 0.9,
-          depthWrite: !1,
-          blending: u === 16774560 ? $i : Qo,
-        }),
+    let e = (t, n, s, o, r) => {
+      let a = new Float32Array(t * 3);
+      for (let h = 0; h < t; h++)
+        ((a[h * 3] = (Math.random() - 0.5) * o), (a[h * 3 + 1] = Math.random() * 3.6), (a[h * 3 + 2] = (Math.random() - 0.5) * r));
+      let c = new qe();
+      c.setAttribute("position", new Je(a, 3));
+      let l = new bs(
+        c,
+        new ls({ color: n, size: s, transparent: !0, opacity: 0.9, depthWrite: !1, blending: n === 16774560 ? $i : Qo }),
       );
-      return ((g.userData.noOcc = !0), i.add(g), g);
+      return ((l.userData.noOcc = !0), i.add(l), l);
     };
-    ((wn.petals = f(70, 16758479, 0.09)), (wn.flies = f(40, 16774560, 0.12)));
-    for (let d = 0; d < yd; d++) {
-      T0(d);
-      let u = kr[d];
-      pt.push({ x: u.x + Math.sin(u.ry) * 0.12, z: u.z + Math.cos(u.ry) * 0.12, hw: 0.52, hd: 0.52 });
-    }
+    ((wn.petals = e(70, 16758479, 0.09, 15, 15)), (wn.flies = e(46, 16774560, 0.12, 14, 15)));
+  }
+  // วางโมเดลสวน (เรียกหลังโหลดโมเดลเสร็จ) · โมเดลรวมเมชมาแล้ว: ทั้งสวน ~6 draw call
+  function ccsGardenModel() {
+    if (!ze("rb_garden") || wn.model) return;
+    let i = vp.rb_garden.clone(!0);
+    (i.scale.setScalar(ccsGS), (i.position.y = 0.012));
+    i.traverse((e) => {
+      let t = e;
+      if (!t.isMesh) return;
+      let n = t.material;
+      // รวมเป็นชิ้นใหญ่: พื้น/แปลงไม่ต้องให้ระบบฉากบังกล้องจับ, ของสูง (ซากุระ ประตู รุ้ง รูปปั้น) โปร่งแสงได้เมื่อบังน้อง
+      ((t.castShadow = !1), (t.receiveShadow = !0), (t.userData.noMerge = !0), n.name !== "rbg_tall" && (t.userData.noOcc = !0));
+      n.name === "rbg_glow"
+        ? ((n.emissive = new ae(16768656)), (n.emissiveIntensity = 0.1), (n.toneMapped = !1), wn.lanterns.push(n))
+        : /rbg_(static|tall)/.test(n.name) && ((n.vertexColors = !0), (n.roughness = 0.92));
+      n.map && (n.map.anisotropy = 4);
+    });
+    // ต้นไม้/รูปปั้น/โคมให้เงา (เฉพาะคุณภาพสูง)
+    ((wn.model = i), wn.g.add(i));
   }
   function FC(i, e) {
     if (!wn.petals) return;
     wn.t += i;
-    let t = e.pos.distanceTo(hn) < 40;
+    let t0 = e.pos.distanceTo(hn),
+      t = t0 < 40;
+    // v81: เดินเข้าใกล้ (<75 ม.) → ส่งโมเดลสวนขึ้นการ์ดจอไว้ก่อน 1 ครั้ง (เดิมค้างตอนสวนโผล่ครั้งแรก)
+    if (!wn.warm && wn.model && t0 < 75 && !Se) {
+      wn.warm = !0;
+      let n = wn.g.visible,
+        s = new qn(4, 4, { type: Zi }),
+        o = new Tn(100, 1, 0.5, 40),
+        r = dn.shadowMap.autoUpdate;
+      try {
+        ((wn.g.visible = !0), o.position.set(hn.x, 18, hn.z), o.lookAt(hn), o.updateMatrixWorld(), (dn.shadowMap.autoUpdate = !1), dn.setRenderTarget(s), dn.render(K, o));
+      } catch (a) {
+        console.warn("warm garden", a);
+      } finally {
+        (dn.setRenderTarget(null), (dn.shadowMap.autoUpdate = r), (wn.g.visible = n), s.dispose());
+      }
+    }
     if (((wn.g.visible = t && !Se), !t)) return;
     let n = 1 - Math.min(1, Math.max(0, (Math.sin((j.time - 0.25) * Math.PI * 2) + 0.15) * 3));
     for (let r of wn.lanterns) r.emissiveIntensity = 0.1 + n * 2.4;
@@ -55082,7 +55072,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     for (let r = 0; r < s.count; r++) {
       let a = s.getY(r) - i * 0.35,
         c = s.getX(r) + Math.sin(wn.t + r) * i * 0.25;
-      (a < 0.02 && ((a = 3.4 + Math.random() * 0.6), (c = (Math.random() - 0.5) * 3.5)), s.setXY(r, c, a));
+      (a < 0.02 && ((a = 3.4 + Math.random() * 0.6), (c = (Math.random() - 0.5) * 15)), s.setXY(r, c, a));
     }
     ((s.needsUpdate = !0), (wn.petals.material.opacity = 0.9 * (1 - n * 0.6)));
     let o = wn.flies.geometry.attributes.position;
@@ -55090,7 +55080,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       o.setXYZ(
         r,
         o.getX(r) + Math.sin(wn.t * 0.7 + r * 2.1) * i * 0.3,
-        0.4 + (Math.sin(wn.t * 0.9 + r) * 0.5 + 0.5) * 2.2,
+        0.3 + (Math.sin(wn.t * 0.9 + r) * 0.5 + 0.5) * 2,
         o.getZ(r) + Math.cos(wn.t * 0.6 + r * 1.3) * i * 0.3,
       );
     ((o.needsUpdate = !0),
@@ -55160,10 +55150,19 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     oo(ln.flowers, !0);
   }
+  // อยู่ในพื้นที่สวน (สี่เหลี่ยมตามโมเดล) · m = ระยะเผื่อ (เมตร)
+  function inGarden(i, m = 0) {
+    return Math.abs(i.x - hn.x) < 12.2 * ccsGS + m && Math.abs(i.z - hn.z) < 13.2 * ccsGS + m;
+  }
   function DC(i) {
     if (Se) return !1;
-    let e = i.distanceTo(hn);
-    return e > 7.6 || e < 2.4 || kr.some((t) => Math.hypot(i.x - t.x, i.z - t.z) < 1.6)
+    let e = Math.abs(i.x - hn.x) / ccsGS,
+      t0 = (i.z - hn.z) / ccsGS;
+    return !inGarden(i, -0.6) ||
+      (e < 1.6 && t0 > -12) ||
+      t0 < -7.4 ||
+      t0 > 10.4 ||
+      kr.some((t) => Math.hypot(i.x - t.x, i.z - t.z) < 1.8)
       ? !1
       : (nt(
           "🌼 วางดอกไม้ตรงนี้",
@@ -55181,7 +55180,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         !0);
   }
   function BC(i, e) {
-    let t = !Se && e.pos.distanceTo(hn) < 8.6;
+    let t = !Se && inGarden(e.pos);
     (ln.btn ||
       ((ln.btn = document.createElement("button")),
       (ln.btn.id = "calmBtn"),
@@ -55250,11 +55249,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
   }
   function NC(i) {
-    if (Se || i.distanceTo(hn) > 9) return !1;
+    if (Se || !inGarden(i, 0.5)) return !1;
     let e = No.memorials ?? (No.memorials = []);
     for (let t = 0; t < yd; t++) {
       let n = kr[t];
-      if (Math.hypot(i.x - n.x, i.z - n.z) > 1.5) continue;
+      if (Math.hypot(i.x - n.x, i.z - n.z) > 2.1) continue;
       let s = e[t];
       return s
         ? (nt(`🌈 ${s.name}`, () => GC(t)), !0)
@@ -57135,7 +57134,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           dd(
             "ปลาสดลุงทะเล 🐟",
             Yk,
-            od.clone().setY((ba(od.x, od.z) ?? 1.8) + 2.2),
+            od.clone().setY(od.y + 2.4),
           ),
       );
     if (e.distanceTo(fn.clone().setZ(fn.z - 1.4)) < 1.8 || e.distanceTo(fn) < 2)
@@ -60524,6 +60523,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("grassvar")),
         bn(Zt("r56")),
         bn(Zt("r56b")),
+        bn(Zt("r81")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
@@ -60540,7 +60540,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     gT = new Pp(K, ET);
     let i = (n) =>
-        Math.hypot(n.x - hn.x, (n.z - hn.z) / 0.85) < 8.6 ||
+        inGarden(n, 1.2) ||
         eb(n, 1) ||
         Math.abs(n.z) < Mt + 0.6 ||
         (Math.abs(n.x + 46) < 3.5 && n.z > -12 && n.z < 48) ||
@@ -60715,6 +60715,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           act: () => Ad,
           ensureDigs: q4,
         },
+        gardenPlot: T0,
         simStep: (n, s) => {
           for (let o = 0; o < n; o++) (w4(s, Le[0]), pT(s, Le[0]), T4(s, Le[0]));
         },

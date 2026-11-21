@@ -24,3 +24,8 @@
 5. commit + push `main` → Vercel deploy เว็บ, Cloudflare build ไฟล์โมเดลใหม่ (`scripts/build-cdn.sh`) ให้เอง
 
 ทดสอบแล้ว (20 พ.ย. 2026): build จากโฟลเดอร์นี้ได้หน้าเกมเหมือนต้นฉบับ เข้าเกม เดิน HUD ทำงาน ไม่มี error
+
+## โมเดลเพิ่มเติม (v81) → `public/farm/r81.glb`
+`game/tools/pack.mjs` แปลงโมเดลต้นฉบับ (ต้องมี `@gltf-transform/*`, `meshoptimizer`, `sharp`, และแปลง FBX ด้วย `fbx2gltf` ก่อน) แล้ว `merge.mjs` รวมเป็นไฟล์เดียว
+- `rb_garden` สวนสายรุ้ง (CHOWCHOW_RAINBOW_GARDEN_v1 ของพี่ปั๊ม) แก้สีให้ตรง sRGB รวมเมชเหลือ ~7 ชิ้น
+- `lamp_rice` โคมกระดาษสา (ตัดสายยาวออก) · `lighthouse` ประภาคาร (ลดเหลือ ~12k เหลี่ยม ภาพ 256px)
