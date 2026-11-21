@@ -46791,71 +46791,59 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             label:
               "อาหารเม็ดพรีเมียม 🥣 (+60🍖)",
             price: 30,
-            make: () => Os(11565636),
-            thumb: () => je(ze("dogbowl2") ? "dogbowl2" : "Bowl", 0.4),
+            make: () => je("dk_fc_5", 0.34),
           },
           {
             key: "can",
             label:
               "อาหารกระป๋อง 🥫 (+40🍖 +20⚡)",
             price: 45,
-            make: () => Os(14829119),
-            thumb: () => je("dk_can_a", 0.3),
+            make: () => je("dk_fc_37", 0.24),
           },
           {
             key: "beef",
             label:
               "เนื้อวัวต้มสุก 🥩 (+70🍖)",
             price: 60,
-            make: () =>
-              (
-                pi.find(
-                  (e) =>
-                    e.name === "สเต๊กติดกระดูก",
-                ) ?? pi[0]
-              ).make(),
+            make: () => je("dk_fc_32", 0.3),
           },
           {
             key: "chicken",
             label: "อกไก่ต้มฉีก 🍗 (+50🍖)",
             price: 40,
-            make: () => (pi.find((e) => e.name === "น่องไก่") ?? pi[0]).make(),
+            make: () => je("dk_fc_9", 0.26),
           },
           {
             key: "salmon",
             label: "แซลมอนนึ่ง 🐟 (+55🍖 +10⚡)",
             price: 70,
-            make: () => (pi.find((e) => e.name.includes("แซลมอน")) ?? pi[0]).make(),
+            make: () => je("dk_fc_0", 0.24),
           },
           {
             key: "snack",
             label: "ขนมน้องหมา 🍪 (+40⚡ +15🍖)",
             price: 50,
-            make: () => Os(13208139),
-            thumb: () => je("Cookie_1", 0.3),
+            make: () => je("dk_fc_27", 0.3),
           },
           {
             key: "water",
             label: "น้ำดื่มสะอาด 💧 (+70💧)",
             price: 15,
-            make: () => Os(8377328),
-            thumb: () => je("Bottle_1", 0.4),
+            make: () => je("dk_fc_36", 0.34),
           },
           {
             key: "fruit",
             label:
               "ผลไม้รวมหั่น 🍉 (+35🍖 +20💧)",
             price: 35,
-            make: () => Os(16748472),
-            thumb: () => je("Watermelon_Slice_1", 0.3),
+            make: () => je("dk_fc_2", 0.24),
           },
           {
             key: "chew",
             label:
               "กระดูกแทะชิ้นใหญ่ 🦴 (+50⚡)",
             price: 70,
-            make: () => Os(15983560),
-            thumb: () => je("Meat_on_Bone", 0.35),
+            make: () => je("dk_fc_18", 0.32),
           },
           {
             key: "chick",
@@ -48994,10 +48982,22 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       return (
         D.position.set(A, I, F),
         (D.rotation.y = C),
-        D.traverse((L) => {
-          let q = L;
-          q.isMesh && ((q.castShadow = !0), (q.receiveShadow = !0));
-        }),
+        // v84: ของตกแต่งในร้านไม่รับเงาตัวเอง (กันเงาเป็นริ้วกะพริบเวลาเดิน) + กัน z-fight ชิ้นที่ซ้อนระนาบเดียวกัน
+        (() => {
+          let L = 0;
+          D.traverse((q) => {
+            if (!q.isMesh) return;
+            ((q.castShadow = !0), (q.receiveShadow = !1));
+            if (/^breadpk|snack_shelf|vfridge/.test(T)) {
+              let W = (Array.isArray(q.material) ? q.material : [q.material]).map((Z) => {
+                Z = Z.clone();
+                (Z.transparent || Z.opacity < 1 || /glass/i.test(Z.name)) && (Z.depthWrite = !1);
+                return ((Z.polygonOffset = !0), (Z.polygonOffsetFactor = -0.5 * (L % 6)), (Z.polygonOffsetUnits = -2 * (L % 6)), Z);
+              });
+              ((q.material = Array.isArray(q.material) ? W : W[0]), L++);
+            }
+          });
+        })(),
         e.add(D),
         k && i.solids.push({ x: t.x + A, z: t.z + F, hw: k[0], hd: k[1] }),
         D
@@ -49963,15 +49963,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (((i.out = 0), i.dead)) {
       if ((i.dead.t -= n) <= 0) {
         let c = i.dead;
-        ((i.dead = null), e.pos.copy(c.p), e.vel.set(0, 0, 0), (e.vy = 0), (e.y = 0.2), rt(c.m, c.p.clone().setY(1.6), "big"));
+        ((i.dead = null), e.pos.copy(c.p), e.vel.set(0, 0, 0), (e.vy = 0), (e.y = 0.2), (i.rc = 2), rt(c.m, c.p.clone().setY(1.6), "big"));
       }
       return;
     }
-    if (i.cool > 0) return;
+    if (i.cool > 0 || (i.rc = (i.rc ?? 0) - n) > 0) return;
     let l = t.pos.distanceTo(e.pos) < 50;
     if (Math.abs(o) > ccsZH + 0.15) {
       let c = Math.max(-Yc + 0.6, Math.min(Yc - 0.6, s));
-      ((i.dead = { t: 1.3, p: new H(xt.x + c, 0, xt.z + Math.sign(o) * (ccsZH + 0.25)), m: "🙌 ลูกทุ่ม!" }), l && (ccsWhistle("out"), rt("📣 บอลออกข้าง!", e.pos.clone().setY(2), "bad")));
+      ((i.dead = { t: 1.3, p: new H(xt.x + c, 0, xt.z + Math.sign(o) * (ccsZH - 0.45)), m: "🙌 ลูกทุ่ม!" }), l && (ccsWhistle("out"), rt("📣 บอลออกข้าง!", e.pos.clone().setY(2), "bad")));
     } else if (Math.abs(s) > Yc + 0.15 && !(Math.abs(o) < 2 && Math.abs(s) < Yc + 3)) {
       ((i.dead = { t: 1.3, p: new H(xt.x + Math.sign(s) * (Yc - 0.35), 0, xt.z + Math.sign(o || 1) * (ccsZH - 0.35)), m: "🚩 เตะมุม!" }), l && (ccsWhistle("out"), rt("📣 บอลออกหลัง!", e.pos.clone().setY(2), "bad")));
     }
@@ -50703,11 +50703,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                   /Taillight/.test(v.name) && !Qh.some((_) => _.m === v) && Qh.push({ m: v, tail: !0 }));
           });
           // v83: แสงไฟหน้าตกถึงพื้นชิดหน้ารถพอดี (เดิมเลยหน้ารถไปมาก) ทุกรุ่นใช้ความยาวจริงของรถ
-          let x = new R(new Te(2.3, 4.6), p4(0.6));
-          ((x.rotation.x = -Math.PI / 2), x.position.set(0, 0.1, g / 2 + 2.25), (x.visible = !1), y.add(x), al.push(x));
+          // v84: แสงไฟหน้าบนพื้นเป็นรูปพัด เริ่มที่กันชนหน้าพอดี แล้วค่อยกว้างและจางออกไป (ไม่มีช่องว่างระหว่างรถกับแสง)
+          let x = new R(new Te(3.2, 6.4), ccsBeamMat());
+          ((x.rotation.x = -Math.PI / 2), x.position.set(0, 0.1, g / 2 + 3.2 - 0.25), (x.visible = !1), (x.renderOrder = 2), y.add(x), al.push(x));
           {
-            let b = new En(16773848, 0, 11, 1.3);
-            (b.position.set(0, 0.9, g / 2 + 2.2), y.add(b), H0.push({ l: b, on: 14 }));
+            let b = new En(16773848, 0, 8, 1.3);
+            (b.position.set(0, 0.75, g / 2 + 1.3), y.add(b), H0.push({ l: b, on: 10 }));
           }
           for (let b of [-0.55, 0.55]) {
             let w = ZE(5.5, 0.08, 1.1, 16773840, 0.22);
@@ -55146,6 +55147,24 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let o = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
     return (o.position.set(e, t - 0.21, n), i.add(o), !0);
   }
+  // v84: พื้นผิวแสงไฟหน้ารถ (พัดแสงจากกันชน กว้างขึ้นตามระยะ จางลงตามระยะ)
+  var ccsBeamTex = null;
+  function ccsBeamMat() {
+    if (!ccsBeamTex) {
+      let i = document.createElement("canvas");
+      ((i.width = 128), (i.height = 256));
+      let e = i.getContext("2d");
+      for (let t = 0; t < 256; t++) {
+        let n = t / 255,
+          s = 0.3 + 0.7 * Math.sqrt(n),
+          o = Math.pow(1 - n, 1.4) * Math.min(1, n * 14 + 0.25),
+          r = e.createLinearGradient(64 - s * 64, 0, 64 + s * 64, 0);
+        (r.addColorStop(0, "rgba(255,240,200,0)"), r.addColorStop(0.25, `rgba(255,242,205,${o * 0.75})`), r.addColorStop(0.5, `rgba(255,246,215,${o})`), r.addColorStop(0.75, `rgba(255,242,205,${o * 0.75})`), r.addColorStop(1, "rgba(255,240,200,0)"), (e.fillStyle = r), e.fillRect(0, t, 128, 1));
+      }
+      ((ccsBeamTex = new ut(i)), (ccsBeamTex.colorSpace = Ye));
+    }
+    return new be({ map: ccsBeamTex, transparent: !0, opacity: 0.6, depthWrite: !1, blending: $i, toneMapped: !1 });
+  }
   // v83: แสงแดดตามน้อง แต่ขยับทีละ 1 พิกเซลของแผนที่เงา (กันเงากระพริบ/สั่นเวลาเดิน)
   var ccsSV = new H(),
     ccsSM = new Oe();
@@ -55213,6 +55232,26 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (h.position.copy(l.position).add(new H(0, 0.35, 0)), K.add(h), u4.push(h), pd(l.position.x, l.position.z, 2.4, 0.9));
       }
       pt.push({ x: r.x, z: r.z, hw: 0.14, hd: 0.14 });
+    }
+    // v84: คบเพลิงตลอดสะพานไม้ (สองฝั่ง) ไฟติดตอนกลางคืน แสงส้มอุ่นส่องพื้นไม้
+    if (ze("tiki_torch")) {
+      let o = Rt + 1;
+      for (let [r, a] of [[0.6, !0], [5.1, !1], [9.6, !0], [14.1, !1], [17.5, !0]])
+        for (let c of [-1.42, 1.42]) {
+          if (r === 17.5 && c > 0) continue;
+          let l = je("tiki_torch", 1.7);
+          (l.position.set(c, 0.3, o + r), K.add(l), l.updateMatrixWorld(!0));
+          let h = null;
+          l.traverse((d) => {
+            d.isMesh && (d.material.name === "fire_flame" || d.name === "fire_flame") && ((h = new mt().setFromObject(d)), (d.visible = !1));
+          });
+          let f = lE(0.48, 0.26);
+          (h ? f.position.set((h.min.x + h.max.x) / 2, h.min.y + 0.02, (h.min.z + h.max.z) / 2) : f.position.set(c, 1.85, o + r), (f.visible = !1), K.add(f), hE.push(f), i1.push(f));
+          if (a && (c < 0 || r === 17.5)) {
+            let d = new En(16747056, 0, 10, 1.4);
+            (d.position.set(0, f.position.y + 0.3, f.position.z), K.add(d), u4.push(d));
+          }
+        }
     }
     // หลอดไฟใต้กันสาด ส่องของบนแผงให้เห็นชัดตอนกลางคืน
     for (let o of [-0.7, 0.7]) {
@@ -61154,6 +61193,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         emo: (i) => emoHTML(emoMood(i)),
         pop: (i) => rt(i, Le[0].pos.clone().setY(1.5), "big"),
         modelKeys: () => Object.keys(vp),
+        thumb: (i) => (ccsThumb("dbg:" + i, () => je(i, 1)).match(/src="([^"]+)"/) || [])[1],
         modelClone: (n, e) => je(n, e),
         held: () => ccsHeld.map((i) => [i.bone.name, i.obj.position.toArray().map((e) => +e.toFixed(2))]),
         simStep: (n, s) => {
