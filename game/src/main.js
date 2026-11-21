@@ -39938,12 +39938,13 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       x = (N, he, le = 2.2) => y(E + Math.max(-le * he, Math.min(le * he, N - E))),
       b = [],
       w = [];
-    for (let N = 0; N < 2; N++)
-      for (let he = 0; he < 3; he++)
-        for (let le = 0; le < 5; le++) {
-          let ve = -0.36 + le * 0.16 + (N ? 0.08 : 0),
-            He = -0.3 + he * 0.2 + (N ? 0.1 : 0);
-          (ve < -0.12 && He > 0.12) || (N && (le === 4 || he === 2)) || w.push([ve, 1.03 + N * 0.13, He]);
+    // v83: กองตุ๊กตาเต็มตู้ (3 ชั้น) แต่เว้นช่องหย่อนของหน้าซ้ายไว้ให้โล่ง
+    for (let N = 0; N < 3; N++)
+      for (let he = 0; he < 6; he++)
+        for (let le = 0; le < 7; le++) {
+          let ve = -0.42 + le * 0.14 + (N % 2 ? 0.07 : 0),
+            He = -0.44 + he * 0.14 + (N % 2 ? 0.07 : 0);
+          ve > 0.43 || He > 0.3 || (ve < 0.07 && He > -0.17) || (N === 2 && (le % 2 || he % 2)) || w.push([ve, 1.03 + N * 0.12, He]);
         }
     let v = [...sM, ...ccsPlush.filter(ze), ...ccsPlush.filter(ze), ...(ze("Barney_01") ? ["Barney_01", "Barney_01", "Barney_01"] : [])].sort(
       () => Math.random() - 0.5,
@@ -46631,8 +46632,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         "dk:beefpk",
         "เนื้อวัวแพ็ก (ต้มสุกให้) 🥩 (+75🍖)",
         70,
-        "beefpack_0",
-        0.3,
+        "Meat_Steak_2",
+        0.26,
       ],
       [
         "dk:icecream",
@@ -46791,6 +46792,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               "อาหารเม็ดพรีเมียม 🥣 (+60🍖)",
             price: 30,
             make: () => Os(11565636),
+            thumb: () => je(ze("dogbowl2") ? "dogbowl2" : "Bowl", 0.4),
           },
           {
             key: "can",
@@ -46798,6 +46800,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               "อาหารกระป๋อง 🥫 (+40🍖 +20⚡)",
             price: 45,
             make: () => Os(14829119),
+            thumb: () => je("dk_can_a", 0.3),
           },
           {
             key: "beef",
@@ -46829,12 +46832,14 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             label: "ขนมน้องหมา 🍪 (+40⚡ +15🍖)",
             price: 50,
             make: () => Os(13208139),
+            thumb: () => je("Cookie_1", 0.3),
           },
           {
             key: "water",
             label: "น้ำดื่มสะอาด 💧 (+70💧)",
             price: 15,
             make: () => Os(8377328),
+            thumb: () => je("Bottle_1", 0.4),
           },
           {
             key: "fruit",
@@ -46842,6 +46847,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               "ผลไม้รวมหั่น 🍉 (+35🍖 +20💧)",
             price: 35,
             make: () => Os(16748472),
+            thumb: () => je("Watermelon_Slice_1", 0.3),
           },
           {
             key: "chew",
@@ -46849,6 +46855,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               "กระดูกแทะชิ้นใหญ่ 🦴 (+50⚡)",
             price: 70,
             make: () => Os(15983560),
+            thumb: () => je("Meat_on_Bone", 0.35),
           },
           {
             key: "chick",
@@ -46939,6 +46946,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                   "วิตามินน้องหมา 💊 (+30⚡)",
                 price: 40,
                 make: () => Os(16765503),
+                thumb: () => je("Bottle_2", 0.35),
               },
               {
                 key: "checkup",
@@ -46946,6 +46954,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                   "ตรวจสุขภาพ 🩺 (พลังเต็ม)",
                 price: 90,
                 make: () => Os(14829119),
+                thumb: () => null,
               },
             ]
           : [
@@ -46954,6 +46963,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 label: "อาบน้ำหอม ๆ 🛁 (+60⚡)",
                 price: 60,
                 make: () => Os(6080757),
+                thumb: () => null,
               },
               {
                 key: "brush",
@@ -47015,6 +47025,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 label: "แว่นกันแดด 🕶",
                 price: 150,
                 make: () => Ns("sunglasses"),
+                thumb: () => null,
               },
               {
                 key: "hat:heartglasses",
@@ -47821,7 +47832,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ed = null,
     nA = null,
     fn = new H(22.5, 0, 12.2),
-    hn = new H(4, 0, -30),
+    hn = new H(-2.2, 0, -19.6), // v83: ย้ายสวนมาหน้าถนน ระหว่างร้านตัดขนกับถูกจังมาร์ท
     ni = new H(-41.3, 0, 24.5),
     In = -Math.PI / 2,
     md = null,
@@ -49879,12 +49890,29 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let c = new R(new ee(0.16, 0.12, n), r);
       (c.position.set(xt.x + a, 0.06, (e + t) / 2), (c.userData.noOcc = !0), K.add(c));
     }
-    let a = ro("⚽ สนามฟุตบอล ChowChowStory FC", 0, 3.2, 0.55);
-    a.position.set(xt.x + 2.6, 1.9, t - 0.8);
-    let c = new R(new re(0.05, 0.05, 1.9, 8), r);
-    (c.position.set(xt.x + 2.6 - 1.4, 0.95, t - 0.8), K.add(c));
-    let l = c.clone();
-    (l.position.x = xt.x + 2.6 + 1.4, K.add(l), K.add(a), pt.push({ x: xt.x + 2.6 - 1.4, z: t - 0.8, hw: 0.1, hd: 0.1 }, { x: xt.x + 2.6 + 1.4, z: t - 0.8, hw: 0.1, hd: 0.1 }));
+    // v83: ซุ้มประตูทางเข้าสนาม (เสาไม้ 2 ต้นคร่อมทางเดิน + ป้ายโค้ง) ไม่ล้นไปชนตู้คีบ
+    let a = new X({ color: 16777215, roughness: 0.5 }),
+      c = new X({ color: 1527636, roughness: 0.6 });
+    for (let f of [-1.8, 1.8]) {
+      let d = new R(new re(0.1, 0.12, 3.3, 12), a);
+      (d.position.set(xt.x + f, 1.65, t - 1.2), (d.castShadow = !0), K.add(d));
+      let u = new R(new re(0.17, 0.17, 0.16, 12), c);
+      (u.position.set(xt.x + f, 0.08, t - 1.2), K.add(u), pt.push({ x: xt.x + f, z: t - 1.2, hw: 0.14, hd: 0.14 }));
+      let m = new R(new we(0.15, 14, 10), new X({ color: 16769280, roughness: 0.4, metalness: 0.2 }));
+      (m.position.set(xt.x + f, 3.38, t - 1.2), K.add(m));
+    }
+    let l = ss(768, 160, (f) => {
+        let d = f.createLinearGradient(0, 0, 0, 160);
+        (d.addColorStop(0, "#1f8a4c"), d.addColorStop(1, "#126b38"), (f.fillStyle = d), f.beginPath(), f.roundRect(0, 0, 768, 160, 34), f.fill());
+        ((f.strokeStyle = "#ffffff"), (f.lineWidth = 8), f.beginPath(), f.roundRect(10, 10, 748, 140, 26), f.stroke());
+        ((f.strokeStyle = "rgba(255,255,255,.18)"), (f.lineWidth = 3));
+        for (let u = 0; u < 768; u += 48) (f.beginPath(), f.moveTo(u, 14), f.lineTo(u + 24, 146), f.stroke());
+        ((f.fillStyle = "#fff"), (f.textAlign = "center"), (f.textBaseline = "middle"), (f.font = "700 64px Mitr, sans-serif"), f.fillText("สนามฟุตบอล", 384, 66));
+        ((f.font = "600 30px Mitr, sans-serif"), (f.fillStyle = "#ffe100"), f.fillText("ChowChowStory FC", 384, 122));
+        ((f.font = "64px sans-serif"), f.fillText("⚽", 66, 82), f.fillText("⚽", 702, 82));
+      }),
+      h = new R(new ee(3.9, 0.82, 0.08), [c, c, c, c, new be({ map: l }), new be({ map: l })]);
+    (h.position.set(xt.x, 3.0, t - 1.2), (h.userData.noOcc = !0), K.add(h));
   }
   // v82: เสียงนกหวีดกรรมการ (สังเคราะห์: นกหวีดมีลูกกลิ้ง = เสียงสูง ~3kHz สั่นรัวเร็ว + ลมหายใจ)
   function ccsWhistle(i) {
@@ -49915,6 +49943,37 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         d = e.createBiquadFilter(),
         u = e.createGain();
       ((f.buffer = l), (d.type = "bandpass"), (d.frequency.value = 3200), (d.Q.value = 2.5), (u.gain.value = 0.18), f.connect(d), d.connect(u), u.connect(c), f.start(a));
+    }
+  }
+  // v83: กติกาบอล: ป้ายรอบสนามกันบอล (เด้งกลับ), บอลออกเส้นข้าง = ลูกทุ่ม, ออกเส้นหลัง = เตะมุม พร้อมนกหวีด
+  var ccsZH = 12;
+  function ccsBallRules(i, e, t, n) {
+    let s = e.pos.x - xt.x,
+      o = e.pos.z - xt.z,
+      r = da / 2 + 2.4 - 0.32,
+      a = td / 2 + 1.2 - 0.32;
+    if (Math.abs(s) < r + 4 && Math.abs(o) < a + 4) {
+      (Math.abs(s) > r && ((e.pos.x = xt.x + Math.sign(s) * r), (e.vel.x = -e.vel.x * 0.45)),
+        Math.abs(o) > a && ((e.pos.z = xt.z + Math.sign(o) * a), (e.vel.z = -e.vel.z * 0.45)));
+      ((s = e.pos.x - xt.x), (o = e.pos.z - xt.z));
+    } else {
+      ((i.out += n), i.out > 8 && (e.pos.copy(xt), e.vel.set(0, 0, 0), (i.out = 0), (i.dead = null)));
+      return;
+    }
+    if (((i.out = 0), i.dead)) {
+      if ((i.dead.t -= n) <= 0) {
+        let c = i.dead;
+        ((i.dead = null), e.pos.copy(c.p), e.vel.set(0, 0, 0), (e.vy = 0), (e.y = 0.2), rt(c.m, c.p.clone().setY(1.6), "big"));
+      }
+      return;
+    }
+    if (i.cool > 0) return;
+    let l = t.pos.distanceTo(e.pos) < 50;
+    if (Math.abs(o) > ccsZH + 0.15) {
+      let c = Math.max(-Yc + 0.6, Math.min(Yc - 0.6, s));
+      ((i.dead = { t: 1.3, p: new H(xt.x + c, 0, xt.z + Math.sign(o) * (ccsZH + 0.25)), m: "🙌 ลูกทุ่ม!" }), l && (ccsWhistle("out"), rt("📣 บอลออกข้าง!", e.pos.clone().setY(2), "bad")));
+    } else if (Math.abs(s) > Yc + 0.15 && !(Math.abs(o) < 2 && Math.abs(s) < Yc + 3)) {
+      ((i.dead = { t: 1.3, p: new H(xt.x + Math.sign(s) * (Yc - 0.35), 0, xt.z + Math.sign(o || 1) * (ccsZH - 0.35)), m: "🚩 เตะมุม!" }), l && (ccsWhistle("out"), rt("📣 บอลออกหลัง!", e.pos.clone().setY(2), "bad")));
     }
   }
   function P4() {
@@ -49960,11 +50019,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         e.pos.distanceTo(n.pos) < 30 && Rs(r === 0 ? 8 : 3, e));
     }
     (t.cool > 0 && t.cool < 0.6 && (n.pos.copy(xt), n.vel.set(0, 0, 0), (n.vy = 2.5), (n.y = 0.5), (t.cool = 0)),
-      eb(n.pos, 1)
-        ? ((t.out = 0), (t.wasIn = !0))
-        : (t.wasIn && t.cool <= 0 && ((t.wasIn = !1), e.pos.distanceTo(n.pos) < 45 && (ccsWhistle("out"), rt("📣 บอลออก!", n.pos.clone().setY(2), "bad"))),
-          (t.out += i),
-          t.out > 12 && (n.pos.copy(xt), n.vel.set(0, 0, 0), (t.out = 0))));
+      ccsBallRules(t, n, e, i));
   }
   var pE = -0.75,
     ao = 0.93 + pE,
@@ -50284,7 +50339,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ccsLH.lampM && (ccsLH.lampM.emissiveIntensity = 0.2 + e * 2.5);
   }
   function TA() {
-    (ccsLighthouse(), ccsStall && Cr && ((ccsStall.position.y = Math.max(0, Cr.heightAt(od.x, od.z))), (od.y = ccsStall.position.y)));
+    (ccsLighthouse(), ccsStall && Cr && ((ccsStall.position.y = Math.max(0, Cr.heightAt(od.x, od.z))), (od.y = ccsStall.position.y)), ccsStallExtras());
     if ((IH(), ze("rb_garden"))) {
       ccsGardenModel();
       for (let d = 0; d < yd; d++) T0(d);
@@ -50647,15 +50702,16 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 (/Headlight|^Emissive$/.test(v.name) && !Qh.some((_) => _.m === v) && Qh.push({ m: v, tail: !1 }),
                   /Taillight/.test(v.name) && !Qh.some((_) => _.m === v) && Qh.push({ m: v, tail: !0 }));
           });
-          let x = new R(new Te(2.4, 5.2), p4(0.6));
-          ((x.rotation.x = -Math.PI / 2), x.position.set(0, 0.1, g / 2 + 2.8), (x.visible = !1), y.add(x), al.push(x));
+          // v83: แสงไฟหน้าตกถึงพื้นชิดหน้ารถพอดี (เดิมเลยหน้ารถไปมาก) ทุกรุ่นใช้ความยาวจริงของรถ
+          let x = new R(new Te(2.3, 4.6), p4(0.6));
+          ((x.rotation.x = -Math.PI / 2), x.position.set(0, 0.1, g / 2 + 2.25), (x.visible = !1), y.add(x), al.push(x));
           {
             let b = new En(16773848, 0, 11, 1.3);
             (b.position.set(0, 0.9, g / 2 + 2.2), y.add(b), H0.push({ l: b, on: 14 }));
           }
           for (let b of [-0.55, 0.55]) {
             let w = ZE(5.5, 0.08, 1.1, 16773840, 0.22);
-            ((w.rotation.x = -Math.PI / 2 + 0.06), w.position.set(b, 0.62, g / 2 + 2.75), y.add(w));
+            ((w.rotation.x = -Math.PI / 2 + 0.06), w.position.set(b * 0.95, 0.62, g / 2 + 2.75), y.add(w));
           }
           p.add(y);
         }
@@ -50765,7 +50821,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (w.position.set(y, 0, x), (w.rotation.y = g), K.add(w), lo.push(new H(y, 0, x)), u++);
       }
       let p = [
-        [hn, 9.5],
+        [hn, 0],
         [Hr, 6.5],
         [fn, 4.5],
         [new H(fn.x, 0, fn.z + 4.5), 5.5],
@@ -50781,7 +50837,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       K.traverse((g) => {
         if (!g.userData.tree) return;
         let y = g.getWorldPosition(new H());
-        (eb(y, 2) || p.some(([x, b]) => Math.hypot(y.x - x.x, y.z - x.z) < b)) && m.push(g);
+        (eb(y, 2) || inGarden(y, 2.5) || p.some(([x, b]) => Math.hypot(y.x - x.x, y.z - x.z) < b)) && m.push(g);
       });
       for (let g of m) {
         let y = g.getWorldPosition(new H());
@@ -50949,7 +51005,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         [13809919, 13215999],
         [16769658, 16773280],
       ],
-      e = i.length,
+      e = (i.splice(3), i.length), // v83: เหลือ 3 ตู้
       t = 1.75,
       n = -36 - ((e - 1) * t) / 2,
       s = -Mt - 1,
@@ -52607,7 +52663,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       (ii.intensity = l * 1.3),
       ii.color.setHex(t.sun).lerp(oa.setHex(n.sun), s));
     let h = (i - 0.25) * Math.PI * 2;
-    (sd.set(Math.cos(h) * 0.8, Math.max(0.25, Math.sin(h)), 0.45).normalize(),
+    // v83: แสงต่ำมากตอนกลางคืน/เช้ามืดทำเงายาวคลุมทั้งหาด ตัดเป็นเส้นตรงที่ขอบเงา → ให้แสงสูงพอ และเงาจางลงตอนมืด
+    ((ii.shadow.intensity = 0.25 + 0.75 * Math.max(0, Math.min(1, (l - 0.15) / 0.5))),
+    sd.set(Math.cos(h) * 0.8, Math.max(0.6, Math.abs(Math.sin(h))), 0.45).normalize(),
       h0.sunDir.value.copy(sd).setY(Math.sin(h)));
     let f = l < 0.6;
     {
@@ -52786,9 +52844,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ((nl.ship.position.y = -0.3 + Math.sin(t * 0.8) * 0.12),
       (nl.ship.rotation.z = Math.sin(t * 0.6) * 0.02),
       (nl.boat.position.y = -0.15 + Math.sin(t * 1.1 + 1) * 0.08),
-      Le[0] && (ii.target.position.copy(Le[0].pos), ii.position.copy(Le[0].pos).addScaledVector(sd, 60)),
+      Le[0] && ccsSunFollow(Le[0].pos),
       j.time >= 0.995 && CT(!0),
-      G4(j.time % 1));
+      G4(j.time % 1),
+      Se && ((x0.intensity = Math.max(x0.intensity, 1.45)), x0.color.setHex(14478591), x0.groundColor.setHex(8034908), (ii.intensity = Math.max(ii.intensity, 0.9))));
     let n = Le[0];
     if (n) {
       (_6.set(-Math.sin(j.yaw), 0, -Math.cos(j.yaw)), S6.set(Math.cos(j.yaw), 0, -Math.sin(j.yaw)));
@@ -54855,7 +54914,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (ke("pop"), _0());
       }));
   }
-  var ccsGS = 0.68,
+  var ccsGS = 0.64,
     No = z,
     yd = 8,
     ds = [16748465, 16765503, 16777215, 11832575, 16743001, 9425919],
@@ -55087,6 +55146,101 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let o = new R(new re(0.008, 0.008, 0.42, 5), new be({ color: 3355443 }));
     return (o.position.set(e, t - 0.21, n), i.add(o), !0);
   }
+  // v83: แสงแดดตามน้อง แต่ขยับทีละ 1 พิกเซลของแผนที่เงา (กันเงากระพริบ/สั่นเวลาเดิน)
+  var ccsSV = new H(),
+    ccsSM = new Oe();
+  function ccsSunFollow(i) {
+    let e = (2 * 26) / ii.shadow.mapSize.x;
+    (ccsSM.lookAt(sd, new H(0, 0, 0), new H(0, 1, 0)), ccsSV.copy(i).applyMatrix4(ccsSM.clone().invert()));
+    ((ccsSV.x = Math.round(ccsSV.x / e) * e), (ccsSV.y = Math.round(ccsSV.y / e) * e), ccsSV.applyMatrix4(ccsSM));
+    (ii.target.position.copy(ccsSV), ii.position.copy(ccsSV).addScaledVector(sd, 60), ii.target.updateMatrixWorld());
+  }
+  // v83: ไอคอนเมนูเรนเดอร์จากโมเดลจริงของแต่ละรายการ (ไม่มีไอคอนซ้ำกัน)
+  var ccsTh = { c: new Map(), rt: null, sc: null, cam: null, cv: null, buf: null };
+  function ccsThumb(i, e) {
+    if (ccsTh.c.has(i)) return ccsTh.c.get(i);
+    let t = "";
+    try {
+      let n = ccsTh;
+      if (!n.rt) {
+        ((n.rt = new qn(128, 128)), (n.rt.texture.colorSpace = Ye), (n.sc = new pc()), (n.cam = new Tn(28, 1, 0.01, 100)));
+        n.sc.add(new Tc(16777215, 7829367, 2.2));
+        let c = new hr(16777215, 2.4);
+        (c.position.set(2, 4, 5), n.sc.add(c));
+        ((n.cv = document.createElement("canvas")), (n.cv.width = n.cv.height = 128), (n.buf = new Uint8Array(128 * 128 * 4)));
+      }
+      let s = e();
+      if (!s) return "";
+      let o = s.root ?? s;
+      (n.sc.add(o), o.updateMatrixWorld(!0));
+      let r = new mt().setFromObject(o),
+        a = r.getCenter(new H()),
+        l = r.getSize(new H()),
+        h = Math.max(l.x, l.y, l.z) || 1;
+      (n.cam.position.copy(a).add(new H(0.55, 0.42, 0.95).normalize().multiplyScalar(h * 2.3)), n.cam.lookAt(a), (n.cam.near = h / 50), (n.cam.far = h * 20), n.cam.updateProjectionMatrix());
+      let f = new ae(),
+        d = dn.getClearAlpha(),
+        u = dn.shadowMap.autoUpdate;
+      (dn.getClearColor(f), dn.setClearColor(0, 0), (dn.shadowMap.autoUpdate = !1), dn.setRenderTarget(n.rt), dn.clear(), dn.render(n.sc, n.cam), dn.readRenderTargetPixels(n.rt, 0, 0, 128, 128, n.buf), dn.setRenderTarget(null), dn.setClearColor(f, d), (dn.shadowMap.autoUpdate = u), n.sc.remove(o));
+      let p = n.cv.getContext("2d"),
+        m = p.createImageData(128, 128);
+      for (let E = 0; E < 128; E++) m.data.set(n.buf.subarray((127 - E) * 512, (128 - E) * 512), E * 512);
+      (p.putImageData(m, 0, 0), (t = `<img class="th" src="${n.cv.toDataURL("image/png")}" alt="">`));
+    } catch (n) {
+      console.warn("thumb", i, n);
+    }
+    return (ccsTh.c.set(i, t), t);
+  }
+  // v83: แผงลุงทะเล: คบเพลิง 2 ต้นหน้าแผง (ไฟติดตอนกลางคืน) + โต๊ะไม้วางเรือซาชิมิ
+  function ccsStallExtras() {
+    if (!ccsStall || ccsStall.userData.ext) return;
+    ccsStall.userData.ext = !0;
+    let i = (o) => Math.max(od.y, Cr ? Cr.heightAt(o.x, o.z) : 0);
+    for (let o of [-1.55, 1.55]) {
+      let r = new H(od.x + 1.25, 0, od.z + o);
+      if (((r.y = i(r)), ze("tiki_torch"))) {
+        let a = je("tiki_torch", 2);
+        (a.position.copy(r).setY(r.y - 0.12), K.add(a));
+        let c = null;
+        (a.updateMatrixWorld(!0),
+          a.traverse((f) => {
+            let d = f;
+            d.isMesh && (d.material.name === "fire_flame" || d.name === "fire_flame") && ((c = new mt().setFromObject(d)), (d.visible = !1));
+          }));
+        let l = lE(0.55, 0.3);
+        (c ? l.position.set((c.min.x + c.max.x) / 2, c.min.y + 0.02, (c.min.z + c.max.z) / 2) : l.position.set(r.x, r.y + 1.82, r.z), (l.visible = !1), K.add(l), hE.push(l), i1.push(l));
+        let h = new En(16747056, 0, 9, 1.6);
+        (h.position.copy(l.position).add(new H(0, 0.35, 0)), K.add(h), u4.push(h), pd(l.position.x, l.position.z, 2.4, 0.9));
+      }
+      pt.push({ x: r.x, z: r.z, hw: 0.14, hd: 0.14 });
+    }
+    // หลอดไฟใต้กันสาด ส่องของบนแผงให้เห็นชัดตอนกลางคืน
+    for (let o of [-0.7, 0.7]) {
+      let r = new R(new we(0.07, 10, 8), new be({ color: 16773832 }));
+      (r.position.set(od.x + 0.55, od.y + 2.25, od.z + o), K.add(r));
+    }
+    {
+      let o = new En(16767392, 0, 7, 1.4);
+      (o.position.set(od.x + 0.9, od.y + 2.1, od.z), K.add(o), H0.push({ l: o, on: 10 }));
+    }
+    // โต๊ะไม้ข้างแผง + เรือซาชิมิ
+    let e = new H(od.x + 0.15, 0, od.z + 2.05);
+    e.y = i(e);
+    let t = new X({ map: Cn(11565636, "#7a4a24"), roughness: 0.75 }),
+      n = new R(new ee(1.25, 0.07, 0.8), t);
+    (n.position.set(e.x, e.y + 0.78, e.z), (n.castShadow = !0), K.add(n));
+    for (let [o, r] of [[-0.55, -0.33], [0.55, -0.33], [-0.55, 0.33], [0.55, 0.33]]) {
+      let a = new R(new ee(0.07, 0.76, 0.07), t);
+      (a.position.set(e.x + o, e.y + 0.38, e.z + r), K.add(a));
+    }
+    if (ze("sashimi_boat")) {
+      let o = je("sashimi_boat", 1.05);
+      (o.position.set(e.x, e.y + 0.815, e.z), (o.rotation.y = Math.PI / 2), K.add(o));
+    }
+    let s = ro("เรือซาชิมิ 159฿", 2, 1.1, 0.3);
+    (s.position.set(e.x + 0.45, e.y + 1.35, e.z), (s.rotation.y = Math.PI / 2), K.add(s));
+    pt.push({ x: e.x, z: e.z, hw: 0.66, hd: 0.44 });
+  }
   // ป้ายชื่อแนวนอนสำหรับแผ่นทองเหลืองบนหินแต่ละแปลง
   function ccsPlaque(i) {
     let e = document.createElement("canvas");
@@ -55219,8 +55373,14 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           let o = s;
           o.isMesh && ((o.material = /eye|nose|tongue|mouth/i.test(o.material?.name ?? "") ? n : t), (o.castShadow = !0), (o.userData.noMerge = !0));
         }),
-          e.root.position.set(0, 0.62 * ccsGS + 0.06 * ccsGS, -10 * ccsGS),
-          wn.g.add(e.root),
+          e.root.position.set(0, 0, -10 * ccsGS),
+          e.root.updateMatrixWorld(!0));
+        {
+          // ยืนบนแท่นพอดี ไม่จม: ให้เท้าต่ำสุดอยู่ที่ผิวแท่น
+          let s = new mt().setFromObject(e.root);
+          e.root.position.y = 0.6 * ccsGS + 0.012 + 0.03 - s.min.y;
+        }
+        (wn.g.add(e.root),
           (wn.statue = e));
       }
     } catch (e) {
@@ -55244,11 +55404,18 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       n.map && (n.map.anisotropy = 4);
     });
     ((wn.model = i), wn.g.add(i));
+    // v83: ต้นไม้จริงแทนซากุระการ์ตูน 6 ต้น
+    for (let [e, t, n] of [[-10.14, 9.1, "tree_r2"], [10.16, 9.1, "tree_r3"], [-10.34, 0.4, "tree_r3"], [10.36, 0.4, "tree_r2"], [-10.09, -9.4, "tree_r2"], [10.11, -9.4, "tree_r3"]]) {
+      if (!ze(n)) continue;
+      let s = Zp(n, 5.2 + Math.abs(e * t) % 0.8);
+      ((s.userData.tree = !1), s.position.set(e * ccsGS, 0.02, t * ccsGS), (s.rotation.y = e + t), wn.g.add(s));
+    }
     ccsGardenStatue();
     // v82: รุ้งโมเดลใหม่ (Rainbow) แทนซุ้มรุ้งเดิม คร่อมหลังรูปปั้น
     if (ze("rainbow_arc")) {
-      let e = je("rainbow_arc", 8.2 * ccsGS);
-      (e.position.set(0, 0.02, -10.9 * ccsGS),
+      // v83: รุ้งใหญ่ขึ้นและอยู่หลังรูปปั้น วงในสูงกว่าหัวรูปปั้น ไม่ทับกัน
+      let e = je("rainbow_arc", 15.5 * ccsGS);
+      (e.position.set(0, 0.02, -11.7 * ccsGS),
         e.traverse((t) => {
           let n = t;
           n.isMesh && ((n.castShadow = !1), (n.userData.noMerge = !0));
@@ -55405,7 +55572,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       ln.on && !t && m1(!1),
       ln.on && ((j.yaw += i * 0.07), (j.pitch += (0.22 - j.pitch) * Math.min(1, i * 0.8))));
     let n = z.music ? (ln.on ? 0.22 : t ? 0.08 : 0) : 0;
-    (n > 0 && !ln.pad && (ln.pad = zC()),
+    (!1, // v83: ไม่เปิดเพลงตอนเข้าสวน
       ln.pad &&
         ((ln.padV += (n - ln.padV) * Math.min(1, i * 0.8)),
         (ln.pad.g.gain.value = ln.padV),
@@ -60267,7 +60434,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let e = z.comps ?? [],
       t = T1.map(
         (n, s) =>
-          `<div class="row"><span class="ic">${n.icon}</span><div><b>${n.name}</b><small>${n.price} 💰 \xB7 ${n.note}</small></div><button data-dog="${s}" ${z.money < n.price || e.length >= w1 ? "disabled" : ""}>รับเลี้ยง</button></div>`,
+          `<div class="row"><span class="ic">${(n.make && ccsThumb("dog:" + n.key, n.make)) || n.icon}</span><div><b>${n.name}</b><small>${n.price} 💰 \xB7 ${n.note}</small></div><button data-dog="${s}" ${z.money < n.price || e.length >= w1 ? "disabled" : ""}>รับเลี้ยง</button></div>`,
       ).join("");
     (Gi(
       "ร้านสัตว์เลี้ยง 🐶",
@@ -60293,6 +60460,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             u = a.key.startsWith("hat:") ? a.key.slice(4) : "",
             p = !!u && n.includes(u),
             m = p ? (pb(u) ? "ถอด" : "ใส่") : "ซื้อ";
+          (a.thumb || a.make) && (f = ccsThumb("w:" + a.key, a.thumb || a.make) || f);
           return `<div class="row"><span class="ic">${f}</span><div><b>${h}</b><small>${p ? "มีแล้ว" : a.price + " 💰"}${d ? " \xB7 " + d : ""}</small></div><button data-ware="${c}" ${!p && z.money < a.price ? "disabled" : ""}>${m}</button></div>`;
         })
         .join(""),
@@ -60341,7 +60509,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       n = t
         .map((s, o) => {
           let r = e.includes(s.k);
-          return `<div class="row"><span class="ic">${s.ic}</span><div><b>${s.l}</b><small>${r ? "มีแล้ว \xB7 ใส่ได้ที่ตู้เสื้อผ้า" : s.pr + " 💰"}${A0(s.k) ? " \xB7 " + A0(s.k) : ""}</small></div><button data-cat="${o}">${r ? (pb(s.k) ? "ถอด" : "ใส่") : "ซื้อ"}</button></div>`;
+          let ic = s.k.startsWith("cc:")
+            ? ccsThumb(s.k, () => r0(s.n, Ok(s.n), ub(s.n) === "head" ? "bottom" : "center"))
+            : s.k.startsWith("dw:") && R0.find((a) => a.key === s.n)?.slot === "neck"
+              ? ccsThumb(s.k, () => Bk(R0.find((a) => a.key === s.n)))
+              : "";
+          return `<div class="row"><span class="ic">${ic || s.ic}</span><div><b>${s.l}</b><small>${r ? "มีแล้ว \xB7 ใส่ได้ที่ตู้เสื้อผ้า" : s.pr + " 💰"}${A0(s.k) ? " \xB7 " + A0(s.k) : ""}</small></div><button data-cat="${o}">${r ? (pb(s.k) ? "ถอด" : "ใส่") : "ซื้อ"}</button></div>`;
         })
         .join("");
     (Gi(
@@ -60971,6 +61144,13 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           ensureDigs: q4,
         },
         gardenPlot: T0,
+        openWares: (i, e) => v1(zn.find((t) => t.def.id === i), e),
+        ball: () => fo,
+        openDogs: () => gb(zn.find((i) => i.def.id === "petshop")),
+        openWardrobe: () => OE(),
+        shopIds: () => zn.map((t) => t.def.id),
+        P: () => ({ od, hn, xt, Rt, shops: zn.map((t) => [t.def.id, t.def.name, t.pos ?? t.door ?? null]) }),
+        openFood: (i) => dd("food", i === "fish" ? Yk : i === "chick" ? Xk : DE, null, ""),
         emo: (i) => emoHTML(emoMood(i)),
         pop: (i) => rt(i, Le[0].pos.clone().setY(1.5), "big"),
         modelKeys: () => Object.keys(vp),

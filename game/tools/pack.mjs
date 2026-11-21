@@ -15,7 +15,7 @@ async function garden() {
   const mTall = doc.createMaterial('rbg_tall').setRoughnessFactor(0.91).setMetallicFactor(0);
   const mGlow = doc.createMaterial('rbg_glow').setRoughnessFactor(0.6).setMetallicFactor(0).setEmissiveFactor([1, 0.86, 0.55]);
   // v82: เอาหมี+รุ้งเดิมออก (ใช้รูปปั้นข้าวต้ม + รุ้งโมเดลใหม่ในเกมแทน)
-  for (const n of root.listNodes()) if (/^(RAINBOW_BRIDGE|RAINBOW_PYLONS|CHOW_|STATUE_HEART)/.test(n.getName())) n.dispose();
+  for (const n of root.listNodes()) if (/^(RAINBOW_BRIDGE|RAINBOW_PYLONS|CHOW_|STATUE_HEART|SAKURA_)/.test(n.getName())) n.dispose();
   // v82: กันภาพกระพริบ (z-fighting) — ผิวที่ทับระนาบเดียวกัน ชิ้นใหญ่ลดต่ำลงกว่าชิ้นเล็กนิดหนึ่ง
   for (const n of root.listNodes()) {
     const m = n.getMesh(); if (!m) continue;
