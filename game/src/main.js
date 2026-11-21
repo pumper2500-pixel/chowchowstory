@@ -35525,8 +35525,8 @@ vObj = position;`,
               `#include <map_fragment>
       { vec3 c0 = diffuseColor.rgb;
         float l = dot(c0, vec3(0.3, 0.59, 0.11));
-        bool tongue = uChow > 0.5 && vPosM.y < uNoseY - 0.03 * uH && vPosM.z > uNoseZ - 0.2 * uL && abs(vPosM.x) < 0.12 && c0.r > c0.g + 0.12 && c0.b > c0.g + 0.015;
-        if (tongue) diffuseColor.rgb = vec3(0.22, 0.12, 0.42) * (0.7 + c0.r * 0.8);
+        bool tongue = uChow > 0.5 && vPosM.y < uNoseY - 0.05 * uH && vPosM.z > uNoseZ - 0.26 * uL && c0.r > 0.3 && c0.r > c0.g + 0.07 && c0.b > c0.g - 0.04;
+        if (tongue) diffuseColor.rgb = vec3(0.075, 0.045, 0.13) * (0.7 + c0.r * 0.5);   // v87: ลิ้นเชาเชาสีม่วงอมดำ (blue-black)
         else if (uRecolor > 0.5 && l > 0.035) diffuseColor.rgb = mix(uDark, uLight, smoothstep(0.05, 0.7, l));
         float shade = 0.78 + 0.3 * smoothstep(0.03, 0.55, l);
         // เสื้อ: คลุมลำตัว + ต้นขาหน้า (แขนเสื้อ) ไม่ทับหัวและหาง \xB7 ลวดลายฉายจาก 3 แกนตามทิศผิว (ไม่ยืดเป็นเส้นตรงกลางตัว)
@@ -35693,7 +35693,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     (g.scale.set(1.3, 0.55, 0.6), E.add(g));
     let y = new we(0.042, 16, 12);
     y.translate(0, -0.03, 0.02);
-    let x = new R(y, new X({ color: 5913228, roughness: 0.38, metalness: 0.02, emissive: 1707050 }));
+    let x = new R(y, new X({ color: 3021898, roughness: 0.35, metalness: 0.02, emissive: 657428 }));
     (x.scale.set(1.15, 1.9, 0.5), E.add(x));
     let b = new R(new ee(0.004, 0.08, 0.01), new X({ color: 3809888 }));
     (b.position.set(0, -0.03, 0.04),
@@ -41655,11 +41655,13 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       (T.position.set(M * 2.2, r - 0.1, 0), n.add(T));
     }
     let f = g3("บ้านข้าวต้ม", !0);
-    (f.position.set(0, -0.18, o / 2 + 0.02),
+    // v87: ประตู/หน้าต่างด้านในให้ตรงกับบ้านด้านนอก (มองจากในบ้าน: หน้าต่างใหญ่ฝั่ง -x, ประตูเยื้องไป +x, ช่องกระจกข้างประตู)
+    const DX = 1.4;
+    (f.position.set(DX, -0.18, o / 2 + 0.02),
       n.add(f),
       Ep(n, s, o, r, t, 16777215, 7317688, NaN, -4.6, 3.4),
-      Ep(n, s, o, r, t, 16777215, 7317688, NaN, 4.6, 3.4));
-    for (let M of [-4.6, 4.6]) {
+      Ep(n, s, o, r, t, 16777215, 7317688, NaN, 3.55, 1.2));
+    for (let M of [-4.6]) {
       for (let A of [-1, 1]) {
         let F = new R(new ee(0.5, 2.5, 0.08), Ae(A < 0 ? 9425888 : 16777215, 0.95));
         (F.position.set(M + A * 1.85, 1.95, o / 2 - 0.22), n.add(F));
@@ -41686,9 +41688,9 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         roughness: 0.95,
       }),
     );
-    ((d.rotation.x = -Math.PI / 2), d.position.set(0, 0.012, o / 2 - 3.4), n.add(d));
+    ((d.rotation.x = -Math.PI / 2), d.position.set(DX, 0.012, o / 2 - 3.4), n.add(d));
     let u = new R(new Te(1.7, 0.8), Ae(9067051, 0.95));
-    ((u.rotation.x = -Math.PI / 2), u.position.set(0, 0.014, o / 2 - 0.5), n.add(u));
+    ((u.rotation.x = -Math.PI / 2), u.position.set(DX, 0.014, o / 2 - 0.5), n.add(u));
     let p = new R(
         new gt(2.2, 40),
         new X({
@@ -41738,7 +41740,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         let I = T.intersectObject(M, !0)[0];
         I && (A = Math.min(A, I.point.y));
       }
-      ((E = A < 9 ? A + 0.01 : 0.2), (g = 1.06), (y = 0.86));
+      ((E = A < 9 ? A + 0.07 : 0.2), (g = 1.06), (y = 0.86)); // v87: ยกตัวขึ้นนอนบนผิวเบาะ (เดิมจม)
       let F = new R(
         new Te(1.4, 0.32),
         new be({
@@ -41924,7 +41926,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         id: "home",
         group: n,
         origin: e,
-        exit: new H(0, 0, o / 2 - 0.8).add(e),
+        exit: new H(DX, 0, o / 2 - 0.8).add(e),
         keeperSpot: new H(9999, 0, 9999),
         wares: [],
         solids: _,
@@ -42552,11 +42554,12 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         h.scale.setScalar(0.72),
         h.position.set(i.x - i.w / 2 + 0.75, e ? Math.min(3.9, r - 0.55) : 3.9, o + 0.06),
         n.add(h));
-      let d = new R(new ee(1.8, 0.1, 0.5), l(16777215, 0.5));
-      (d.position.set(i.x - 1.4, 0.48, o + 0.55), n.add(d));
-      for (let u of [-0.8, 0.8]) {
+      // v87: ม้านั่งสั้นลงและเลื่อนไปชิดมุมร้าน ไม่ทับกระถางต้นไม้หน้าประตู
+      let d = new R(new ee(1.1, 0.1, 0.5), l(16777215, 0.5));
+      (d.position.set(i.x - 2.1, 0.48, o + 0.55), n.add(d));
+      for (let u of [-0.48, 0.48]) {
         let p = new R(new ee(0.06, 0.45, 0.45), l(1943770, 0.4));
-        (p.position.set(i.x - 1.4 + u, 0.23, o + 0.55), n.add(p));
+        (p.position.set(i.x - 2.1 + u, 0.23, o + 0.55), n.add(p));
       }
     } else if (i.id === "groom") {
       let h = new X({ color: 13627391, roughness: 0.05, metalness: 0.1, transparent: !0, opacity: 0.45 }),
@@ -46207,6 +46210,26 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (c.position.set(s, 3.7, o), K.add(c), pd(s, o - 1.6, 3.6));
       }
     }
+    // v87: เสาไฟฝั่งร้านค้า (ฟุตบาทอีกฝั่ง) หันโคมเข้าหาถนน ส่องทางเดินหน้าร้าน
+    if (i)
+      for (let s of [-55, -30, -19.5, -8, 16, 30, 50]) {
+        let o = -(Mt - 0.35),
+          r = new be({ color: 16774048 });
+        YE.push(r);
+        let a = je("street_lamp2");
+        ((a.rotation.y = -Math.PI / 2),
+          a.position.set(s, 0, o - e),
+          a.traverse((f) => {
+            f.castShadow = !0;
+          }),
+          K.add(a));
+        let c = new R(new we(0.13, 10, 8), r);
+        ((c.scale.y = 0.6), c.position.set(s, n, o - e + t), K.add(c), pt.push({ x: s, z: o, hw: 0.18, hd: 0.18 }), pd(s, o - e + t + 0.2, 3));
+        let l = ZE(n - 0.05, 0.12, 1.9, 16766880, 0.22);
+        (l.position.set(s, n / 2, o - e + t), K.add(l));
+        let h = new En(16766880, 0, 10, 1.4);
+        (h.position.set(s, n - 0.45, o - e + t), K.add(h), H0.push({ l: h, on: 16 }));
+      }
   }
   var zn = [],
     KE = [
@@ -48304,7 +48327,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           y
         );
       };
-    (l(0.2, 3.2, 6, a, 3.5, 1.6, -0.8), l(7.6, 0.2, 1.5, c, -0.1, 3.3, 0.12));
+    (l(0.36, 3.2, 6, a, 3.58, 1.6, -0.8), l(7.6, 0.2, 1.5, c, -0.1, 3.3, 0.12)); // v87: ผนังปิดข้างหนาขึ้น กันประตูแดงของโมเดลซ้อนระนาบ (กะพริบ)
     for (let [f, d] of [
       [-3.58, 0],
       [3.38, 3],
@@ -49234,24 +49257,33 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           "dk_chips_8",
           "dk_bag",
         ].filter((b) => ze(b)),
-        u = new Map(),
         p = 5,
-        m = () => (p = (p * 16807) % 2147483647) / 2147483647,
-        E = new Yn(),
-        g = new At(),
-        y = new H(1, 1, 1);
-      for (let b = 0; b < 46; b++) {
-        let w = d[b % d.length],
-          v = m() - 0.5,
-          _ = m() - 0.5,
-          S = 1 - Math.min(1, v * v * 3 + _ * _ * 3);
-        (E.set(-Math.PI / 2 + (m() - 0.5) * 0.9, m() * Math.PI * 2, (m() - 0.5) * 0.5),
-          g.setFromEuler(E),
-          (u.get(w) ?? (u.set(w, []), u.get(w))).push(
-            new Oe().compose(new H(c + v * 2.6, 0.62 + S * 0.25 + m() * 0.08, l + _ * 0.75), g.clone(), y),
-          ));
+        m = () => (p = (p * 16807) % 2147483647) / 2147483647;
+      // v87: ถังขนมจัดเป็นระเบียบ — ขอบกั้นรอบถัง + ถุงตั้งเรียงแถว เอนพิงไปด้านหลัง ไม่ทะลุเสาป้าย/ขอบ
+      {
+        let b = new X({ color: 16769280, roughness: 0.5 });
+        for (let [w, v, _, S] of [
+          [3, 0.2, 0.06, [0, 0.5]],
+          [3, 0.2, 0.06, [0, -0.5]],
+          [0.06, 0.2, 1.05, [1.47, 0]],
+          [0.06, 0.2, 1.05, [-1.47, 0]],
+        ]) {
+          let M = new R(new ee(w, v, _), b);
+          (M.position.set(c + S[0], 0.82, l + S[1]), e.add(M));
+        }
       }
-      for (let [b, w] of u) ad(e, b, w);
+      for (let [b, w, v] of [
+        [0.27, 0.72, 0.5],
+        [0, 0.8, 0.5],
+        [-0.27, 0.88, 0.5],
+      ])
+        for (let _ = 0; _ < 8; _++) {
+          let S = d[(_ * 3 + Math.round(b * 10) + 20) % d.length],
+            M = je(S, 0.3);
+          (M.position.set(c - 1.22 + _ * 0.35 + (m() - 0.5) * 0.04, w - 0.1, l + b),
+            (M.rotation.set(-v * 0.6 - 0.15, (m() - 0.5) * 0.25, 0)),
+            e.add(M));
+        }
       let x = new R(
         new Te(1.4, 0.5),
         new be({
@@ -49277,10 +49309,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           side: Ke,
         }),
       );
-      (x.position.set(c, 1.45, l), e.add(x));
-      for (let b of [-0.6, 0.6]) {
-        let w = new R(new re(0.02, 0.02, 0.6, 6), new X({ color: 8947848 }));
-        (w.position.set(c + b, 0.95, l), e.add(w));
+      (x.position.set(c, 1.55, l - 0.5), e.add(x));
+      for (let b of [-0.72, 0.72]) {
+        let w = new R(new re(0.02, 0.02, 0.9, 6), new X({ color: 8947848 }));
+        (w.position.set(c + b, 1.2, l - 0.5), e.add(w));
       }
       i.solids.push({ x: t.x + c, z: t.z + l, hw: 1.5, hd: 0.52 });
     }
@@ -51065,6 +51097,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         if ((f.position.set(-0.05, 1.86, 0.18), h.group.add(f), c % 2 === 0)) {
           let d = new En(a, 9, 3.4, 1.5);
           (d.position.set(t / 2 / 1.15, 1.7, 0.1), h.group.add(d));
+        }
+        {
+          // v87: ไฟส่องหน้าตู้คีบตอนกลางคืน (สปอตไลต์ติดชายคา + แสงตกพื้น)
+          let d = new En(16773336, 0, 7, 1.3);
+          (d.position.set(l, 2.7, s + 1.3), K.add(d), H0.push({ l: d, on: 12 }), pd(l, s + 1.1, 2.2));
         }
         (gl.push({ c: h, pos: new H(l, 0, s), front: new H(l, 0, s + 1.35) }),
           pt.push({ x: l, z: s + 0.1, hw: 0.8, hd: 0.72 }));
@@ -53103,7 +53140,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           }
           continue;
         }
-        (E4(b, b.pos.distanceTo(n.pos) < 3 ? n.pos : null, 1.8, 8, e), Qp(b, e));
+        (E4(b, b.pos.distanceTo(n.pos) < 3 ? n.pos : null, 1.8, 8, e), Qp(b, e), Se && Se === Rn && $H(b.pos) && (b.rig.root.position.y = Rn.bedY)); // v87: เพื่อนขึ้นไปนอนบนเบาะ ไม่จมเตียง
       }
       for (let b of z4) {
         if (!b.alive) {
@@ -61324,6 +61361,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         openDogs: () => gb(zn.find((i) => i.def.id === "petshop")),
         openWardrobe: () => OE(),
         shopIds: () => zn.map((t) => t.def.id),
+        enterHome: () => JE(),
         P: () => ({ od, hn, xt, Rt, shops: zn.map((t) => [t.def.id, t.def.name, t.pos ?? t.door ?? null]) }),
         openFood: (i) => dd("food", i === "fish" ? Yk : i === "chick" ? Xk : DE, null, ""),
         emo: (i) => emoHTML(emoMood(i)),
