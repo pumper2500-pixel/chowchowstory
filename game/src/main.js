@@ -47799,7 +47799,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         s(3) && _0(),
         s(8) && it("poopBtn").click(),
         (s(6) || s(11)) && xa(),
-        s(9) && j.started && Rr());
+        s(9) && j.started && Rr(),
+        j.started && (s(14) && ccsBagCycle(-1), s(15) && ccsBagCycle(1), s(13) && ccsBagCycle(0))); // v86: D-pad ◀▶ เลือกของในกระเป๋า, ▼ ยกเลิก
     return (
       s(4) && it("zout").click(),
       s(5) && it("zin").click(),
@@ -57400,6 +57401,30 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     Ad = null,
     C0 = () => js.classList.contains("on");
   $c.addEventListener("click", () => Ad?.());
+  // v86: เลือกของในกระเป๋าได้ทุกอุปกรณ์ — คีย์บอร์ด: เลข 1-9 เลือกช่อง, 0/Esc ยกเลิก, Z/X เลื่อนซ้าย-ขวา · จอย: D-pad ◀▶ ▼
+  function ccsBagCycle(i) {
+    let e = Object.entries(z.inv)
+      .filter(([, n]) => n > 0)
+      .map(([n]) => n);
+    if (!e.length) return (De("กระเป๋าว่าง \xB7 จับแมลง เก็บไข่ไก่ แล้วเอาไปส่งขาย", 1600), void 0);
+    if (i === 0) Fn = "";
+    else if (typeof i == "string") Fn = i;
+    else {
+      let n = e.indexOf(Fn);
+      Fn = n < 0 ? e[i > 0 ? 0 : e.length - 1] : e[(n + i + e.length) % e.length];
+    }
+    (Ei(), ke("pop"), De(Fn ? `${zE(Fn)} เลือก${e4(Fn)} ×${z.inv[Fn]} \xB7 เดินไปที่ลังส่งของ/เพื่อน/แปลงผัก แล้วกดปุ่มใช้` : "ยกเลิกการเลือกของ", 1800));
+    let n = K3.querySelector(".slot.on");
+    n?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }
+  addEventListener("keydown", (i) => {
+    if (!j.started || C0() || i.target?.tagName === "INPUT" || i.target?.tagName === "TEXTAREA") return;
+    let e = i.key;
+    if (/^[1-9]$/.test(e)) {
+      let t = Object.entries(z.inv).filter(([, n]) => n > 0)[+e - 1];
+      t && ccsBagCycle(Fn === t[0] ? 0 : t[0]);
+    } else (e === "0" || (e === "Escape" && Fn)) ? ccsBagCycle(0) : e === "z" || e === "Z" ? ccsBagCycle(-1) : (e === "x" || e === "X") && ccsBagCycle(1);
+  });
   addEventListener("keydown", (i) => {
     (i.key === "f" || i.key === "F" || i.key === "Enter") && j.started && !C0() && (i.preventDefault(), Ad?.());
   });
@@ -57416,7 +57441,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     for (let [e, t] of i) {
       let n = document.createElement("button");
       ((n.className = `slot${e === Fn ? " on" : ""}${e.startsWith("seed") ? " seed" : ""}`),
-        (n.innerHTML = `<span>${zE(e)}</span>${e.startsWith("seed") ? `<em>${so(e.split(":")[1]).icon}</em>` : ""}<b>${t}</b>`),
+        (n.innerHTML = `<span>${zE(e)}</span>${e.startsWith("seed") ? `<em>${so(e.split(":")[1]).icon}</em>` : ""}<b>${t}</b>${K3.children.length < 9 ? `<i class="kn">${K3.children.length + 1}</i>` : ""}`),
         (n.title = e4(e)),
         n.addEventListener("click", () => {
           ((Fn = Fn === e ? "" : e), Ei(), Fn && De(e4(Fn), 1200));
@@ -60835,7 +60860,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       .join("");
     (Gi(
       "เพื่อนในเมือง 👥",
-      `${i}<p class="note">คุยทุกวัน +1♥ \xB7 ให้ของ +1♥ \xB7 ของโปรด +3♥<br>🎁 วิธีให้ของ: แตะของในกระเป๋าแถบล่าง (ปลา แมลง ไข่ เปลือกหอย ไข่มุก) ให้ขึ้นกรอบ แล้วเดินไปใกล้เพื่อน กดปุ่ม “🎁 ให้…”</p><button class="reset" id="resetSave">เริ่มฟาร์มใหม่</button>`,
+      `${i}<p class="note">คุยทุกวัน +1♥ \xB7 ให้ของ +1♥ \xB7 ของโปรด +3♥<br>🎁 วิธีให้ของ: เลือกของในกระเป๋าแถบล่างให้ขึ้นกรอบ (มือถือ: แตะ · คีย์บอร์ด: เลข 1-9 หรือ Z/X · จอย: D-pad ◀▶, ▼ ยกเลิก) แล้วเดินไปใกล้เพื่อน กดปุ่ม “🎁 ให้…” (F/Enter หรือ Ⓐ)</p><button class="reset" id="resetSave">เริ่มฟาร์มใหม่</button>`,
     ),
       it("resetSave").addEventListener("click", () => {
         (DM(), location.reload());

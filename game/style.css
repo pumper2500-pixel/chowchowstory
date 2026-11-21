@@ -217,3 +217,8 @@ body.sniffing #app canvas{filter:grayscale(.85) brightness(.72) contrast(1.08)}
 .pop .e3d{width:1.7em;height:1.7em;vertical-align:-.45em;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
 /* v83: ไอคอนเมนูจากโมเดล 3D */
 .ic img.th{width:46px;height:46px;display:block;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+/* v86: ป้ายปุ่มลัดกระเป๋า — คีย์บอร์ดเห็นเลข 1-9, จอยเห็น ◀ ▶ (D-pad) */
+.slot .kn{display:none;position:absolute;left:3px;top:1px;font:700 10px/1 Mitr,sans-serif;font-style:normal;color:#8a6d3b}
+@media (hover:hover) and (pointer:fine){body:not(.pad) .slot .kn{display:block}}
+#barhint{display:none;position:fixed;left:50%;bottom:calc(74px + var(--sab,0px));translate:-50% 0;padding:1px 10px;border-radius:10px;background:rgba(40,40,40,.85);color:#fff;font:700 11px/18px Mitr,sans-serif;white-space:nowrap;pointer-events:none;z-index:6}
+body.pad.playing #bar:has(.slot) + #barhint{display:block}
