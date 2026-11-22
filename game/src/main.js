@@ -38010,7 +38010,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           { x: t.x - a / 2 + 0.45, z: t.z + 0.9, hw: 0.6, hd: 3.3 },
           { x: t.x + a / 2 - 0.45, z: t.z + 0.9, hw: 0.6, hd: 3.3 },
         ];
-    F && !o && (C(2.4, -0.4, 0, 3.6, !0), P.push({ x: t.x + 2.4, z: t.z - 0.4, hw: 2, hd: 0.8 }));
+    F && !o && i.id !== "petshop" && (C(2.4, -0.4, 0, 3.6, !0), P.push({ x: t.x + 2.4, z: t.z - 0.4, hw: 2, hd: 0.8 })); // v112: ร้านสัตว์เลี้ยงไม่ตั้งชั้นกลางร้าน (บังคอกน้องหมา)
     let I = [];
     return (
       n.slice(0, T.length).forEach((k, D) => {
@@ -46198,7 +46198,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       let p = new R(new ee(340, 0.1, 0.22), new bt({ color: 11578532 }));
       (p.position.set(0, 0.05, Math.sign(u) * (vn + 0.11)), K.add(p));
       let m = new R(new ee(340, 0.03, Xc - 0.2), new bt({ map: c }));
-      (m.position.set(0, 0.025, u + Math.sign(u) * 0.1), (m.receiveShadow = !0), K.add(m));
+      (m.position.set(0, 0.025, u + Math.sign(u) * 0.1), (m.receiveShadow = !0), K.add(m), (ccsOldSW = ccsOldSW || []).push(p, m));
     }
     let l = new R(new gt(12, 40), new bt({ map: s }));
     ((l.rotation.x = -Math.PI / 2),
@@ -48377,8 +48377,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let a = new mt().setFromObject(o),
         c = a.getSize(new H());
       // ให้จมน้ำราว 35% ของความสูง (ห่วงยางลอยตื้น ลูกบอล/เป็ดลอยสูง)
-      ((o.position.y = -c.y * (s < 0.5 ? 0.3 : 0.38)), r.position.set(e, Ph, Rt + t), K.add(r));
-      ccsFloats.push({ g: r, x: e, z: Rt + t, hx: e, hz: Rt + t, vx: 0, vz: 0, vy: 0, y: Ph, r: Math.max(c.x, c.z) * 0.46, m: s, yaw: Math.random() * 6, yv: (Math.random() - 0.5) * 0.3, px: 0, pz: 0, pvx: 0, pvz: 0, nw: !0 });
+      let dr = c.y * (s < 0.5 ? 0.3 : 0.38);
+      ((o.position.y = -a.min.y - dr), r.position.set(e, Ph, Rt + t), K.add(r));
+      ccsFloats.push({ g: r, x: e, z: Rt + t, hx: e, hz: Rt + t, vx: 0, vz: 0, vy: 0, y: Ph, dr: dr, r: Math.max(c.x, c.z) * 0.46, m: s, yaw: Math.random() * 6, yv: (Math.random() - 0.5) * 0.3, px: 0, pz: 0, pvx: 0, pvz: 0, nw: !0 });
     }
   }
   function ccsPhysSetup() {
@@ -48592,21 +48593,33 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           ((a.x += (d / p) * E), (a.z += (u / p) * E), g < 0 && ((a.vx -= (d / p) * g * 0.6 * (f.m / (a.m + f.m)) * 2), (a.vz -= (u / p) * g * 0.6 * (f.m / (a.m + f.m)) * 2), (a.yv += g * 0.3)));
         }
       }
-      // ผิวน้ำ: ความสูง + ความชันจากคลื่น
+      // ผิวน้ำ + พื้น (ทะเลลาดลึก / ชายหาด) → ลอยน้ำ หรือ เกยหาด
       let f = ccsWaveY(a.x, a.z, t),
         d = (ccsWaveY(a.x + h, a.z, t) - ccsWaveY(a.x - h, a.z, t)) / (2 * h),
-        u = (ccsWaveY(a.x, a.z + h, t) - ccsWaveY(a.x, a.z - h, t)) / (2 * h);
-      // แรงลอยตัวแบบสปริง-หน่วง (ของเบาเด้งไวกว่า) + คลื่นไหลลงตามความชัน + ลมทะเลพัดเข้าฝั่งเบา ๆ + ดึงกลับบริเวณเดิมช้า ๆ
-      ((a.vy += ((f - a.y) * (34 / l) - a.vy * (3.2 + 1.5 / l)) * c), (a.y += a.vy * c));
-      let p = 1.6 + 0.5 * Math.sin(t * 0.11 + a.hx);
-      ((a.vx += (-d * 9.8 * 0.35 + Math.sin(t * 0.07 + a.hz) * 0.06 + (a.hx - a.x) * 0.012) * c),
-        (a.vz += (-u * 9.8 * 0.35 - 0.05 * p * 0.3 + (a.hz - a.z) * 0.012) * c));
-      let m = Math.pow(0.55, c);
-      ((a.vx *= m), (a.vz *= m), (a.yv *= Math.pow(0.6, c)), (a.yv += (d - u) * 0.15 * c), (a.x += a.vx * c), (a.z += a.vz * c), (a.yaw += a.yv * c));
-      a.z < Rt + 1.1 && ((a.z = Rt + 1.1), (a.vz = Math.abs(a.vz) * 0.3));
-      // เอียงตามผิวน้ำแบบสปริง (มีแกว่งค้าง ไม่แข็งทื่อ)
-      let E = Math.atan(u) * 1.1,
-        g = -Math.atan(d) * 1.1;
+        u = (ccsWaveY(a.x, a.z + h, t) - ccsWaveY(a.x, a.z - h, t)) / (2 * h),
+        gH = a.z > Rt - 1.35 ? Lc(a.z) : b4(a.x, a.z),
+        rest = gH + a.dr,
+        wet = f > rest - 0.01,
+        sw = Math.max(0, 1 - Math.abs(a.z - (Rt - 0.6)) / 2.2); // เขตคลื่นซัดฝั่ง
+      if (wet) {
+        // ลอยน้ำ: แรงลอยตัวแบบสปริง-หน่วง (ของเบาเด้งไวกว่า) + คลื่นไหลตามความชัน + ลมเบา ๆ + ดึงกลับแถวเดิมช้า ๆ
+        ((a.vy += ((f - a.y) * (34 / l) - a.vy * (3.2 + 1.5 / l)) * c), (a.y += a.vy * c), a.y < rest && ((a.y = rest), (a.vy = Math.max(0, a.vy))));
+        let p = a.z > Rt + 1.5 ? 1 : 0;
+        ((a.vx += (-d * 9.8 * 0.35 + Math.sin(t * 0.07 + a.hz) * 0.06 + (a.hx - a.x) * 0.012 * p) * c),
+          (a.vz += (-u * 9.8 * 0.35 - 0.024 + (a.hz - a.z) * 0.012 * p + Math.sin(t * 0.9 + a.hx) * 0.35 * sw) * c));
+        let m = Math.pow(0.55, c);
+        ((a.vx *= m), (a.vz *= m));
+      } else {
+        // เกยหาด: ตกลงพื้น มีแรงเสียดทานทราย, หาดลาดลงทะเล → ไหลกลับลงน้ำเอง, คลื่นซัดดึงกลับ
+        ((a.vy -= 9.8 * c), (a.y += a.vy * c), a.y < rest && ((a.y = rest), (a.vy = 0)));
+        let p = a.z > Rt - 4.5 ? 0.55 : 0;
+        ((a.vz += (p + Math.max(0, Math.sin(t * 0.9 + a.hx)) * 0.9 * sw) * c), (a.vx *= Math.pow(0.12, c)), (a.vz *= Math.pow(0.12, c)));
+      }
+      ((a.yv *= Math.pow(wet ? 0.6 : 0.1, c)), (a.yv += (d - u) * 0.15 * c * (wet ? 1 : 0)), (a.x += a.vx * c), (a.z += a.vz * c), (a.yaw += a.yv * c));
+      a.z < Rt - 9 && ((a.z = Rt - 9), (a.vz = Math.abs(a.vz) * 0.3));
+      // เอียงตามผิวน้ำ (บนหาดวางราบ) แบบสปริง มีแกว่งค้าง
+      let E = wet ? Math.atan(u) * 1.1 : 0,
+        g = wet ? -Math.atan(d) * 1.1 : 0;
       ((a.pvx += ((E - a.px) * 22 - a.pvx * 3.5) * c), (a.pvz += ((g - a.pz) * 22 - a.pvz * 3.5) * c), (a.px += a.pvx * c), (a.pz += a.pvz * c));
       (a.g.position.set(a.x, a.y, a.z), a.g.rotation.set(a.px, a.yaw, a.pz, "YXZ"));
     }
@@ -51685,8 +51698,52 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ((ccsLH.glow.material.opacity = 0.25 + e * 0.75 * (0.8 + 0.2 * Math.sin(ccsLH.t * 6))), ccsLH.glow.scale.setScalar(4 + e * 6));
     ccsLH.lampM && (ccsLH.lampM.emissiveIntensity = 0.2 + e * 2.5);
   }
+  // v112: ทางเท้าใหม่จากโมเดล Sidewalk (บล็อกปูถนน + แถบอิฐแดง + ขอบคันหิน + รางหินคิวบ์)
+  var ccsOldSW;
+  function ccsSidewalk() {
+    let i = vp.sidewalk_tex,
+      e = null;
+    if ((i?.traverse((d) => d.isMesh && !e && (e = d.material)), !e?.map)) return;
+    let t = e.map.clone();
+    ((t.wrapS = gn), (t.wrapT = Fi), (t.anisotropy = 8), (t.needsUpdate = !0));
+    let n = new X({ map: t, roughness: 0.92, metalness: 0 }),
+      s = 340,
+      o = 0.7;
+    for (let d of [-1, 1]) {
+      let u = [],
+        p = [],
+        m = [],
+        E = [],
+        g = (y, x, b, w, v, _, S) => {
+          // แถบยาวตามแกน x: (z0,y0,v0) → (z1,y1,v1)
+          let M = u.length / 3;
+          for (let [T, A, F] of [
+            [-s / 2, y, v],
+            [s / 2, y, v],
+            [s / 2, x, _],
+            [-s / 2, x, _],
+          ])
+            (u.push(T, A, 0), p.push(T * o, F));
+          let T = u.length / 3 - 4;
+          ((u[T * 3 + 2] = b), (u[(T + 1) * 3 + 2] = b), (u[(T + 2) * 3 + 2] = w), (u[(T + 3) * 3 + 2] = w));
+          let A = S ? [0, 0, 1] : [0, 1, 0];
+          for (let F = 0; F < 4; F++) m.push(A[0], A[1], A[2] * -d);
+          d > 0 ? E.push(M, M + 2, M + 1, M, M + 3, M + 2) : E.push(M, M + 1, M + 2, M, M + 2, M + 3);
+        },
+        y = vn,
+        x = vn + 0.3,
+        b = vn + 0.52,
+        w = vn + Xc + 0.05;
+      (g(0.025, 0.025, d * y, d * x, 0.99, 0.845, !1), g(0.025, 0.065, d * x, d * x, 0.845, 0.812, !0), g(0.065, 0.065, d * x, d * b, 0.81, 0.772, !1), g(0.065, 0.065, d * b, d * w, 0.77, 0.045, !1));
+      let v = new qe();
+      (v.setAttribute("position", new Fe(u, 3)), v.setAttribute("normal", new Fe(m, 3)), v.setAttribute("uv", new Fe(p, 2)), v.setIndex(E), v.computeBoundingSphere());
+      let _ = new R(v, n);
+      ((_.receiveShadow = !0), K.add(_));
+    }
+    for (let d of ccsOldSW ?? []) d.visible = !1;
+  }
   function TA() {
-    (ccsLighthouse(), ccsFerris(), ccsVolcano(), ccsStall && Cr && ((ccsStall.position.y = Math.max(0, Cr.heightAt(od.x, od.z))), (od.y = ccsStall.position.y)), ccsStallExtras());
+    (ccsSidewalk(), ccsLighthouse(), ccsFerris(), ccsVolcano(), ccsStall && Cr && ((ccsStall.position.y = Math.max(0, Cr.heightAt(od.x, od.z))), (od.y = ccsStall.position.y)), ccsStallExtras());
     if ((IH(), ze("rb_garden"))) {
       ccsGardenModel();
       for (let d = 0; d < yd; d++) T0(d);
@@ -53555,7 +53612,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           ? Kr(i.beast)
           : i.anim
             ? Yg(i.anim, i.h ?? 0.8)
-            : ui("orange", 0.8, i.key, i.tint);
+            : i.key === "bulldog" && vp.pet_britbull
+              ? ccsTB("pet_britbull", 0.42)
+              : ui("orange", 0.8, i.key, i.tint);
       K.add(t.root);
       let n = new H(i.home[0], 0, i.home[1]);
       po(n) && (n.z += n.z < 0 ? -7 : 7);
@@ -54199,12 +54258,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     for (let s of zn) (s.keeper.root.position.copy(s.inside.keeperSpot), Qi(s.keeper, e, 0, s.inside.keeperYaw ?? 0));
     if ((uE && Se && Se.id === "groom" && uE.userData.update?.(e), Se && Se.id === "petshop"))
-      for (let s of wT) {
-        s.t += e;
-        let o = Math.max(0, Math.sin(s.t * 2.2)) * (Math.sin(s.t * 0.37) > 0.4 ? 0.12 : 0);
-        (s.rig.root.position.set(s.base.x + Math.sin(s.t * 0.6) * 0.25, o, s.base.z + Math.cos(s.t * 0.5) * 0.15),
-          Qi(s.rig, e, Math.abs(Math.cos(s.t * 0.6)) * 0.6, Math.sin(s.t * 0.3) * 2));
-      }
+      ccsPenTick(e);
     if (Se && ((C3 -= e), C3 <= 0)) {
       let s = zn.find((o) => o.inside === Se);
       if (s && !js.classList.contains("on")) {
@@ -60831,52 +60885,99 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   var wT = [],
     vT = [];
+  // v112: คอกน้องหมาใหญ่ขึ้น คอกละ 4 ตัว คละสายพันธุ์ เดินเล่น/หยุดดมพื้น/กระโดดเล่น/หันมองคนแบบเป็นธรรมชาติ
   function $k(i) {
     let e = new X({ color: 16777215, roughness: 0.5 }),
       t = new X({ color: 15895592, roughness: 0.5 }),
-      n = [
-        () => ui("cream", 0.5),
-        () => ui("red", 0.5),
-        () => ui("orange", 0.6, "poodle"),
-        () => ui("black", 0.5),
-        () => ui("blue", 0.5),
-        () => ui("white", 0.5),
+      n = 3.2,
+      s = 2.4,
+      o = [
+        [["chow_cream", 1], ["labrador", 0.6], ["chihuahua", 1], ["bulldog", 0.85]],
+        [["chow_red", 1], ["poodle", 1], ["sharpei", 0.78], ["pharaoh", 0.6]],
+        [["chow_black", 1], ["chow_white", 1], ["bulldogpup", 0.95], ["chow_blue", 1]],
       ];
-    [-3.4, 0, 3.4].forEach((s, o) => {
-      let r = i.origin.x + s,
-        a = i.origin.z + 0.6,
-        c = new R(new Te(2.4, 2), new X({ color: [16770026, 15136511, 16774084][o], roughness: 0.9 }));
-      ((c.rotation.x = -Math.PI / 2), c.position.set(s, 0.015, 0.6), i.group.add(c));
-      for (let [l, h, f, d] of [
-        [-1.2, -1, 1.2, -1],
-        [-1.2, 1, 1.2, 1],
-        [-1.2, -1, -1.2, 1],
-        [1.2, -1, 1.2, 1],
+    [-3.5, 0, 3.5].forEach((r, a) => {
+      let c = i.origin.x + r,
+        l = i.origin.z + 0.6,
+        h = new R(new Te(n, s), new X({ color: [16770026, 15136511, 16774084][a], roughness: 0.9 }));
+      ((h.rotation.x = -Math.PI / 2), h.position.set(r, 0.015, 0.6), i.group.add(h));
+      let f = n / 2,
+        d = s / 2;
+      for (let [u, p, m, E] of [
+        [-f, -d, f, -d],
+        [-f, d, f, d],
+        [-f, -d, -f, d],
+        [f, -d, f, d],
       ]) {
-        let u = Math.hypot(f - l, d - h),
-          p = new R(new ee(u, 0.06, 0.05), e);
-        (p.position.set(s + (l + f) / 2, 0.45, 0.6 + (h + d) / 2),
-          (p.rotation.y = -Math.atan2(d - h, f - l)),
-          i.group.add(p));
-        for (let [m, E] of [
-          [l, h],
-          [f, d],
+        let g = Math.hypot(m - u, E - p),
+          y = new R(new ee(g, 0.06, 0.05), e);
+        (y.position.set(r + (u + m) / 2, 0.45, 0.6 + (p + E) / 2), (y.rotation.y = -Math.atan2(E - p, m - u)), i.group.add(y));
+        for (let [x, b] of [
+          [u, p],
+          [m, E],
         ]) {
-          let g = new R(new re(0.05, 0.05, 0.55, 8), t);
-          (g.position.set(s + m, 0.27, 0.6 + E), i.group.add(g));
+          let w = new R(new re(0.05, 0.05, 0.55, 8), t);
+          (w.position.set(r + x, 0.27, 0.6 + b), i.group.add(w));
         }
       }
-      (i.solids.push({ x: r, z: a, hw: 1.3, hd: 1.1 }), vT.push(new H(r, 0, a + 1.6)));
-      for (let l = 0; l < 2; l++)
+      (i.solids.push({ x: c, z: l, hw: f + 0.1, hd: d + 0.1 }), vT.push(new H(c, 0, l + d + 0.45)));
+      let pen = { x: c, z: l, hw: f - 0.32, hd: d - 0.3 };
+      o[a].forEach(([u, p], m) => {
         try {
-          let h = n[(o * 2 + l) % n.length](),
-            f = new H(r + (l ? 0.45 : -0.45), 0, a + (l ? -0.2 : 0.25));
-          (h.root.position.copy(f),
-            (h.yaw = Math.PI * 0.1 * (l ? -1 : 1)),
-            K.add(h.root),
-            wT.push({ rig: h, base: f, t: Math.random() * 6 }));
-        } catch {}
+          let E = T1.find((y) => y.key === u);
+          if (!E || (E.need && !E.need())) return;
+          let g = E.make();
+          if (!g) return;
+          g.root.scale.multiplyScalar(p);
+          let y = new H(c + (m % 2 ? 0.7 : -0.7), 0, l + (m < 2 ? -0.45 : 0.45));
+          (g.root.position.copy(y), (g.yaw = Math.random() * 6), K.add(g.root), wT.push({ rig: g, pos: y, pen: pen, st: 0, tt: Math.random() * 2, tgt: y.clone(), sp: 0, hop: 0, r: 0.32 * p + 0.12, base: y }));
+        } catch (E) {
+          console.warn("pen dog", u, E);
+        }
+      });
     });
+  }
+  function ccsPenTick(i) {
+    let e = Le[0]?.pos;
+    for (let t of wT) {
+      if (!t.pen) continue;
+      let n = t.pen,
+        s = t.rig;
+      if (((t.tt -= i), t.st === 0)) {
+        // ยืนดู/ดมพื้น แล้วสุ่มเป้าหมายใหม่ในคอก
+        if (((t.sp += (0 - t.sp) * Math.min(1, i * 6)), t.tt <= 0)) {
+          let o = 0;
+          do (t.tgt.set(n.x + (Math.random() * 2 - 1) * n.hw, 0, n.z + (Math.random() * 2 - 1) * n.hd), o++);
+          while (o < 6 && wT.some((r) => r !== t && r.pen === n && r.pos.distanceTo(t.tgt) < 0.6));
+          ((t.st = 1), (t.tt = 6), (t.want = 0.45 + Math.random() * 0.6), Math.random() < 0.15 && (t.want = 1.6));
+        }
+      } else {
+        let o = t.tgt.x - t.pos.x,
+          r = t.tgt.z - t.pos.z,
+          a = Math.hypot(o, r);
+        ((t.sp += ((a > 0.25 ? t.want : 0) - t.sp) * Math.min(1, i * 4)), (t.yawT = Math.atan2(o, r)));
+        if (a < 0.2 || t.tt <= 0) ((t.st = 0), (t.tt = 1.2 + Math.random() * 4), Math.random() < 0.25 && (t.hop = 0.6));
+      }
+      // เดินหลบตัวอื่นในคอก + อยู่ในรั้ว
+      let o = t.st === 1 ? Math.sin(t.yawT ?? 0) * t.sp * i : 0,
+        r = t.st === 1 ? Math.cos(t.yawT ?? 0) * t.sp * i : 0;
+      for (let a of wT)
+        if (a !== t && a.pen === n) {
+          let c = t.pos.x - a.pos.x,
+            l = t.pos.z - a.pos.z,
+            h = Math.hypot(c, l),
+            f = t.r + a.r;
+          h < f && h > 1e-3 && ((o += (c / h) * (f - h) * 0.5), (r += (l / h) * (f - h) * 0.5));
+        }
+      ((t.pos.x = Math.max(n.x - n.hw, Math.min(n.x + n.hw, t.pos.x + o))), (t.pos.z = Math.max(n.z - n.hd, Math.min(n.z + n.hd, t.pos.z + r))));
+      // กระโดดดีใจเบา ๆ ตอนหยุด
+      let c = 0;
+      t.hop > 0 && ((t.hop -= i), (c = Math.max(0, Math.sin((0.6 - t.hop) * Math.PI * 3.3)) * 0.12));
+      s.root.position.set(t.pos.x, c, t.pos.z);
+      // ยืนเฉย ๆ หันมองน้องเชาที่มาดูคอก
+      let a = t.st === 1 ? t.yawT : e && e.distanceTo(t.pos) < 3.5 ? Math.atan2(e.x - t.pos.x, e.z - t.pos.z) : null;
+      Qi(s, i, t.sp * 2.2, a);
+    }
   }
   var Q3 = {};
   function RT(i) {
@@ -61859,7 +61960,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         icon: "🐶",
         price: 900,
         note: "หน้าย่น ใจดี",
-        make: () => ui("orange", 0.62, "bulldog", 14859408),
+        make: () => ccsTB("pet_britbull", 0.42, () => ui("orange", 0.62, "bulldog", 14859408)), // v112: บูลด็อกอังกฤษโมเดลใหม่
       },
       {
         key: "chihuahua",
@@ -62593,6 +62694,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r105")),
         bn(Zt("r109")),
         bn(Zt("r111")),
+        bn(Zt("r112")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
@@ -62703,6 +62805,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         clawPair: (d) => ccsClawPair(d),
         addComp: (k, p) => BE(k, p),
         floats: () => ccsFloats,
+        pen: () => wT,
         petKeys: () => T1.filter((n) => !n.need || n.need()).map((n) => n.key),
         clawDaily: () => ccsClawDaily(),
         cabSync: () => H1(),
