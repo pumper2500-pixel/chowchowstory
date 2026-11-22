@@ -36962,6 +36962,37 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     }
     return n;
   }
+  // v93: ระบบสปริง (secondary motion) — คำนวณแรงเร่งของตัวน้องในแกนตัวเอง แล้วให้ของที่ติดตัวแกว่งตาม
+  var ccsSprQ = new At(),
+    ccsSprE = new Yn(),
+    ccsSprV = new H();
+  function ccsSpring(i, e) {
+    let t = i.spr ?? (i.spr = { lx: null, lz: null, vx: 0, vz: 0, ox: 0, oz: 0, wx: 0, wz: 0, flick: 0 });
+    if (!(e > 0) || e > 0.2) return t;
+    i.root.getWorldPosition(ccsSprV);
+    if (t.lx === null) return ((t.lx = ccsSprV.x), (t.lz = ccsSprV.z), t);
+    let n = (ccsSprV.x - t.lx) / e,
+      s = (ccsSprV.z - t.lz) / e;
+    if (Math.hypot(n, s) > 40) ((n = t.vx), (s = t.vz));
+    let o = (n - t.vx) / e,
+      r = (s - t.vz) / e,
+      a = i.root.rotation.y,
+      c = Math.sin(a),
+      l = Math.cos(a),
+      h = o * c + r * l,
+      f = o * l - r * c;
+    ((t.lx = ccsSprV.x), (t.lz = ccsSprV.z), (t.vx = n), (t.vz = s));
+    let d = Math.max(-0.32, Math.min(0.32, -h * 0.014)),
+      u = Math.max(-0.28, Math.min(0.28, f * 0.012));
+    return (
+      (t.wz += ((d - t.oz) * 140 - t.wz * 8) * e),
+      (t.wx += ((u - t.ox) * 140 - t.wx * 8) * e),
+      (t.oz += t.wz * e),
+      (t.ox += t.wx * e),
+      (t.flick = Math.min(14, Math.abs(t.wz) * 3 + Math.abs(t.wx) * 3)),
+      t
+    );
+  }
   function L7(i, e, t) {
     let n = i,
       s = n.uni,
@@ -37050,6 +37081,9 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       M = l.hy,
       T = l.hz;
     ((s.uHeadY.value = M), (s.uHeadX.value = S), (s.uHeadZ.value = T));
+    // v93: สปริงตามแรงเร่ง — ของบนหัว/ผ้าพันคอ/หางเด้งตามตอนวิ่ง-หยุด-เลี้ยว
+    let SQ = ccsSpring(i, e);
+    s.uWag.value += SQ.flick * e;
     let A = n.slots;
     if (!A) return;
     a.base ?? (a.base = new Map());
@@ -37070,6 +37104,17 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       (Vg.copy(q).multiply(L).multiply(D),
         I.position.copy(k.p).sub(F).applyQuaternion(Vg).add(F),
         I.quaternion.copy(Vg).multiply(k.q));
+      let SF = C === "head" ? 1 : C === "neck" ? 1.5 : 0;
+      SF && (ccsSprQ.setFromEuler(ccsSprE.set(SQ.oz * SF, 0, SQ.ox * SF)), I.quaternion.multiply(ccsSprQ));
+    }
+    for (let C in A) {
+      if (C === "eyes" || C === "face" || C === "head" || C === "neck") continue;
+      let I = A[C];
+      if (!I || !I.children.length) continue;
+      let k = a.base.get(I);
+      (k || ((k = { p: I.position.clone(), q: I.quaternion.clone() }), a.base.set(I, k)),
+        ccsSprQ.setFromEuler(ccsSprE.set(SQ.oz * 0.8, 0, SQ.ox * 0.8)),
+        I.quaternion.copy(k.q).multiply(ccsSprQ));
     }
     e3(n);
   }
@@ -47508,7 +47553,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           let E = d / p,
             g = u / p,
             y = Math.max(2.5, h.v * 1.35);
-          ((n.vel.x += E * y * 0.6 + Math.sin(h.dir) * h.v * 0.4),
+          // v93: เตะเฉียง = บอลหมุน (สปิน) แล้วเลี้ยวโค้ง
+          let SP = Math.sin(h.dir) * g - Math.cos(h.dir) * E;
+          ((n.spin = Math.max(-2.2, Math.min(2.2, (n.spin ?? 0) + SP * h.v * 0.35))),
+            (n.vel.x += E * y * 0.6 + Math.sin(h.dir) * h.v * 0.4),
             (n.vel.z += g * y * 0.6 + Math.cos(h.dir) * h.v * 0.4),
             (n.pos.x = h.p.x + E * m),
             (n.pos.z = h.p.z + g * m),
@@ -47526,7 +47574,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           let f = a0.clone();
           ((f.x = n.pos.x), ri(f, o) && (n.vel.z *= -0.6));
         } else n.pos.copy(a0);
-      let r = Math.pow(n.y > 0.02 ? 0.995 : 0.975, i * 60);
+      ccsBallPhys(n, i);
+      // v93: แรงเสียดทานตามพื้น — หญ้าสนาม/สนามหญ้า หนืดกว่าพื้นปูน, ทรายหนืดสุด
+      let FR = n.y > 0.02 ? 0.995 : n.pos.z > Rt - 6 ? 0.955 : Math.abs(n.pos.x) < 60 && Math.abs(n.pos.z) < Mt + 2.6 ? 0.988 : 0.975,
+        r = Math.pow(FR, i * 60);
       (n.vel.multiplyScalar(r),
         (n.vy -= 18 * i),
         (n.y += n.vy * i),
@@ -47540,6 +47591,293 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         n.m.rotateOnWorldAxis(h, (l * i) / (n.r ?? 0.45));
       }
     }
+  }
+  // v93: ฟิสิกส์ลูกบอลเพิ่ม — แรงแมกนัส (บอลโค้งตามสปิน), ชนเสาประตู/คานแล้วเด้งตามมุมจริง
+  function ccsBallPhys(n, i) {
+    let s = n.spin ?? 0;
+    if (Math.abs(s) > 0.01) {
+      let o = Math.hypot(n.vel.x, n.vel.z);
+      (o > 0.5 && ((n.vel.x += -n.vel.z * s * 0.55 * i), (n.vel.z += n.vel.x * s * 0.55 * i)), (n.spin = s * Math.pow(0.35, i)));
+    }
+    if (!fo || n !== fo.ball) return;
+    let o = n.r ?? 0.3,
+      r = n.y + o;
+    for (let a of tb) {
+      let c = a.h ?? 2.2;
+      for (let l of [-1, 1]) {
+        let h = n.pos.x - a.x0,
+          f = n.pos.z - (xt.z + (l * a.w) / 2),
+          d = Math.hypot(h, f),
+          u = o + 0.07;
+        if (d < u && d > 1e-4 && r < c + 0.05) {
+          let p = h / d,
+            m = f / d,
+            E = n.vel.x * p + n.vel.z * m;
+          E < 0 &&
+            ((n.vel.x -= 1.7 * E * p),
+            (n.vel.z -= 1.7 * E * m),
+            (n.spin = (n.spin ?? 0) * -0.5),
+            Math.abs(E) > 2 && (ke("pop"), rt("🥅 ชนเสา!", n.pos.clone().setY(2), "")));
+          ((n.pos.x = a.x0 + p * u), (n.pos.z = xt.z + (l * a.w) / 2 + m * u));
+        }
+      }
+      let g = n.pos.x - a.x0,
+        y = r - c;
+      if (Math.abs(n.pos.z - xt.z) < a.w / 2 && Math.abs(g) < o + 0.07 && Math.abs(y) < o + 0.07) {
+        let x = Math.hypot(g, y) || 1,
+          b = g / x,
+          w = y / x,
+          v = n.vel.x * b + n.vy * w;
+        v < 0 &&
+          ((n.vel.x -= 1.6 * v * b),
+          (n.vy -= 1.6 * v * w),
+          Math.abs(v) > 2 && (ke("pop"), rt("🥅 ชนคาน!", n.pos.clone().setY(2.6), "")));
+      }
+    }
+  }
+  // ===== v93: ฟิสิกส์ไดนามิก — ของในฉากชนแล้วล้ม/กลิ้ง, ของลอยน้ำตามคลื่น, น้ำกระเซ็น =====
+  var ccsBodies = [],
+    ccsFloats = [],
+    ccsSplash = null,
+    ccsPhysInit = !1,
+    ccsQa = new At(),
+    ccsQb = new At(),
+    ccsVa = new H(),
+    ccsUp = new H(0, 1, 0);
+  function ccsWaveY(i, e, t) {
+    let n = Math.max(0, e - Rt),
+      s = 0.015 + 0.22 * Math.min(1, Math.max(0, (n - 4) / 36)),
+      o = Math.sin(i * 0.21 + t * 0.9) * 0.45 + Math.sin(e * 0.33 - t * 1.35 + i * 0.07) * 0.4 + Math.sin((i - e) * 0.6 + t * 2.1) * 0.15;
+    return Ph + o * s + 0.02 * Math.sin(t * 1.7 + i * 0.9 + e * 0.6);
+  }
+  function ccsMkCone() {
+    let i = new J(),
+      e = new X({ color: 16737792, roughness: 0.55 }),
+      t = new R(new ee(0.4, 0.04, 0.4), new X({ color: 2236962, roughness: 0.8 }));
+    ((t.position.y = 0.02), i.add(t));
+    let n = new R(new re(0.03, 0.16, 0.56, 14), e);
+    ((n.position.y = 0.32), i.add(n));
+    let s = new R(new re(0.075, 0.1, 0.1, 14), new X({ color: 16777215, roughness: 0.4 }));
+    return ((s.position.y = 0.36), i.add(s), { g: i, r: 0.19, h: 0.6, snd: "pop" });
+  }
+  function ccsMkBin() {
+    let i = new J(),
+      e = new R(new re(0.24, 0.2, 0.7, 16), new X({ color: 2984521, roughness: 0.6 }));
+    ((e.position.y = 0.35), i.add(e));
+    let t = new R(new re(0.26, 0.26, 0.06, 16), new X({ color: 2237995, roughness: 0.5 }));
+    return ((t.position.y = 0.73), i.add(t), { g: i, r: 0.24, h: 0.76, snd: "pop" });
+  }
+  function ccsMkCrate() {
+    let i = new J(),
+      e = new R(new ee(0.5, 0.42, 0.42), new X({ map: Cn(11827314, "#7a5530"), roughness: 0.85 }));
+    ((e.position.y = 0.21), i.add(e));
+    let t0 = ["Watermelon_Slice_1", "dk_fc_2", "Bottle_1"][ccsBodies.length % 3],
+      t = ze(t0) ? je(t0, 0.22) : null;
+    return (t && ((t.position.y = 0.44), i.add(t)), { g: i, r: 0.24, h: 0.46, snd: "pop" });
+  }
+  function ccsAddBody(i, e, t, n) {
+    let s = i();
+    if ((s.g.position.set(e, 0, t), (s.g.rotation.y = n), ri(s.g.position, s.r, !0))) return;
+    (s.g.traverse((o) => {
+      o.isMesh && ((o.castShadow = !0), (o.receiveShadow = !0));
+    }),
+      K.add(s.g),
+      Object.assign(s, { hx: e, hz: t, yaw: n, x: e, z: t, vx: 0, vz: 0, tilt: 0, tv: 0, nx: 0, nz: 1, lying: !1, away: 0, roll: 0 }),
+      ccsBodies.push(s));
+  }
+  function ccsMkBeachBall(i, e, t) {
+    let n = ss(256, 128, (a) => {
+        let c = ["#ff3b3b", "#ffffff", "#ffd400", "#ffffff", "#2a8cff", "#ffffff"];
+        for (let l = 0; l < 6; l++) ((a.fillStyle = c[l]), a.fillRect((l * 256) / 6, 0, 256 / 6 + 1, 128));
+      }),
+      s = new R(new we(i, 20, 14), new X({ map: n, roughness: 0.35 }));
+    s.castShadow = !0;
+    let o = new J();
+    return (o.add(s), K.add(o), { m: o, pos: new H(e, 0, t), vel: new H(), y: 0, vy: 0, r: i, beach: !0 });
+  }
+  function ccsPhysSetup() {
+    ccsPhysInit = !0;
+    // กรวยจราจร/ถังขยะ ริมฟุตบาท
+    for (let [i, e] of [[-3.5, 8.6], [-2.6, 8.6], [-1.7, 8.6], [21, -8.4], [22, -8.4], [-46, 8.5]]) ccsAddBody(ccsMkCone, i, e, 0);
+    for (let [i, e] of [[12.5, 8.9], [-15, 8.9], [-6.5, Rt - 7.5], [7, Rt - 7.5]]) ccsAddBody(ccsMkBin, i, e, 0.3);
+    // ลังผลไม้ข้างแผงลุงทะเล
+    for (let [i, e, t] of [[2.6, 0.7, 0], [2.6, -0.1, 0.4], [-2.4, 0.9, 0.2]]) ccsAddBody(ccsMkCrate, od.x + i, od.z + e, t);
+    // ลูกบอลชายหาด (ใช้ระบบลูกบอลเดิม เด้ง/กลิ้ง/เตะได้)
+    for (let [i, e] of [[4, Rt - 3], [-9, Rt - 2.5], [14, Rt - 4]]) _d.push(ccsMkBeachBall(0.32, i, e));
+    // ของลอยน้ำ: ห่วงยาง ลูกบอล เป็ดยาง เรือคายัค
+    let i = (n, s) => new X({ color: n, roughness: s ?? 0.45 });
+    for (let [n, s, o] of [
+      ["ring", -6, Rt + 3.2],
+      ["ring", 9, Rt + 4.4],
+      ["ball", 2, Rt + 3.8],
+      ["duck", -2.5, Rt + 2.6],
+      ["duck", 5.5, Rt + 2.4],
+      ["kayak", -14, Rt + 7.5],
+      ["ring", 18, Rt + 6],
+    ]) {
+      let r = new J(),
+        a = 0.3;
+      if (n === "ring") {
+        let c = new R(new vt(0.42, 0.14, 12, 28), i(o % 2 > 1 ? 16729156 : 16740096));
+        ((c.rotation.x = Math.PI / 2), r.add(c));
+        for (let l = 0; l < 4; l++) {
+          let h = new R(new vt(0.42, 0.145, 6, 6, Math.PI / 8), i(16777215));
+          ((h.rotation.x = Math.PI / 2), (h.rotation.z = (l * Math.PI) / 2), r.add(h));
+        }
+        a = 0.56;
+      } else if (n === "ball") {
+        let c = ccsMkBeachBall(0.3, 0, 0);
+        (K.remove(c.m), r.add(c.m), (c.m.position.y = 0.12), (a = 0.3));
+      } else if (n === "duck") {
+        let c = new R(new we(0.2, 14, 10), i(16766208));
+        ((c.scale.set(1, 0.75, 1.25), (c.position.y = 0.06)), r.add(c));
+        let l = new R(new we(0.12, 12, 8), i(16766208));
+        (l.position.set(0, 0.24, 0.16), r.add(l));
+        let h = new R(new yt(0.05, 0.1, 8), i(16738816));
+        ((h.rotation.x = Math.PI / 2), h.position.set(0, 0.22, 0.31), r.add(h));
+        for (let f of [-0.05, 0.05]) {
+          let d = new R(new we(0.02, 6, 4), i(1118481));
+          (d.position.set(f, 0.28, 0.25), r.add(d));
+        }
+        a = 0.24;
+      } else {
+        let c = new R(new we(0.5, 16, 10), i(1946623, 0.35));
+        ((c.scale.set(0.6, 0.32, 3.2)), r.add(c));
+        let l = new R(new ee(0.4, 0.05, 0.7), i(2236962));
+        (l.position.set(0, 0.15, 0), r.add(l));
+        let h = new R(new re(0.02, 0.02, 2.2, 6), i(13421772));
+        ((h.rotation.z = Math.PI / 2 - 0.2), h.position.set(0, 0.3, 0.2), r.add(h));
+        a = 0.8;
+      }
+      (r.traverse((c) => {
+        c.isMesh && (c.castShadow = !0);
+      }),
+        r.position.set(s, Ph, o),
+        K.add(r),
+        ccsFloats.push({ g: r, x: s, z: o, hx: s, hz: o, vx: 0, vz: 0, r: a, yaw: Math.random() * 6, yv: 0, kayak: n === "kayak" }));
+    }
+    // ละอองน้ำกระเซ็น + วงคลื่น
+    let e = new be({ color: 15400959, transparent: !0, opacity: 0.85, depthWrite: !1 }),
+      t = [];
+    for (let n = 0; n < 40; n++) {
+      let o = new R(new we(0.065, 6, 4), e);
+      ((o.visible = !1), K.add(o), t.push({ m: o, vx: 0, vy: 0, vz: 0, life: 0 }));
+    }
+    let n = [];
+    for (let o = 0; o < 6; o++) {
+      let r = new R(new rr(0.8, 1, 32), new be({ color: 16777215, transparent: !0, opacity: 0, depthWrite: !1 }));
+      ((r.rotation.x = -Math.PI / 2), (r.visible = !1), K.add(r), n.push({ m: r, life: 0 }));
+    }
+    ccsSplash = { drops: t, rings: n, di: 0, ri: 0, acc: 0, ringAcc: 0, wasIn: !1 };
+  }
+  function ccsSplashAt(i, e, t, n) {
+    let s = ccsSplash;
+    for (let o = 0; o < n; o++) {
+      let r = s.drops[s.di++ % s.drops.length],
+        a = Math.random() * Math.PI * 2,
+        c = 0.6 + Math.random() * 1.4;
+      (r.m.position.set(i + Math.cos(a) * 0.25, e, t + Math.sin(a) * 0.25), (r.vx = Math.cos(a) * c), (r.vz = Math.sin(a) * c), (r.vy = 1.8 + Math.random() * 2.2), (r.life = 0.6 + Math.random() * 0.4), (r.m.visible = !0), r.m.scale.setScalar(0.6 + Math.random()));
+    }
+  }
+  function ccsRingAt(i, e, t) {
+    let n = ccsSplash.rings[ccsSplash.ri++ % ccsSplash.rings.length];
+    (n.m.position.set(i, e + 0.02, t), (n.life = 1.2), (n.m.visible = !0));
+  }
+  function ccsPhysTick(i, e, t) {
+    if (!j.started || !e || Se) return;
+    ccsPhysInit || ccsPhysSetup();
+    let n = e.pos,
+      s = e.spd ?? 0,
+      o = [{ p: n, v: s, r: 0.5 }, ...ml.map((a) => ({ p: a.pos, v: a.spd ?? 0, r: 0.35 }))];
+    // ---- ของล้มได้ ----
+    for (let a of ccsBodies) {
+      let c = Math.hypot(a.x - n.x, a.z - n.z),
+        l = a.tilt > 0.001 || Math.abs(a.vx) + Math.abs(a.vz) > 0.01 || a.lying;
+      if (c > 40 && !l) continue;
+      for (let h of o) {
+        let f = a.x - h.p.x,
+          d = a.z - h.p.z,
+          u = Math.hypot(f, d),
+          p = a.r + h.r;
+        if (u < p && u > 1e-3) {
+          let m = f / u,
+            E = d / u,
+            g = Math.max(0.8, h.v);
+          ((a.x = h.p.x + m * p), (a.z = h.p.z + E * p), (a.vx += m * g * 0.9 * (a.lying ? 1.3 : 0.6)), (a.vz += E * g * 0.9 * (a.lying ? 1.3 : 0.6)));
+          if (!a.lying && a.tilt < 0.02) ((a.nx = m), (a.nz = E), (a.tv = Math.max(a.tv, g * 0.7)), h.v > 1.6 && ke(a.snd));
+        }
+      }
+      if (!a.lying) {
+        let h = Math.atan2(a.r, a.h * 0.5),
+          f = (9.8 / (a.h * 0.75)) * Math.sin(a.tilt - h + (a.tilt > h ? 0 : 0));
+        ((a.tv += (a.tilt > 0.001 || a.tv > 0 ? f : 0) * i), (a.tv *= Math.pow(0.6, i)), (a.tilt += a.tv * i));
+        if (a.tilt <= 0) ((a.tilt = 0), (a.tv = Math.abs(a.tv) > 0.4 ? -a.tv * 0.3 : 0));
+        a.tilt >= Math.PI / 2 && ((a.tilt = Math.PI / 2), (a.lying = !0), (a.tv = 0), ke("pop"), (a.vx += a.nx * 0.6), (a.vz += a.nz * 0.6));
+      }
+      let h = a.x + a.vx * i,
+        f = a.z + a.vz * i;
+      (ccsVa.set(h, 0, f), ri(ccsVa, a.r * 0.8, !0) ? ((a.vx *= -0.4), (a.vz *= -0.4)) : ((a.x = h), (a.z = f)));
+      let d = a.lying ? -a.nz * a.vx + a.nx * a.vz : 0;
+      if (a.lying) {
+        let u = a.vx * a.nx + a.vz * a.nz,
+          p = Math.pow(0.86, i * 60),
+          m = Math.pow(0.985, i * 60);
+        ((u *= p), (d *= m), (a.vx = a.nx * u - a.nz * d), (a.vz = a.nz * u + a.nx * d), (a.roll += (d / a.r) * i));
+      } else ((a.vx *= Math.pow(0.8, i * 60)), (a.vz *= Math.pow(0.8, i * 60)));
+      // ตั้งกลับที่เดิมเมื่อน้องไปไกล
+      let u = Math.hypot(a.x - a.hx, a.z - a.hz) > 0.2 || a.tilt > 0.01;
+      ((a.away = u && c > 28 ? a.away + i : 0), a.away > 6 && ((a.x = a.hx), (a.z = a.hz), (a.vx = a.vz = 0), (a.tilt = a.tv = 0), (a.lying = !1), (a.roll = 0), (a.away = 0)));
+      // วาด: หมุนรอบขอบฐานด้านที่ล้ม
+      let p = new H(a.nz, 0, -a.nx);
+      (ccsQa.setFromAxisAngle(p, a.tilt), ccsQb.setFromAxisAngle(ccsUp, a.yaw));
+      if (a.lying && a.roll) {
+        let m = new At().setFromAxisAngle(new H(a.nx, 0, a.nz), a.roll);
+        ccsQa.premultiply(m);
+      }
+      (a.g.quaternion.copy(ccsQa).multiply(ccsQb), ccsVa.set(-a.nx * a.r, 0, -a.nz * a.r).applyQuaternion(ccsQa));
+      a.g.position.set(a.x + a.nx * a.r + ccsVa.x, Math.max(0, ccsVa.y) - (a.lying ? a.r * 0.15 : 0), a.z + a.nz * a.r + ccsVa.z);
+    }
+    // ลูกบอลชายหาดลอยน้ำ
+    for (let a of _d)
+      if (a.beach && a.pos.z > Rt - 1.3) {
+        let c = ccsWaveY(a.pos.x, a.pos.z, t);
+        (a.m.position.y = Math.max(a.m.position.y, c + a.r * 0.55), (a.vel.z -= 0.25 * i), (a.vel.x += Math.sin(t * 0.3) * 0.05 * i));
+      }
+    // ---- ของลอยน้ำ ----
+    for (let a of ccsFloats) {
+      if (Math.hypot(a.x - n.x, a.z - n.z) > 70) continue;
+      for (let f of o) {
+        let d = a.x - f.p.x,
+          u = a.z - f.p.z,
+          p = Math.hypot(d, u),
+          m = a.r + f.r;
+        p < m && p > 1e-3 && ((a.x = f.p.x + (d / p) * m), (a.z = f.p.z + (u / p) * m), (a.vx += (d / p) * Math.max(0.6, f.v) * 0.7), (a.vz += (u / p) * Math.max(0.6, f.v) * 0.7), (a.yv += (Math.random() - 0.5) * 2));
+      }
+      ((a.vx += ((a.hx - a.x) * 0.02 + Math.sin(t * 0.21 + a.hx) * 0.05) * i), (a.vz += ((a.hz - a.z) * 0.02 + Math.cos(t * 0.17 + a.hz) * 0.04) * i));
+      let c = Math.pow(0.97, i * 60);
+      ((a.vx *= c), (a.vz *= c), (a.yv *= c), (a.x += a.vx * i), (a.z = Math.max(Rt + 1.2, a.z + a.vz * i)), (a.yaw += (a.yv + 0.08) * i));
+      let l = ccsWaveY(a.x, a.z, t),
+        h = 0.35;
+      ((a.g.position.x = a.x), (a.g.position.z = a.z), (a.g.position.y += (l - a.g.position.y) * Math.min(1, i * 8)));
+      let f = (ccsWaveY(a.x + h, a.z, t) - ccsWaveY(a.x - h, a.z, t)) / (2 * h),
+        d = (ccsWaveY(a.x, a.z + h, t) - ccsWaveY(a.x, a.z - h, t)) / (2 * h);
+      a.g.rotation.set(Math.atan(d) * 1.4, a.yaw, -Math.atan(f) * 1.4, "YXZ");
+    }
+    // ---- น้ำกระเซ็นเมื่อน้องเดินลุยน้ำ ----
+    let r = ccsSplash,
+      a = n.z > Rt - 1.0 && go(n.x, n.z) > 0.04;
+    if (a) {
+      let c = ccsWaveY(n.x, n.z, t);
+      (r.wasIn || (ccsSplashAt(n.x, c, n.z, 14), ccsRingAt(n.x, c, n.z)), (r.acc += i * Math.min(1, s / 3)), (r.ringAcc += i));
+      for (; r.acc > 0.06; ) ((r.acc -= 0.06), ccsSplashAt(n.x, c, n.z, 2));
+      r.ringAcc > (s > 0.6 ? 0.35 : 1.4) && ((r.ringAcc = 0), ccsRingAt(n.x, c, n.z));
+    }
+    r.wasIn = a;
+    for (let c of r.drops)
+      c.life > 0 &&
+        ((c.life -= i), (c.vy -= 9.8 * i), c.m.position.set(c.m.position.x + c.vx * i, c.m.position.y + c.vy * i, c.m.position.z + c.vz * i), (c.life <= 0 || c.m.position.y < Ph - 0.2) && ((c.life = 0), (c.m.visible = !1)));
+    for (let c of r.rings)
+      c.life > 0 && ((c.life -= i), c.m.scale.setScalar(0.3 + (1.2 - c.life) * 1.6), (c.m.material.opacity = Math.max(0, c.life / 1.2) * 0.55), c.life <= 0 && (c.m.visible = !1));
   }
   var QH = new H();
   function T4(i, e) {
@@ -52893,6 +53231,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     (aM(t, Lt.position, sd, h0.top.value, h0.bottom.value, yE),
       xA(e, Le[0]),
+      ccsPhysTick(Math.min(0.05, e), Le[0], t),
       tl.update(e),
       sE?.update(e, Le[0]?.pos ?? new H(), !Se),
       oi.update(t),
