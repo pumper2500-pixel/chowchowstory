@@ -40050,7 +40050,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         for (let le = 0; le < 7; le++) {
           let ve = -0.42 + le * 0.14 + (N % 2 ? 0.07 : 0),
             He = -0.44 + he * 0.14 + (N % 2 ? 0.07 : 0);
-          ve > 0.43 || He > 0.3 || (ve < -0.02 && He > 0.05) || (N === 2 && (le % 2 || he % 2)) || w.push([ve, 1.03 + N * 0.12, He]);
+          ve > 0.43 || He > 0.3 || (ve < -0.02 && He > 0.05) || (N === 2 && (le % 2 || he % 2)) || w.push([ve, 1.165 + N * 0.12, He]);
         }
     let v = [...sM, ...ccsPlush.filter(ze), ...ccsPlush.filter(ze), ...(ze("Barney_01") ? ["Barney_01", "Barney_01", "Barney_01"] : [])].sort(
       () => Math.random() - 0.5,
@@ -40098,7 +40098,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         let N = new mt();
         for (let ve of a) N.expandByObject(ve);
         let he = e.worldToLocal(N.min.clone()).y,
-          le = 1.05;
+          le = 1.18;
         if (T) {
           let ve = new mt().setFromObject(T.obj);
           ((le = e.worldToLocal(ve.max.clone()).y - 0.07), C.copy(T.obj.position));
@@ -40166,7 +40166,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           let ue = De.obj.position,
             ye = De.v;
           ((ye.y -= 6.5 * B), ue.addScaledVector(ye, B));
-          let fl = inChute(ue.x, ue.z) ? 0.55 : 1.03;
+          let fl = inChute(ue.x, ue.z) ? 0.55 : 1.165;
           if (ue.y < fl) {
             if (fl < 1) {
               won = won ?? De;
