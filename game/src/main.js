@@ -48943,7 +48943,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           c = a6[r];
         return ((a6[r] = a), a && !c);
       };
-    if (C0()) {
+    if (C0() && ccsPK) {
+      // v114: ดวลจุดโทษ: D-pad ◀ ▲ ▶ เลือกมุม/พุ่ง, Ⓐ ยิง, Ⓑ ยกเลิก
+      (s(14) && ccsPKInput("L"), s(15) && ccsPKInput("R"), (s(12) || s(13)) && ccsPKInput("C"), s(0) && ccsPKInput(ccsPK.ph === "power" ? "K" : ccsPK.ph === "aim" || ccsPK.ph === "dive" ? "C" : "-"), (s(1) || s(9)) && qs());
+    } else if (C0()) {
       let r = eA(),
         a = (c) => {
           r.length &&
@@ -51356,8 +51359,196 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       e.fillText(`${fo.score[0]}  :  ${fo.score[1]}`, 256, 130),
       (fo.boardTex.needsUpdate = !0));
   }
+  // ===== v114: ดวลจุดโทษกับชาวเมือง =====
+  var ccsPK = null,
+    ccsPKNpc = null,
+    ccsPKFoes = [
+      { n: "ลุงโต", lv: "ง่าย", read: 0.22, miss: 0.3, pay: 60 },
+      { n: "พี่บอล", lv: "กลาง", read: 0.38, miss: 0.18, pay: 100 },
+      { n: "กัปตันแม็ก", lv: "ยาก", read: 0.55, miss: 0.08, pay: 160 },
+    ];
+  function ccsPKFoe() {
+    return ccsPKFoes[(z.day ?? 1) % 3];
+  }
+  function ccsPKGeo() {
+    let i = xt.x + Yc;
+    return { gx: i, spot: new H(i - 6.5, 0, xt.z), keep: new H(i - 0.55, 0, xt.z), idle: new H(i - 1.6, 0, xt.z + 3.4) };
+  }
+  function ccsPKMakeNpc() {
+    if (ccsPKNpc || !fo) return;
+    try {
+      let i = mr()
+        ? Zr(["Body_11", "Ears_11", "Male_Emotion_Happy_01", "Hairstyle_Male_07", "Outwear_19", "Pants_03", "Shoe_Sneakers_09", "Hat_01"])
+        : Ic(Sh[2]);
+      ((i.yaw = -Math.PI / 2), i.root.position.copy(ccsPKGeo().idle), K.add(i.root), (ccsPKNpc = { rig: i, pos: ccsPKGeo().idle.clone(), dive: 0, dz: 0 }));
+    } catch (i) {
+      console.warn("pk npc", i);
+    }
+  }
+  function ccsPKBoard() {
+    if (!fo?.boardTex) return;
+    let i = ccsPK,
+      e = fo.boardTex.image.getContext("2d");
+    ((e.fillStyle = "#111"), e.fillRect(0, 0, 512, 160), (e.strokeStyle = "#ffe100"), (e.lineWidth = 8), e.strokeRect(4, 4, 504, 152), (e.fillStyle = "#fff"), (e.font = "700 26px Mitr, sans-serif"), (e.textAlign = "center"));
+    (e.fillText("ดวลจุดโทษ", 256, 34), e.fillText(pl[0]?.name ?? "น้อง", 110, 70), e.fillText(i.foe.n, 402, 70));
+    let t = (n, o) => {
+      for (let r = 0; r < Math.max(5, n.length); r++) {
+        let a = n[r];
+        ((e.fillStyle = a === void 0 ? "#555" : a ? "#4cd964" : "#ff3b30"), e.beginPath(), e.arc(o - 64 + (r % 5) * 32, 108 + Math.floor(r / 5) * 26, 11, 0, 7), e.fill());
+      }
+    };
+    (t(i.me, 110), t(i.cpu, 402), (e.fillStyle = "#ffe100"), (e.font = "700 40px Mitr, sans-serif"), e.fillText(`${i.me.filter(Boolean).length}:${i.cpu.filter(Boolean).length}`, 256, 112), (fo.boardTex.needsUpdate = !0));
+  }
+  function ccsPKStart() {
+    if (ccsPK || !fo) return;
+    let i = ccsPKFoe();
+    ((ccsPK = { foe: i, me: [], cpu: [], ph: "aim", t: 0, aim: null, dive: null, pow: 0, turn: 0, sd: !1 }), ke("pop"), ccsWhistle?.("goal"), Ln(ccsPKNpc?.pos ?? Le[0].pos, `มาเลย! ${i.n} พร้อมแล้ว ยิงคนละ 5 ลูกนะ ⚽`), ccsPKBoard(), ccsPKUI());
+  }
+  function ccsPKEnd(i) {
+    let e = ccsPK;
+    if (!e) return;
+    window.__pkLast = { why: i ?? "done", me: e.me.slice(), cpu: e.cpu.slice() };
+    ccsPK = null;
+    (js.classList.contains("on") && qs(), js.classList.remove("dress"), fo && ((fo.cool = 0), fo.ball.pos.copy(xt), fo.ball.vel.set(0, 0, 0), (fo.ball.y = 0)), P4());
+    if (i === "quit") return void De("🏳️ ยกเลิกการดวลจุดโทษ", 1800);
+    let t = e.me.filter(Boolean).length,
+      n = e.cpu.filter(Boolean).length;
+    if (t > n) {
+      let s = (z.pkWin ?? (z.pkWin = {}));
+      let o = s[e.foe.n] !== z.day;
+      ((s[e.foe.n] = z.day), o && ((z.money += e.foe.pay), Ei()), ke("quest"), Rs(o ? 25 : 8, Le[0]), Ln(ccsPKNpc?.pos ?? Le[0].pos, `เก่งมาก! ${pl[0]?.name ?? "น้อง"} ชนะ ${t}:${n} 👏`), De(`🏆 ชนะดวลจุดโทษ ${t}:${n}!${o ? ` +${e.foe.pay}💰` : " (วันนี้รับรางวัลแล้ว)"}`, 3200));
+    } else if (t === n) (ke("pop"), Ln(ccsPKNpc?.pos ?? Le[0].pos, `สูสีมาก! เสมอ ${t}:${n} ไว้มาดวลกันใหม่ 🤝`), De(`🤝 เสมอ ${t}:${n} (ดวลครบ 8 ลูกแล้ว) · ลองใหม่ได้เสมอ`, 3e3));
+    else (ke("nope"), Ln(ccsPKNpc?.pos ?? Le[0].pos, `เฮ้! ${e.foe.n} ชนะ ${n}:${t} มาแก้มือได้นะ 😆`), De(`😿 แพ้ดวลจุดโทษ ${t}:${n} · ลองใหม่ได้เสมอ`, 3e3));
+    _t(z);
+  }
+  function ccsPKUI() {
+    let i = ccsPK;
+    if (!i) return;
+    let e = i.ph === "aim" ? "เลือกมุมยิง" : i.ph === "power" ? "กดยิงตอนแถบอยู่ในช่องเขียว" : "เดาทางแล้วพุ่งรับ!",
+      t = i.ph === "power" ? `<div class="pkbar"><b></b><i id="pkPow"></i></div><button class="bigbtn" data-pk="K">⚽ ยิง!</button>` : `<div class="pkrow"><button data-pk="L">⬅️ ${i.ph === "dive" ? "พุ่งซ้าย" : "ซ้าย"}</button><button data-pk="C">⬆️ ${i.ph === "dive" ? "อยู่กลาง" : "กลาง"}</button><button data-pk="R">➡️ ${i.ph === "dive" ? "พุ่งขวา" : "ขวา"}</button></div>`;
+    (Gi(`⚽ ดวลจุดโทษ vs ${i.foe.n} (${i.foe.lv})`, `<p class="note">${i.ph === "dive" ? `ลูกที่ ${i.cpu.length + 1} · ${i.foe.n} ยิง` : `ลูกที่ ${i.me.length + 1} · ${pl[0]?.name ?? "น้อง"} ยิง`} · ${e} <small>(จอย ◀ ▲ ▶ / ปุ่ม Ⓐ · คีย์ ← ↑ → / Space)</small></p>${t}`),
+      js.classList.add("dress"),
+      document.querySelectorAll("[data-pk]").forEach((n) => n.addEventListener("click", () => ccsPKInput(n.dataset.pk))));
+  }
+  function ccsPKInput(i) {
+    let e = ccsPK;
+    if (!e) return;
+    if (e.ph === "aim" && "LCR".includes(i)) ((e.aim = i), (e.ph = "power"), (e.t = 0), ke("pop"), ccsPKUI());
+    else if (e.ph === "power" && i === "K") ((e.ph = "kick"), (e.t = 0), (e.shooter = "me"), qs(), js.classList.remove("dress"));
+    else if (e.ph === "dive" && "LCR".includes(i) && !e.dive) ((e.dive = i), ke("pop"));
+  }
+  addEventListener("keydown", (i) => {
+    if (!ccsPK || !js.classList.contains("on")) return;
+    let e = i.key,
+      t = e === "ArrowLeft" || e === "a" || e === "A" ? "L" : e === "ArrowRight" || e === "d" || e === "D" ? "R" : e === "ArrowUp" || e === "w" || e === "W" ? "C" : e === " " || e === "Enter" ? (ccsPK.ph === "power" ? "K" : null) : null;
+    t && (i.preventDefault(), i.stopPropagation(), ccsPKInput(t));
+  }, !0);
+  function ccsPKTick(i, e) {
+    ccsPKMakeNpc();
+    ccsPK && (c0.set(0, 0, 0), (Ed = !1));
+    let t = ccsPK,
+      n = ccsPKNpc,
+      s = ccsPKGeo();
+    if (!t) {
+      // ยืนรอข้างประตู หันมองน้อง
+      if (n) {
+        (n.root ?? n.rig.root).position.copy(n.pos);
+        let o = e.pos.distanceTo(n.pos) < 6 ? Math.atan2(e.pos.x - n.pos.x, e.pos.z - n.pos.z) : -Math.PI / 2;
+        Qi(n.rig, i, 0, o);
+      }
+      return;
+    }
+    if (Se) return ccsPKEnd("quit");
+    let o = fo.ball;
+    ((fo.cool = 5), (t.t += i));
+    {
+      // ซิงก์ตำแหน่ง/ท่าทางคนยิง-ผู้รักษาประตู (ชาวเมือง) และหันหน้าน้อง
+      let r = t.shooter === "cpu" || t.ph === "dive";
+      if (n) {
+        let a = n.rig;
+        ((a.root.position.x = n.pos.x), (a.root.position.z = n.pos.z), Qi(a, i, r && t.ph === "kick" && t.t < 0.45 ? 4 : 0, r ? Math.PI / 2 : -Math.PI / 2));
+      }
+      e.dir = r ? -Math.PI / 2 : Math.PI / 2;
+    }
+    // แผงหายเพราะผู้เล่นกดปิด (✕ / Ⓑ / Esc) ระหว่างเลือก → ยกเลิก
+    if ((t.ph === "aim" || t.ph === "power") && !js.classList.contains("on")) return ccsPKEnd("quit");
+    if (t.ph === "power") {
+      let r = document.getElementById("pkPow");
+      ((t.pow = 0.5 - 0.5 * Math.cos(t.t * 3.4)), r && (r.style.width = `${Math.round(t.pow * 100)}%`));
+    }
+    let r = t.shooter === "cpu" || t.ph === "dive",
+      a = n?.rig;
+    // ตำแหน่งตามบทบาท
+    let c = r ? s.keep : s.spot.clone().add(new H(-0.9, 0, 0)),
+      l = r ? s.spot.clone().add(new H(-1.1, 0, 0)) : s.keep;
+    if (t.ph !== "kick" && t.ph !== "result") {
+      (e.pos.copy(c), (j.yaw = r ? Math.PI / 2 : -Math.PI / 2), (j.pitch = 0.18));
+      n && n.pos.copy(l);
+      (o.pos.copy(s.spot), o.vel.set(0, 0, 0), (o.vy = 0), (o.y = 0), o.m.position.set(o.pos.x, (o.r ?? 0.45) + 0.03, o.pos.z));
+    }
+    if (t.ph === "dive" && t.t > 1.7) ((t.ph = "kick"), (t.t = 0), (t.shooter = "cpu"), (t.aim = "LCR"[Math.floor(Math.random() * 3)]), qs(), js.classList.remove("dress"));
+    if (t.ph === "kick") {
+      let h = t.shooter === "me",
+        f = { L: -1, C: 0, R: 1 },
+        d = h ? 1 : -1; // ทิศมองของคนยิง: ยิงเข้าประตู +x เสมอ, ซ้าย/ขวาตามมุมมองคนยิง
+      if (t.res === void 0) {
+        // ตัดสินผลตอนเริ่มเตะ
+        let u = h ? (Math.random() < t.foe.read ? t.aim : "LCR"[Math.floor(Math.random() * 3)]) : t.dive ?? "C",
+          p = h ? t.pow > 0.93 || t.pow < 0.12 : Math.random() < t.foe.miss,
+          m = !p && u === t.aim && (t.aim === "C" || !h || !(t.pow > 0.55 && t.pow < 0.85) || Math.random() < 0.7) && (h || Math.random() < 0.88);
+        ((t.res = p ? "miss" : m ? "save" : "goal"), (t.kdive = u), (t.hi = h && t.pow > 0.93));
+      }
+      // วิ่งเข้าหาลูก 0.45 วิ แล้วลูกพุ่ง 0.55 วิ
+      let u = h ? e : null;
+      if (t.t < 0.45) {
+        let p = t.t / 0.45;
+        h ? (e.pos.copy(c).lerp(s.spot.clone().add(new H(-0.35, 0, 0)), p), (e.spd = 4)) : n && n.pos.copy(l).lerp(s.spot.clone().add(new H(-0.4, 0, 0)), p);
+      } else {
+        let p = Math.min(1, (t.t - 0.45) / 0.55),
+          m = t.aim === "C" ? 0 : f[t.aim] * (t.res === "miss" && !t.hi ? 2.6 : 1.45) * (h ? 1 : 1),
+          E = t.res === "miss" ? (t.hi ? 3.1 : 0.9) : t.aim === "C" ? 0.9 : 1.25 + (t.pow ?? 0.5) * 0.3,
+          g = t.res === "save" ? 0.55 : 1;
+        (o.pos.set(s.spot.x + (s.gx + 0.6 - s.spot.x) * p * g, 0, s.spot.z + m * p * g), (o.y = Math.sin(p * Math.PI * 0.5) * E), o.m.position.set(o.pos.x, (o.r ?? 0.45) + 0.03 + o.y, o.pos.z));
+        // ผู้รักษาประตูพุ่ง
+        let y = f[t.kdive] * Math.min(1, p * 1.6) * 1.3,
+          x = Math.min(1, p * 1.6);
+        if (h && n) (n.pos.set(s.keep.x, 0, s.keep.z + y), (a.root.rotation.z = -f[t.kdive] * x * 1.1), (a.root.position.y = Math.sin(x * Math.PI) * 0.25));
+        else if (!h) (e.pos.set(s.keep.x, 0, s.keep.z + y), t.kdive !== "C" && x > 0.1 && j.jy <= 0.001 && ((j.vy = 4.5), (j.jt = 0)));
+        if (p >= 1) {
+          ((t.ph = "result"), (t.t = 0), (h ? t.me : t.cpu).push(t.res === "goal"), ccsPKBoard());
+          let v = t.res === "goal" ? (h ? "⚽ โกล!!" : `⚽ ${t.foe.n} ยิงเข้า`) : t.res === "save" ? (h ? `🧤 ${t.foe.n} เซฟได้!` : "🧤 เซฟสวย!!") : h ? "😵 ยิงข้ามคาน!" : `😆 ${t.foe.n} ยิงพลาด!`;
+          (rt(v, o.pos.clone().setY(2), t.res === "goal" === h ? "big" : "bad"), t.res === "goal" ? (ke(h ? "heart" : "nope"), ccsWhistle?.("goal")) : ke(h ? "nope" : "heart"), h && t.res === "goal" && Ai("goal"));
+          if (t.res === "goal") {
+            for (let _ of tb) _.side === 1 && ((_.t = 0), _.hit.copy(o.pos).setY(o.y + 0.5), _.dir.set(1, 0, 0), (_.amp = 0.5));
+          }
+        }
+      }
+      return;
+    }
+    if (t.ph === "result") {
+      if (n && a) ((a.root.rotation.z *= 0.9), (a.root.position.y = 0));
+      if (t.t < 1.6) return;
+      a && (a.root.rotation.z = 0);
+      ((t.res = void 0), (t.aim = null), (t.dive = null), (t.pow = 0));
+      // ตัดสินจบเกม (5 ลูก + ดวลแบบ sudden death)
+      let h = t.me.filter(Boolean).length,
+        f = t.cpu.filter(Boolean).length,
+        d = t.me.length,
+        u = t.cpu.length;
+      if (d === u) {
+        if (d >= 5 && h !== f) return ccsPKEnd();
+        if (d >= 8) return ccsPKEnd();
+      } else if (d <= 5 && u < 5) {
+        let p = 5 - d,
+          m = 5 - u;
+        if (h + p < f || f + m < h) return ccsPKEnd();
+      }
+      ((t.ph = d > u ? "dive" : "aim"), (t.t = 0), (t.shooter = d > u ? "cpu" : "me"), ccsPKUI());
+    }
+  }
   function xA(i, e) {
     if ((gA(i), !fo)) return;
+    ccsPKTick(i, e);
     let t = fo,
       n = t.ball;
     t.cool -= i;
@@ -59231,6 +59422,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (ccsRide) return nt(ccsRide.k >= 0 ? "🎡 กำลังชมวิว… ลากจอ/จอยขวา หมุนมุมมอง" : "🎡 กำลังขึ้นกระเช้า…", null, !0);
     if (ccsFW && !Se && e.distanceTo(ccsFW.gate) < 2.2)
       return nt("🎡 ขึ้นชิงช้าสวรรค์ชมวิว 50💰", ccsRideStart);
+    if (ccsPK) return nt(`⚽ ดวลจุดโทษ ${ccsPK.me.filter(Boolean).length}:${ccsPK.cpu.filter(Boolean).length}`, null, !0);
+    if (ccsPKNpc && !Se && e.distanceTo(ccsPKNpc.pos) < 1.9) {
+      let h = ccsPKFoe();
+      return nt(`⚽ ท้าดวลจุดโทษกับ${h.n} (${h.lv})${z.pkWin?.[h.n] === z.day ? "" : ` · ชนะได้ ${h.pay}💰`}`, ccsPKStart);
+    }
     if (ccsBooth && !Se && e.distanceTo(ccsBooth.front) < 1.6)
       return nt("🎟 ซื้อตั๋วชิงช้าสวรรค์ 50💰 แล้วขึ้นเลย", ccsRideStart);
     for (let h of gl)
@@ -62808,6 +63004,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         home: () => Rn,
         enterHome: JE,
         album: () => ccsAlbum(),
+        pk: () => ccsPK,
+        pkStart: () => ccsPKStart(),
+        pkInput: (k) => ccsPKInput(k),
+        pkNpc: () => ccsPKNpc,
+        pkTick: (d) => ccsPKTick(d, Le[0]),
         clawPair: (d) => ccsClawPair(d),
         addComp: (k, p) => BE(k, p),
         floats: () => ccsFloats,
