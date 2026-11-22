@@ -48809,7 +48809,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (te.position.set(T, 0, A), (te.rotation.y = (C ? Math.PI / 2 : 0) + (k ? Math.PI : 0)), e.add(te));
         let Y = new R(new ee(D, $, 0.06), a);
         (Y.position.set(0, $ / 2, L ? -q / 2 + 0.03 : 0), te.add(Y));
-        let O = new R(new ee(D, 0.14, q), c);
+        let O = new R(new ee(D - 0.12, 0.14, q - 0.02), c); // v90: ฐานแดงหดเข้าด้านใน ไม่ซ้อนระนาบกับแผงข้างสีเทา (กะพริบ)
         ((O.position.y = 0.07), te.add(O));
         for (let ge of [-1, 1]) {
           let Pe = new R(new ee(0.05, $, q), a);
