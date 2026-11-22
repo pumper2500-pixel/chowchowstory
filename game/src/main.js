@@ -39936,13 +39936,14 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       "Unicorn_01",
     ],
     // v82: ตุ๊กตาสะสมชุดใหม่ (ตู้คีบ + ร้าน)
-    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura"],
+    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo"],
     Rp = {
       plush_shiba: "ชิบะ",
       plush_beaver: "บีเวอร์ฟันโต",
       plush_penguin: "เพนกวินซานต้า",
       plush_hound: "บาสเซ็ตฮาวนด์",
       plush_gura: "ฉลามน้อยกุระ",
+      plush_hippo: "ฮิปโปนุ่มนิ่ม",
       Barney_01: "ไดโนเสาร์ม่วง",
       Bear_01: "หมี",
       Cat_01: "แมว",
@@ -47145,8 +47146,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             },
             ...ccsPlush.filter(ze).map((e, t) => ({
               key: "plush:" + e,
-              label: `ตุ๊กตา${Rp[e]} ${["🐕", "🦫", "🐧", "🐶", "🦈"][t]} (ใหม่!)`,
-              price: [260, 240, 220, 200, 280][t],
+              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛" }[e] ?? "🧸"} (ใหม่!)`,
+              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250 }[e] ?? 240,
               make: () => je(e, 0.5),
             })),
             ...(ze("Barney_01")
@@ -62172,6 +62173,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r81")),
         bn(Zt("r82")),
         bn(Zt("r93")),
+        bn(Zt("r102")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
