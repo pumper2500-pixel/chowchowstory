@@ -39961,7 +39961,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       Unicorn_01: "ยูนิคอร์น",
     };
   // ขอบด้านในกระจกตู้คีบ (พิกัดในตู้) และช่องหย่อนรางวัล (หน้าซ้าย)
-  var CLW = { x0: -0.5, x1: 0.5, z0: -0.425, z1: 0.405, cx: 0.08, cz: -0.175 };
+  var CLW = { x0: -0.5, x1: 0.5, z0: -0.425, z1: 0.405, cx: -0.039, cz: 0.071 };
   function ccsClawFit(i, e) {
     let t = i.obj.position,
       n = i.hx ?? 0.11,
@@ -40050,7 +40050,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         for (let le = 0; le < 7; le++) {
           let ve = -0.42 + le * 0.14 + (N % 2 ? 0.07 : 0),
             He = -0.44 + he * 0.14 + (N % 2 ? 0.07 : 0);
-          ve > 0.43 || He > 0.3 || (ve < 0.07 && He > -0.17) || (N === 2 && (le % 2 || he % 2)) || w.push([ve, 1.03 + N * 0.12, He]);
+          ve > 0.43 || He > 0.3 || (ve < -0.02 && He > 0.05) || (N === 2 && (le % 2 || he % 2)) || w.push([ve, 1.03 + N * 0.12, He]);
         }
     let v = [...sM, ...ccsPlush.filter(ze), ...ccsPlush.filter(ze), ...(ze("Barney_01") ? ["Barney_01", "Barney_01", "Barney_01"] : [])].sort(
       () => Math.random() - 0.5,
@@ -40069,20 +40069,21 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       (ccsClawFit(B), b.push(B));
     });
     {
-      // v99: กล่องช่องรางวัลทึบชั้นเดียว (แบบตู้คีบจริง) สูงพอกันตุ๊กตาไถลตก — ไม่มีแผ่นใสซ้อนเป็น 2 ชั้นแล้ว
-      let N = new X({ color: 16250871, roughness: 0.5 }),
-        he = new X({ color: 15123811, roughness: 0.4 }),
-        HB = 0.24,
-        y0 = 1.03;
-      for (let [le, ve, He, at] of [
-        [0.03, 0.6, 0.06, 0.11],
-        [0.56, 0.03, -0.22, -0.157],
-      ]) {
-        let Ge = new R(new ee(le, HB, ve), N);
-        (Ge.position.set(He, y0 + HB / 2, at), (Ge.castShadow = !0), e.add(Ge));
-        let V = new R(new ee(le + 0.02, 0.025, ve + 0.02), he);
-        (V.position.set(He, y0 + HB + 0.012, at), e.add(V));
-      }
+      // v100: ใช้ขอบกระจกใสรอบช่องรางวัลของโมเดลเดิม แค่ยกให้สูงขึ้น (ไม่เพิ่มชิ้นอื่น)
+      e.updateMatrixWorld(!0);
+      let N = new Oe().copy(e.matrixWorld).invert();
+      e.traverse((he) => {
+        if (!he.isMesh || he.name !== "Toy_Claw_01_3") return;
+        let le = new Oe().multiplyMatrices(N, he.matrixWorld),
+          ve = new Oe().copy(le).invert(),
+          He = he.geometry.clone(),
+          at = He.attributes.position,
+          Ge = new H();
+        for (let V = 0; V < at.count; V++)
+          (Ge.fromBufferAttribute(at, V).applyMatrix4(le),
+            Ge.x < -0.03 && Ge.z > 0.06 && Ge.y > 1.2 && Ge.y < 1.35 && ((Ge.y += 0.2), Ge.applyMatrix4(ve), at.setXYZ(V, Ge.x, Ge.y, Ge.z)));
+        ((at.needsUpdate = !0), He.computeBoundingSphere(), He.computeBoundingBox(), (he.geometry = He));
+      });
     }
     let _ = -1,
       S = !1,
@@ -40144,7 +40145,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       gr = 1,
       won = null,
       PR = 0.1,
-      inChute = (V, B) => V < 0.07 && B > -0.17,
+      inChute = (V, B) => V < -0.039 && B > 0.071,
       wake = (V, B, ce, De = 1.6) => {
         for (let ue of b) {
           if (ue === T && S) continue;
@@ -40177,7 +40178,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           {
             let ox = ue.x,
               oz = ue.z,
-              ab = ue.y > 1.3;
+              ab = ue.y > 1.5;
             (ccsClawFit(De, ab || De.top), (De.top = ab || (De.top && inChute(ue.x, ue.z))), ue.x !== ox && (ye.x *= -0.35), ue.z !== oz && (ye.z *= -0.35));
           }
           for (let ke2 of b) {
