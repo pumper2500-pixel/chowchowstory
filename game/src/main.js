@@ -47881,7 +47881,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (n && n.k >= 0 && !n.topDone) {
       let o = t.cabs[n.k],
         r = o.a + t.ang;
-      Math.sin(r) > 0.995 && ((n.topDone = !0), (t.hold = 5), De("✨ วิวสวยมาก! เห็นทั้งเมือง ทะเล ประภาคาร และภูเขาไฟกลางทะเล 🌋", 4200), ke("heart"));
+      Math.sin(r) > 0.995 && ((n.topDone = !0), (t.hold = 5), De("✨ วิวสวยมาก! เห็นทั้งเมือง ทะเล ประภาคาร และเกาะภูเขาป่ากลางทะเล 🏝", 4200), ke("heart"));
     }
     let s = t.hold > 0 ? 0 : t.w;
     ((t.hold = Math.max(0, t.hold - i)), (t.spd = (t.spd ?? s) + (s - (t.spd ?? s)) * Math.min(1, i * 1.5)), (t.ang += t.spd * i), (t.hub.rotation.z = t.ang));
@@ -47920,7 +47920,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     });
     ((() => {
       // หันหน้าน้องและกล้องไปทางทะเล/ภูเขาไฟ
-      let n = (ccsVol ? ccsVol.g.position.x : -95) - i.root.position.x,
+      let n = (ccsVol ? ccsVol.g.position.x : -60) - i.root.position.x,
         s = (ccsVol ? ccsVol.g.position.z : Rt + 305) - i.root.position.z;
       ((ccsRide = { k: e, trav: 0, topDone: !1, yaw: Math.atan2(n, s) }), (j.yaw = Math.atan2(-n, -s)), (j.pitch = 0.12));
     })(),
@@ -47958,18 +47958,17 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     });
   }
   function ccsVolcano() {
-    if (!ze("volcano_isle") || !ze("volcano_cone")) return;
+    if (!ze("volcano_isle")) return;
     let i = new H(-60, 0, Rt + 305),
       e = new J();
     ((e.userData.noCull = !0), e.position.copy(i), K.add(e)); // v95: วัตถุใหญ่ไกล ๆ ไม่ซ่อนตามระยะ
-    // เกาะป่าข้าง ๆ (Tacana) + เกาะภูเขาไฟ (กรวยลาวา) ฐานจมทะเล
-    let t = je("volcano_isle", 130);
-    (t.position.set(-150, Ph - 2.5, 30), e.add(t));
+    // v96: เอาภูเขาไฟออก — เหลือเกาะ Tacana (ภูเขาป่าจริง) ตั้งกลางทะเลไกล ๆ เป็นวิว
+    let t = je("volcano_isle", 230);
+    (t.position.set(0, Ph - 3, 0), e.add(t));
     t.traverse((A) => {
-      A.isMesh && ((A.material = A.material.clone()), (A.material.fog = !1), A.material.color.setRGB(0.82, 0.88, 0.92), (A.receiveShadow = !0));
+      A.isMesh && ((A.material = A.material.clone()), (A.material.fog = !1), A.material.color.setRGB(0.92, 0.97, 1.0), A.material.emissive?.setHex(7311536), A.material.emissive && (A.material.emissiveIntensity = 0.16), (A.receiveShadow = !0));
     });
-    let o = je("volcano_cone", 210);
-    (o.position.set(0, Ph - 1.6, 0), e.add(o), e.updateMatrixWorld(!0));
+    return;
     let r = new mt().setFromObject(o),
       a = (() => {
         // ปากปล่อง = ค่าเฉลี่ยจุดยอดที่สูงใกล้ยอดสุด (ขอบปากปล่อง)
