@@ -35238,8 +35238,8 @@ vObj = position;`,
           T = atob(M),
           A = new Uint8Array(T.length);
         for (let F = 0; F < T.length; F++) A[F] = T.charCodeAt(F);
-        n = await new s0().parseAsync(A.buffer, "");
-      } else n = await new s0().loadAsync(i);
+        n = await new s0().setMeshoptDecoder(Ng).parseAsync(A.buffer, "");
+      } else n = await new s0().setMeshoptDecoder(Ng).loadAsync(i);
       let s = null;
       if (
         (n.scene.updateMatrixWorld(!0),
@@ -35559,10 +35559,10 @@ vObj = position;`,
       { vec3 c0 = diffuseColor.rgb;
         float l = dot(c0, vec3(0.3, 0.59, 0.11));
         // v91: ปาก/ลิ้นสะอาดทุกสีขน — ลิ้นม่วงอมดำผสมแบบนุ่ม (ไม่เป็นจุดกระดำกระด่าง), ริมฝีปาก/เส้นปากเก็บสีเข้มเดิมไว้ ไม่โดนย้อมสีขน
-        float muz = uChow > 0.5 ? step(uNoseZ - 0.22 * uL, vPosM.z) * (1.0 - smoothstep(uNoseY + 0.0 * uH, uNoseY + 0.04 * uH, vPosM.y)) : 0.0;
+        vec3 mq = vPosM - uNose3;
+        float muz = uChow > 0.5 ? smoothstep(-0.26 * uL, -0.2 * uL, mq.z) * (1.0 - smoothstep(0.0, 0.04 * uH, mq.y)) : 0.0;   // v103: อิงตำแหน่งจมูกจริง
         // v92: ลิ้นทั้งลิ้นม่วงอมดำ (ทุกเฉดชมพู/แดงในช่องปาก) + จมูกดำสนิทเรียบทั้งก้อน
         float pinkish = smoothstep(0.0, 0.05, c0.r - c0.g) * smoothstep(-0.12, -0.03, c0.b - c0.g) * smoothstep(0.12, 0.22, c0.r);
-        vec3 mq = vPosM - uNose3;
         float mouthZone = uChow > 0.5 ? (1.0 - smoothstep(0.05 * uL, 0.075 * uL, abs(mq.x))) * (1.0 - smoothstep(-0.075 * uH, -0.05 * uH, mq.y)) * smoothstep(-0.22 * uH, -0.18 * uH, mq.y) * smoothstep(-0.24 * uL, -0.2 * uL, mq.z) : 0.0;
         float tgw = clamp(pinkish * 1.6, 0.0, 1.0) * mouthZone;
         vec3 nd = (vPosM - uNose3) / vec3(0.07 * uL, 0.065 * uH, 0.07 * uL);
@@ -35571,8 +35571,8 @@ vObj = position;`,
         if (uRecolor > 0.5) {
           vec3 fur = mix(uDark, uLight, smoothstep(0.05, 0.7, l));
           float keep = 1.0 - smoothstep(0.012, 0.03, l);
-          float lip = muz * (1.0 - smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y));
-          float philtrum = muz * smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y);
+          float lip = muz * (1.0 - smoothstep(-0.095 * uH, -0.075 * uH, mq.y));
+          float philtrum = muz * smoothstep(-0.095 * uH, -0.075 * uH, mq.y);
           keep *= 1.0 - philtrum;
           keep = max(keep, lip * (1.0 - smoothstep(0.07, 0.15, l)));
           base = mix(fur, uDark * 0.1 + c0 * 0.4, keep);
@@ -47954,8 +47954,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     });
     ((() => {
       // หันหน้าน้องและกล้องไปทางทะเล/ภูเขาไฟ
-      let n = (ccsVol ? ccsVol.g.position.x : -60) - i.root.position.x,
-        s = (ccsVol ? ccsVol.g.position.z : Rt + 305) - i.root.position.z;
+      let n = (ccsIsle ? ccsIsle.g.position.x : -60) - i.root.position.x,
+        s = (ccsIsle ? ccsIsle.g.position.z : Rt + 305) - i.root.position.z;
       ((ccsRide = { k: e, trav: 0, topDone: !1, yaw: Math.atan2(n, s) }), (j.yaw = Math.atan2(-n, -s)), (j.pitch = 0.12));
     })(),
       (i.hold = 0), De("🎡 ขึ้นกระเช้าแล้ว! ลากจอ (หรือจอยขวา) หมุนมุมมองชมวิว · หมุนครบ 1 รอบแล้วลงเอง", 3600));
@@ -48021,18 +48021,6 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ccsIsle = { g: e, top: e.worldToLocal(new H((o.min.x + o.max.x) / 2, o.max.y, (o.min.z + o.max.z) / 2)), cap: a, amt: 0 };
     return;
   }
-  function ccsVolRumble(i) {
-    let e = _i();
-    if (!e) return;
-    let t = e.createBuffer(1, e.sampleRate * i, e.sampleRate),
-      n = t.getChannelData(0),
-      s = 0;
-    for (let c = 0; c < n.length; c++) ((s = s * 0.985 + (Math.random() * 2 - 1) * 0.015), (n[c] = s * 9 * Math.min(1, c / 4000) * Math.min(1, (n.length - c) / 9000)));
-    let o = e.createBufferSource(),
-      r = e.createBiquadFilter(),
-      a = e.createGain();
-    ((o.buffer = t), (r.type = "lowpass"), (r.frequency.value = 140), (a.gain.value = 0.55), o.connect(r).connect(a).connect(e.destination), o.start());
-  }
   function ccsVolcanoTick(i, e) {
     if (ccsIsle) {
       // เมฆปกคลุมยอดเขา: มากตอนเช้า/เย็น, วันฟ้าหม่น, ฟ้าครึ้ม; วันฟ้าใสแทบไม่มี
@@ -48047,89 +48035,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (c.s.position.set(a.x + Math.cos(c.ang) * c.rad, a.y * c.h + Math.sin(e * 0.05 + c.ang) * 2, a.z + Math.sin(c.ang) * c.rad * 0.6), c.s.scale.set(c.sz * 1.6, c.sz * 0.7, 1), (c.s.material.opacity = ccsIsle.amt * 0.75), c.s.material.color.copy(ccsHazeCol.value).lerp(oa.setHex(16777215), r ? 0.1 : 0.7));
       }
     }
-    let t = ccsVol;
-    if (!t) return;
-    ((t.uni.uT.value = e), (t.t -= i));
-    let n = Le[0],
-      s = n ? Math.hypot(n.pos.x - t.g.position.x, n.pos.z - t.g.position.z) : 999,
-      o = !Se && j.started;
-    if (t.state === "calm" && t.t <= 0) ((t.state = "rumble"), (t.t = 4), o && (ccsVolRumble(4), De("🌋 พื้นสั่น… ภูเขาไฟกลางทะเลกำลังจะปะทุ!", 3e3)));
-    else if (t.state === "rumble") ((ccsShake = Math.max(ccsShake, o ? 0.06 : 0)), t.t <= 0 && ((t.state = "erupt"), (t.t = 18), (t.fl = 1), o && (ccsVolRumble(3), ke("pop"), De("🌋💥 ภูเขาไฟปะทุ! ลาวาพุ่งและไหลลงทะเล", 3200)), (ccsShake = o ? 0.35 : 0)));
-    else if (t.state === "erupt") ((ccsShake = Math.max(ccsShake, o ? 0.05 + (s < 300 ? 0.05 : 0) : 0)), t.t <= 0 && ((t.state = "cool"), (t.t = 40)));
-    else if (t.state === "cool" && t.t <= 0) ((t.state = "calm"), (t.t = 70 + Math.random() * 80));
-    let r = t.state === "erupt" ? 1 : t.state === "rumble" ? 0.35 : 0;
-    ((t.eru += (r - t.eru) * Math.min(1, i * 1.2)),
-      (t.uni.uErupt.value = t.eru),
-      (t.flow = t.state === "erupt" ? Math.min(1, t.flow + i / 14) : t.state === "cool" ? t.flow : Math.max(0, t.flow - i / 30)),
-      (t.heat = t.state === "erupt" ? 1 : t.state === "cool" ? Math.max(0, t.heat - i / 40) : Math.max(0, t.heat - i / 5)),
-      (t.lavaMat.uniforms.uFlow.value = t.flow * 1.02),
-      (t.lavaMat.uniforms.uHeat.value = t.heat));
-    let a = j.time % 1 > 0.79 || j.time % 1 < 0.21;
-    ((t.glow.material.opacity = (a ? 0.55 : 0.06) * (0.5 + t.eru * 1.2) * (0.85 + 0.15 * Math.sin(e * 7))), t.glow.scale.setScalar(30 + t.eru * 30));
-    // ควัน: ปกติพวยบาง ๆ, ปะทุ = เสาควันดำหนา
-    t.acc += i * (1.2 + t.eru * 9);
-    for (; t.acc > 1; ) {
-      t.acc -= 1;
-      let c = t.smoke[t.si++ % t.smoke.length],
-        l = t.eru > 0.5;
-      ((c.steam = !1), (c.life = c.max = 7 + Math.random() * 5), c.s.position.copy(t.crater).add(new H((Math.random() - 0.5) * 4, 2, (Math.random() - 0.5) * 4)), (c.vx = (Math.random() - 0.5) * 2 + 2.2), (c.vz = (Math.random() - 0.5) * 2), (c.vy = l ? 14 + Math.random() * 8 : 4 + Math.random() * 2), (c.g0 = l ? 10 : 6), (c.g1 = l ? 55 : 28), c.s.material.color.setHex(a ? (l ? 2761504 : 4473924) : l ? 3815994 : 10066329), (c.s.visible = !0));
-    }
-    // ไอน้ำตรงลาวาลงทะเล
-    if (t.flow > 0.97 && t.heat > 0.2 && Math.random() < i * 5)
-      for (let c of t.lava) {
-        let l = t.smoke[t.si++ % t.smoke.length];
-        ((l.steam = !0), (l.life = l.max = 5), l.s.position.copy(t.g.worldToLocal(c.end.clone())).add(new H(0, 1, 0)), (l.vx = 0.5), (l.vz = 0), (l.vy = 3), (l.g0 = 4), (l.g1 = 18), l.s.material.color.setHex(a ? 6710886 : 15658734), (l.s.visible = !0));
-      }
-    for (let c of t.smoke) {
-      if (c.life <= 0) continue;
-      c.life -= i;
-      let l = 1 - c.life / c.max;
-      (c.s.position.x += c.vx * i, (c.s.position.y += c.vy * i), (c.s.position.z += c.vz * i), (c.vy *= Math.pow(0.82, i)), c.s.scale.setScalar(c.g0 + (c.g1 - c.g0) * l), (c.s.material.opacity = Math.min(1, l * 6) * (1 - l) * (c.steam ? 0.55 : 0.85)), c.life <= 0 && (c.s.visible = !1));
-    }
-    // ไฟพุ่ง: ปะทุ = น้ำพุลาวาสูง 60-120 ม. เป็นระลอก, ช่วงพื้นสั่น/เย็นตัว = ประทุเบา ๆ
-    // ระเบิดครั้งแรก: ลูกไฟกระจายเป็นดอกไม้ไฟลาวา
-    if (t.state === "erupt" && !t.burst) {
-      t.burst = !0;
-      for (let c = 0; c < 110; c++) {
-        let l = t.ff[t.fi++ % t.ff.length],
-          h = Math.random() * Math.PI * 2,
-          f = 8 + Math.random() * 22;
-        ((l.life = l.max = 2.5 + Math.random() * 2.5), l.s.position.copy(t.crater).add(new H(0, 2, 0)), l.v.set(Math.cos(h) * f, 30 + Math.random() * 40, Math.sin(h) * f), (l.big = 5 + Math.random() * 7), (l.s.visible = !0), (l.s.material.blending = a ? $i : Qo));
-      }
-    }
-    t.state !== "erupt" && (t.burst = !1);
-    let FR = t.state === "erupt" ? 150 * (0.6 + 0.4 * Math.abs(Math.sin(e * 1.7)) + (Math.sin(e * 0.9) > 0.85 ? 0.8 : 0)) : t.state === "rumble" ? 6 : t.state === "cool" ? t.heat * 5 : 0;
-    t.facc += i * FR;
-    for (; t.facc > 1; ) {
-      t.facc -= 1;
-      let c = t.ff[t.fi++ % t.ff.length],
-        l = Math.random() * Math.PI * 2,
-        h = t.state === "erupt" ? 1 : 0.35,
-        f = Math.pow(Math.random(), 1.3) * 13 * h;
-      ((c.life = c.max = 2.2 + Math.random() * 2.2 * h), c.s.position.copy(t.crater).add(new H((Math.random() - 0.5) * 5, 1, (Math.random() - 0.5) * 5)), c.v.set(Math.cos(l) * f, (26 + Math.random() * 26) * h + 6, Math.sin(l) * f), (c.big = 3.5 + Math.random() * 6 * h), (c.s.visible = !0), (c.s.material.blending = a ? $i : Qo));
-    }
-    for (let c of t.ff) {
-      if (c.life <= 0) continue;
-      ((c.life -= i), (c.v.y -= 15 * i), c.s.position.addScaledVector(c.v, i));
-      let l = 1 - c.life / c.max;
-      (c.s.material.color.setRGB(1, Math.max(0.08, (a ? 0.8 : 0.5) - l * 1.0), Math.max(0, (a ? 0.35 : 0.05) - l * 1.0)), (c.s.material.opacity = Math.min(1, (1 - l) * 1.6) * (a ? 1 : 0.95)), c.s.scale.setScalar(c.big * (1 - l * 0.45)), (c.life <= 0 || c.s.position.y < t.crater.y - 55) && ((c.life = 0), (c.s.visible = !1)));
-    }
-    // แสงวาบตอนระเบิด
-    ((t.fl = Math.max(0, t.fl - i * 0.7)), (t.flash.material.opacity = t.fl * 0.95 + (t.state === "erupt" ? 0.25 + 0.15 * Math.sin(e * 11) : 0)), t.flash.scale.setScalar(25 + t.fl * 90 + (t.state === "erupt" ? 15 : 0)));
-    // หินลาวาพุ่ง (วิถีโปรเจกไทล์)
-    if (t.state === "erupt") {
-      t.bacc += i * 14;
-      for (; t.bacc > 1; ) {
-        t.bacc -= 1;
-        let c = t.bombs[t.bi++ % t.bombs.length],
-          l = Math.random() * Math.PI * 2,
-          h = 6 + Math.random() * 16;
-        ((c.life = 6), c.m.position.copy(t.crater), c.v.set(Math.cos(l) * h, 22 + Math.random() * 22, Math.sin(l) * h), (c.m.visible = !0), c.m.scale.setScalar(0.6 + Math.random() * 1.4));
-      }
-    }
-    for (let c of t.bombs)
-      c.life > 0 &&
-        ((c.life -= i), (c.v.y -= 16 * i), c.m.position.addScaledVector(c.v, i), (c.m.rotation.x += i * 3), (c.m.position.y < t.crater.y - 40 || c.life <= 0) && ((c.life = 0), (c.m.visible = !1)));
+  // v103: ลบระบบภูเขาไฟปะทุออกแล้ว (เหลือแค่เกาะ Tacana + เมฆคลุมยอด)
   }
   // ===== v93: ฟิสิกส์ไดนามิก — ของในฉากชนแล้วล้ม/กลิ้ง, ของลอยน้ำตามคลื่น, น้ำกระเซ็น =====
   var ccsBodies = [],
@@ -62373,12 +62279,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         openWardrobe: () => OE(),
         shopIds: () => zn.map((t) => t.def.id),
         enterHome: () => JE(),
-        vol: () => ccsVol,
         setClar: (v) => ((ccsClar = ccsClarT = v), (ccsClarDay = typeof I0 == "function" ? I0() : 0)),
         clawStart: () => ((Oo = { k: gl[0], t: 30, dropped: !1, yaw0: j.yaw }), !0),
         clawState: () => (Oo ? [Oo.t, Oo.dropped, gl.length] : null),
         isle: () => ccsIsle,
-        volTick: (d, t) => ccsVolcanoTick(d, t),
         fwTick: (d, t) => ccsFWTick(d, t),
         fw: () => ccsFW,
         rideStart: () => ccsRideStart(),

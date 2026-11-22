@@ -1,5 +1,5 @@
 // เก็บเกมไว้ในเครื่อง เล่นได้แม้ไม่มีเน็ต (ยกเว้นฟอนต์) — เปลี่ยน VERSION เมื่ออัปเดตเกม
-const VERSION = "farm-v102";
+const VERSION = "farm-v103";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION && k !== "ccs-cdn").map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
