@@ -39960,6 +39960,19 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       Shark_01: "ฉลาม",
       Unicorn_01: "ยูนิคอร์น",
     };
+  // ขอบด้านในกระจกตู้คีบ (พิกัดในตู้) และช่องหย่อนรางวัล (หน้าซ้าย)
+  var CLW = { x0: -0.5, x1: 0.5, z0: -0.425, z1: 0.405, cx: 0.075, cz: -0.172 };
+  function ccsClawFit(i, e) {
+    let t = i.obj.position,
+      n = i.hx ?? 0.11,
+      s = i.hz ?? 0.11;
+    ((t.x = Math.max(CLW.x0 + n, Math.min(CLW.x1 - n, t.x))), (t.z = Math.max(CLW.z0 + s, Math.min(CLW.z1 - s, t.z))));
+    if (!e && t.x < CLW.cx + n && t.z > CLW.cz - s) {
+      let o = CLW.cx + n - t.x,
+        r = t.z - (CLW.cz - s);
+      o < r ? (t.x = CLW.cx + n + 0.002) : (t.z = CLW.cz - s - 0.002);
+    }
+  }
   function h3(i = 0.85) {
     let e = new J(),
       t = vp.Toy_Claw_01,
@@ -40048,16 +40061,20 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       (at.position.set(N + (Math.random() - 0.5) * 0.04, he, le + (Math.random() - 0.5) * 0.04),
         (at.rotation.y = (Math.random() - 0.5) * 1.4 + (Math.random() < 0.3 ? Math.PI * 0.5 : 0)),
         (at.userData.noMerge = !0),
-        e.add(at),
-        b.push({ name: He, obj: at }));
+        e.add(at));
+      // v98: วัดขนาดจริงของตุ๊กตา แล้วจัดให้อยู่ในกระจกทั้งตัว (ไม่ทะลุผนัง/ไม่ล้ำช่องรางวัล)
+      let Ge = new mt().setFromObject(at),
+        V = Ge.getSize(new H()).multiplyScalar(0.5 / (e.scale.x || 1)),
+        B = { name: He, obj: at, hx: V.x, hz: V.z };
+      (ccsClawFit(B), b.push(B));
     });
     {
       // v97: ผนังอะคริลิกใสกั้นช่องหย่อนรางวัล (สูงขึ้น ตุ๊กตาไถลตกเองไม่ได้)
       let N = new X({ color: 15134975, roughness: 0.05, transparent: !0, opacity: 0.28, depthWrite: !1 }),
         he = new X({ color: 16777215, roughness: 0.4 });
       for (let [le, ve, He, at] of [
-        [0.008, 0.5, 0.075, 0.08],
-        [0.52, 0.008, -0.19, -0.17],
+        [0.008, 0.58, 0.075, 0.115],
+        [0.575, 0.008, -0.212, -0.172],
       ]) {
         let Ge = new R(new ee(le, 0.4, ve), N);
         (Ge.position.set(He, 1.225, at), (Ge.userData.noMerge = !0), e.add(Ge));
@@ -40154,15 +40171,13 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
             }
             ((ue.y = fl), (ye.y = Math.abs(ye.y) > 0.4 ? -ye.y * 0.3 : 0), (ye.x *= 0.55), (ye.z *= 0.55));
           }
-          // ขอบกั้นช่องหย่อนรางวัล: ตุ๊กตาที่ไถลข้าง ๆ ตกลงช่องไม่ได้ ต้องถูกปล่อยจากด้านบนเท่านั้น
-          if (inChute(ue.x, ue.z)) {
-            if (!De.top && ue.y < 1.42) {
-              let ox = 0.07 - ue.x,
-                oz = ue.z + 0.17;
-              ox < oz ? ((ue.x = 0.071), (ye.x = Math.abs(ye.x) * 0.3)) : ((ue.z = -0.171), (ye.z = -Math.abs(ye.z) * 0.3));
-            } else De.top = !0;
-          } else De.top = !1;
-          (ue.x < -0.45 && ((ue.x = -0.45), (ye.x = Math.abs(ye.x) * 0.4)), ue.x > 0.45 && ((ue.x = 0.45), (ye.x = -Math.abs(ye.x) * 0.4)), ue.z < -0.47 && ((ue.z = -0.47), (ye.z = Math.abs(ye.z) * 0.4)), ue.z > 0.33 && ((ue.z = 0.33), (ye.z = -Math.abs(ye.z) * 0.4)));
+          // ขอบกั้นช่องหย่อนรางวัล + ผนังกระจก ตามขนาดจริงของตุ๊กตา
+          {
+            let ox = ue.x,
+              oz = ue.z,
+              ab = ue.y > 1.42;
+            (ccsClawFit(De, ab || De.top), (De.top = ab || (De.top && inChute(ue.x, ue.z))), ue.x !== ox && (ye.x *= -0.35), ue.z !== oz && (ye.z *= -0.35));
+          }
           for (let ke2 of b) {
             if (ke2 === De || (ke2 === T && S)) continue;
             let Ue = ke2.obj.position,
@@ -40183,6 +40198,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
                 (ye.z *= 0.96));
             }
           }
+          ccsClawFit(De, De.top);
           let sp = ye.length();
           ((De.aw -= B), sp > 0.15 && (De.aw = Math.max(De.aw, 0.3)), De.aw <= 0 && ye.set(0, 0, 0));
           De.obj.rotation.x += ye.z * B * 6;
