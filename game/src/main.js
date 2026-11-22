@@ -40052,30 +40052,30 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       x = (N, he, le = 2.2) => y(E + Math.max(-le * he, Math.min(le * he, N - E))),
       b = [],
       w = [];
-    // v83: กองตุ๊กตาเต็มตู้ (3 ชั้น) แต่เว้นช่องหย่อนของหน้าซ้ายไว้ให้โล่ง
-    for (let N = 0; N < 3; N++)
-      for (let he = 0; he < 6; he++)
-        for (let le = 0; le < 7; le++) {
-          let ve = -0.42 + le * 0.14 + (N % 2 ? 0.07 : 0),
-            He = -0.44 + he * 0.14 + (N % 2 ? 0.07 : 0);
-          ve > 0.43 || He > 0.3 || (ve < -0.02 && He > 0.05) || (N === 2 && (le % 2 || he % 2)) || w.push([ve, 1.165 + N * 0.12, He]);
-        }
-    let v = [...sM, ...ccsPlush.filter(ze), ...ccsPlush.filter(ze), ...(ze("Barney_01") ? ["Barney_01", "Barney_01", "Barney_01"] : [])].sort(
-      () => Math.random() - 0.5,
-    );
-    w.forEach(([N, he, le], ve) => {
-      let He = v[ve % v.length],
-        at = je(He, 0.22 + Math.random() * 0.05);
-      (at.position.set(N + (Math.random() - 0.5) * 0.04, he, le + (Math.random() - 0.5) * 0.04),
-        (at.rotation.y = (Math.random() - 0.5) * 1.4 + (Math.random() < 0.3 ? Math.PI * 0.5 : 0)),
-        (at.userData.noMerge = !0),
-        e.add(at));
-      // v98: วัดขนาดจริงของตุ๊กตา แล้วจัดให้อยู่ในกระจกทั้งตัว (ไม่ทะลุผนัง/ไม่ล้ำช่องรางวัล)
-      let Ge = new mt().setFromObject(at),
-        V = Ge.getSize(new H()).multiplyScalar(0.5 / (e.scale.x || 1)),
-        B = { name: He, obj: at, hx: V.x, hz: V.z };
-      (ccsClawFit(B), b.push(B));
-    });
+    // v108: ตู้คีบมีตุ๊กตาแค่ 10 ตัว (วันละ 2 แบบ แบบละ 5 ตัว) วางบนพื้นตู้ชั้นเดียว ไม่ล้นตู้
+    let ccsRestock = (types) => {
+      for (let N of b) e.remove(N.obj);
+      b.length = 0;
+      let N = [
+        [-0.36, -0.33], [-0.12, -0.33], [0.12, -0.33], [0.36, -0.33],
+        [-0.36, -0.07], [-0.12, -0.07], [0.12, -0.07], [0.36, -0.07],
+        [0.13, 0.2], [0.36, 0.2],
+      ];
+      if (!types.length) return;
+      N.forEach(([he, le], ve) => {
+        let He = types[ve % types.length],
+          at = je(He, 0.22 + Math.random() * 0.04);
+        (at.position.set(he + (Math.random() - 0.5) * 0.03, 1.165, le + (Math.random() - 0.5) * 0.03),
+          (at.rotation.y = (Math.random() - 0.5) * 1.2),
+          (at.userData.noMerge = !0),
+          e.add(at));
+        // v98: วัดขนาดจริงของตุ๊กตา แล้วจัดให้อยู่ในกระจกทั้งตัว (ไม่ทะลุผนัง/ไม่ล้ำช่องรางวัล)
+        let Ge = new mt().setFromObject(at),
+          V = Ge.getSize(new H()).multiplyScalar(0.5 / (e.scale.x || 1)),
+          B = { name: He, obj: at, hx: V.x, hz: V.z };
+        (ccsClawFit(B), b.push(B));
+      });
+    };
     {
       // v100: ใช้ขอบกระจกใสรอบช่องรางวัลของโมเดลเดิม แค่ยกให้สูงขึ้น (ไม่เพิ่มชิ้นอื่น)
       e.updateMatrixWorld(!0);
@@ -40305,6 +40305,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           (_ = 1.2));
       },
       bounds: ge,
+      restock: ccsRestock,
       pos: () => Pe.clone(),
       busy: () => _ >= 0,
       dbg: () => ({
@@ -48821,6 +48822,33 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     (js.classList.remove("on"), js.classList.remove("dress"), (uo = !1));
   }
   var gl = [];
+  // v108: หมุนเวียนตุ๊กตาในตู้คีบ วันละ 2 แบบ ไม่ซ้ำจนกว่าจะครบทุกแบบ (พลาดวันไหนต้องรอรอบหน้า)
+  function ccsShuf(i, e) {
+    let t = (e * 2654435761 + 977) >>> 0,
+      n = () => ((t = (t + 1831565813) >>> 0), (((t ^ (t >>> 15)) * (t | 1)) >>> 0) / 4294967296),
+      s = i.slice();
+    for (let o = s.length - 1; o > 0; o--) {
+      let r = Math.floor(n() * (o + 1));
+      [s[o], s[r]] = [s[r], s[o]];
+    }
+    return s;
+  }
+  function ccsClawDayIdx() {
+    return ((z.year ?? 1) * 3 + (z.season ?? 0)) * PM + (z.day ?? 1) - 1;
+  }
+  function ccsClawPair(i = ccsClawDayIdx()) {
+    let e = ccsAlbAll(),
+      t = e.length;
+    if (t < 2) return e;
+    let n = (r) => ccsShuf(e, Math.floor(r / t))[r % t],
+      s = n(2 * i),
+      o = n(2 * i + 1);
+    return (o === s && (o = n(2 * i + 2)), [s, o]);
+  }
+  function ccsClawDaily() {
+    let i = ccsClawDayIdx();
+    for (let e of gl) e.day === i || e.c.busy?.() || ((e.day = i), e.c.restock?.(ccsClawPair(i)));
+  }
   var Oo = null;
   // v97: ยกเลิกการคีบ (ยังไม่กดปล่อย) → คืนเงิน
   function ccsClawCancel() {
@@ -58695,6 +58723,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     return e < 0 || t < 0 || e >= Gt.cols || t >= Gt.rows ? -1 : t * Gt.cols + e;
   }
   function Tk(i) {
+    ccsClawDaily();
     let e = i.pos;
     if (Rn && Se === Rn) {
       if (j.sleeping) return nt("☀️ ตื่นนอน", () => y4());
@@ -59004,7 +59033,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         return f.busy()
           ? nt("🕹 กำลังคีบ…", null, !0)
           : f.prizes.length
-            ? nt("🕹 เล่นตู้คีบ 20💰", () => {
+            ? nt(`🕹 เล่นตู้คีบ 20💰 · วันนี้: ${ccsClawPair().map((u) => Rp[u] ?? u).join(" + ")} (เหลือ ${f.prizes.length})`, () => {
                 if (z.money < 20) {
                   (De(
                     "เงินไม่พอ ต้องมี 20 💰",
@@ -62481,6 +62510,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         home: () => Rn,
         enterHome: JE,
         album: () => ccsAlbum(),
+        clawPair: (d) => ccsClawPair(d),
+        clawDaily: () => ccsClawDaily(),
         cabSync: () => H1(),
         wx: co,
         inside: () => Se,
