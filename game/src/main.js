@@ -37726,10 +37726,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         ($.receiveShadow = !0),
         ($.castShadow = !0),
         ($.userData.noMerge = !0),
-        r.add($),
-        r.add(
-          tt(L === 0 || L === Math.PI ? q : 0.06, 0.4, L === 0 || L === Math.PI ? 0.06 : q, Ve(i.trim, 0.6), k, 0.2, D),
-        ),
+        r.add($), // v89: เอาบัวผนังล่าง (แถบสีเข้ม) ออก — ซ้อนระนาบกับตู้/เสาชิดผนังจนกะพริบ
         r.add(
           tt(
             L === 0 || L === Math.PI ? q : 0.08,
@@ -55228,31 +55225,45 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   // v88: ประตูบานเลื่อนไม้ (บานไม้ทึบ + บานกระจกกรอบไม้ บนรางเลื่อน) ให้ตรงกับประตูบ้านด้านนอก
   function ccsSlideDoor() {
+    // v89: ประตูกระจกบานเลื่อน 2 บาน กรอบไม้ มองออกไปเห็นวิวทะเล
     let i = new J(),
       e = new X({ map: Cn(9070127, "#5a3a1c"), roughness: 0.75 }),
       t = new X({ color: 13152156, roughness: 0.7 }),
       n = new X({ color: 2763306, roughness: 0.6, metalness: 0.5 }),
-      s = new X({ color: 4870217, roughness: 0.15, metalness: 0.1, transparent: !0, opacity: 0.55 }),
+      s = new X({ color: 15201279, roughness: 0.05, metalness: 0.1, transparent: !0, opacity: 0.18, depthWrite: !1 }),
       o = 2.4,
       r = 2.45,
       a = (c, l, h, f, d, u, p) => {
         let m = new R(new ee(c, l, h), f);
         return (m.position.set(d, u, p), i.add(m), m);
       };
-    // วงกบ
+    // วิวทะเลด้านนอก (ฟ้า ทะเล คลื่น หาดทราย ต้นมะพร้าว)
+    let v = ss(512, 512, (c) => {
+        let l = c.createLinearGradient(0, 0, 0, 300);
+        (l.addColorStop(0, "#5fb4ee"), l.addColorStop(1, "#cfeefc"), (c.fillStyle = l), c.fillRect(0, 0, 512, 300));
+        ((c.fillStyle = "rgba(255,255,255,.85)"), [[90, 70, 46], [140, 80, 34], [380, 110, 40], [420, 100, 30]].forEach(([h, f, d]) => (c.beginPath(), c.arc(h, f, d, 0, 7), c.fill())));
+        ((c.fillStyle = "#fff6c8"), c.beginPath(), c.arc(330, 230, 26, 0, 7), c.fill());
+        let h = c.createLinearGradient(0, 290, 0, 400);
+        (h.addColorStop(0, "#1f86b8"), h.addColorStop(1, "#3cc4c9"), (c.fillStyle = h), c.fillRect(0, 290, 512, 110));
+        c.strokeStyle = "rgba(255,255,255,.7)";
+        for (let f = 0; f < 6; f++) ((c.lineWidth = 2 + f * 0.6), c.beginPath(), c.moveTo(0, 310 + f * 16), c.bezierCurveTo(130, 300 + f * 16, 380, 322 + f * 16, 512, 308 + f * 16), c.stroke());
+        ((c.fillStyle = "#f3dfae"), c.fillRect(0, 400, 512, 112), (c.fillStyle = "#e7cf96"), c.fillRect(0, 470, 512, 42));
+        ((c.strokeStyle = "#7a5530"), (c.lineWidth = 14), c.beginPath(), c.moveTo(70, 500), c.quadraticCurveTo(90, 300, 130, 170), c.stroke());
+        c.fillStyle = "#2f8a3e";
+        for (let f = 0; f < 6; f++) (c.beginPath(), c.ellipse(130, 170, 90, 18, -0.4 + f * 0.62, 0, 7), c.fill());
+      }),
+      _ = new R(new Te(o, r), new be({ map: v }));
+    ((_.rotation.y = Math.PI), _.position.set(0, 0.18 + r / 2, -0.045), i.add(_));
+    // วงกบ + ราง
     (a(o + 0.24, 0.14, 0.16, t, 0, r + 0.25, -0.1), a(0.12, r + 0.1, 0.16, t, -o / 2 - 0.06, 0.18 + r / 2, -0.1), a(0.12, r + 0.1, 0.16, t, o / 2 + 0.06, 0.18 + r / 2, -0.1));
-    // รางบน/ล่าง
     (a(o + 0.1, 0.05, 0.08, n, 0, r + 0.16, -0.2), a(o + 0.1, 0.03, 0.1, n, 0, 0.2, -0.2));
-    // บานไม้ทึบ (ซ้ายเมื่อมองจากในบ้าน = +x)
     let c = o / 2 + 0.04;
-    a(c, r - 0.06, 0.05, e, o / 4, 0.18 + r / 2, -0.17);
-    for (let l of [0.75, 1.55]) a(c - 0.12, 0.03, 0.02, t, o / 4, 0.18 + l, -0.2);
-    a(0.04, 0.32, 0.05, n, 0.1, 1.25, -0.21);
-    // บานกระจกกรอบไม้
-    let l = -o / 4;
-    (a(c, 0.1, 0.06, e, l, 0.25, -0.13), a(c, 0.1, 0.06, e, l, r + 0.1, -0.13), a(0.1, r - 0.06, 0.06, e, l - c / 2 + 0.05, 0.18 + r / 2, -0.13), a(0.1, r - 0.06, 0.06, e, l + c / 2 - 0.05, 0.18 + r / 2, -0.13));
-    let h = new R(new ee(c - 0.18, r - 0.26, 0.015), s);
-    return (h.position.set(l, 0.18 + r / 2, -0.13), i.add(h), a(0.04, 0.32, 0.05, n, l + c / 2 - 0.14, 1.25, -0.08), i);
+    for (let [l, h] of [[o / 4, -0.17], [-o / 4, -0.12]]) {
+      (a(c, 0.1, 0.05, e, l, 0.25, h), a(c, 0.1, 0.05, e, l, r + 0.1, h), a(0.1, r - 0.06, 0.05, e, l - c / 2 + 0.05, 0.18 + r / 2, h), a(0.1, r - 0.06, 0.05, e, l + c / 2 - 0.05, 0.18 + r / 2, h));
+      let f = new R(new ee(c - 0.18, r - 0.26, 0.012), s);
+      (f.position.set(l, 0.18 + r / 2, h), i.add(f));
+    }
+    return (a(0.04, 0.34, 0.05, n, 0.1, 1.25, -0.21), a(0.04, 0.34, 0.05, n, -0.1, 1.25, -0.08), i);
   }
   // v85: กระดูกแทะสำหรับน้องหมา (ทรงกระดูกการ์ตูนสีครีม ไม่ใช่กล่อง)
   function ccsBone(i) {
@@ -55279,8 +55290,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     (c.position.y = 0.4), o.add(c);
     let l = new R(new ee(n - 0.08, 0.03, s - 0.08), new X({ color: 13429237, roughness: 0.6 }));
     ((l.position.y = 0.815), o.add(l));
-    let h = new R(new ee(n, 0.12, 0.04), a);
-    ((h.position.set(0, 0.06, s / 2 - 0.02), o.add(h)));
+    // v89: เอาแถบกันเตะสีดำด้านล่างตู้ออก (ซ้อนระนาบกับตัวตู้ กะพริบ)
     // ป้ายแดงหน้าตู้
     let f = ss(1024, 64, (q) => {
         ((q.fillStyle = "#c8102e"), q.fillRect(0, 0, 1024, 64), (q.fillStyle = "#fff"), (q.font = "700 40px Mitr, sans-serif"), (q.textBaseline = "middle"));
