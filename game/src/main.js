@@ -39909,6 +39909,8 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     let t = vp[i],
       n = new J();
     if (!t) return n;
+    // v104: ตุ๊กตาทรงยาว (ฉลาม) ขยายให้ตัวดูพอ ๆ กับตัวอื่น
+    e && (e *= { plush_shark: 1.3 }[i] ?? 1);
     let s = t.clone(!0);
     (s.position.set(0, 0, 0), s.updateMatrixWorld(!0));
     let o = new mt().setFromObject(s),
@@ -39936,7 +39938,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       "Unicorn_01",
     ],
     // v82: ตุ๊กตาสะสมชุดใหม่ (ตู้คีบ + ร้าน)
-    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo"],
+    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo", "plush_shark", "plush_plane"],
     Rp = {
       plush_shiba: "ชิบะ",
       plush_beaver: "บีเวอร์ฟันโต",
@@ -39944,6 +39946,8 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       plush_hound: "บาสเซ็ตฮาวนด์",
       plush_gura: "ฉลามน้อยกุระ",
       plush_hippo: "ฮิปโปนุ่มนิ่ม",
+      plush_shark: "ฉลามฟ้ายิ้มกว้าง",
+      plush_plane: "เครื่องบินตาโต",
       Barney_01: "ไดโนเสาร์ม่วง",
       Bear_01: "หมี",
       Cat_01: "แมว",
@@ -41070,7 +41074,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
     let l = new be({ color: 16773568 });
     for (let m of [0.92, 1.67, t - 0.1]) a(e - 0.3, 0.025, 0.04, l, 0, m, n / 2 - 0.08);
     let h = new En(16767392, 2.2, 3.2, 1.6);
-    (h.position.set(0, 1.6, 0.4), i.add(h));
+    (h.position.set(0, 1.6, 0.2), i.add(h)); // v104: ไฟอยู่หลังกระจก กันแสงสะท้อนจ้ากลางตู้
     let f = new X({ color: 14677247, roughness: 0.05, metalness: 0.1, transparent: !0, opacity: 0.18, depthWrite: !1 });
     for (let m of [-1, 1]) {
       let E = new J();
@@ -47146,8 +47150,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             },
             ...ccsPlush.filter(ze).map((e, t) => ({
               key: "plush:" + e,
-              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛" }[e] ?? "🧸"} (ใหม่!)`,
-              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250 }[e] ?? 240,
+              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛", plush_shark: "🌊", plush_plane: "✈️" }[e] ?? "🧸"} (ใหม่!)`,
+              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250, plush_shark: 270, plush_plane: 230 }[e] ?? 240,
               make: () => je(e, 0.5),
             })),
             ...(ze("Barney_01")
@@ -62080,6 +62084,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r82")),
         bn(Zt("r93")),
         bn(Zt("r102")),
+        bn(Zt("r104")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
@@ -62276,6 +62281,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         openWares: (i, e) => v1(zn.find((t) => t.def.id === i), e),
         ball: () => fo,
         openDogs: () => gb(zn.find((i) => i.def.id === "petshop")),
+        openToys: () => v1(zn.find((i) => i.def.id === "petshop"), !0),
         openWardrobe: () => OE(),
         shopIds: () => zn.map((t) => t.def.id),
         enterHome: () => JE(),
