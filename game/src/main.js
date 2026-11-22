@@ -61803,12 +61803,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       // v109: สัตว์เลี้ยงใหม่
       {
         key: "sharpei",
-        need: () => !!Xg("sharpei"),
+        need: () => !!vp.pet_sharpei,
         name: "ชาไป่",
         icon: "🫓",
         price: 1250,
         note: "หน้าย่น ลิ้นสีม่วงเหมือนเชาเชา",
-        make: () => Yg("sharpei", 0.56),
+        make: () => ccsTB("pet_sharpei", 0.42), // v110: ใช้โมเดลเหมือนจริง (ตัวการ์ตูนย้ายไปเป็นตุ๊กตา)
       },
 
       {
@@ -62508,7 +62508,6 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r105")),
         bn(Zt("r109")),
         $g(Zt("horse2")),
-        $g(Zt("pets109")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
       nM(ze, je),
