@@ -39938,7 +39938,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       "Unicorn_01",
     ],
     // v82: ตุ๊กตาสะสมชุดใหม่ (ตู้คีบ + ร้าน)
-    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo", "plush_shark", "plush_plane"],
+    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo", "plush_shark", "plush_plane", "plush_toydog", "plush_truck", "plush_police"],
     Rp = {
       plush_shiba: "ชิบะ",
       plush_beaver: "บีเวอร์ฟันโต",
@@ -39948,6 +39948,9 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       plush_hippo: "ฮิปโปนุ่มนิ่ม",
       plush_shark: "ฉลามฟ้ายิ้มกว้าง",
       plush_plane: "เครื่องบินตาโต",
+      plush_toydog: "หมาปั๊กหน้าย่น",
+      plush_truck: "รถดั๊มพ์ขนหิน",
+      plush_police: "รถตำรวจจิ๋ว",
       Barney_01: "ไดโนเสาร์ม่วง",
       Bear_01: "หมี",
       Cat_01: "แมว",
@@ -41051,14 +41054,21 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
     return n;
   }
   var bM = (i) => () => ((i = (i * 16807) % 2147483647), (i - 1) / 2147483646);
-  function Q7() {
+  var ccsCntTex = {};
+  function ccsCntTag(i) {
+    let e = Math.min(i, 99),
+      t = ccsCntTex[e] ?? (ccsCntTex[e] = ei(`×${e}`, 16765503, 6045472, 128, 64));
+    return new R(new Te(0.24, 0.12), new be({ map: t }));
+  }
+  function Q7(lbl = "🧸 ตู้ตุ๊กตาของข้าวต้ม", lit = !0) {
     let i = new J(),
       e = 2.6,
       t = 2.5,
       n = 0.62,
       s = new X({ map: Cn(12618322, "#8a5a2b"), roughness: 0.6 }),
       o = Ae(16774885, 0.5),
-      r = Ae(16770026, 0.9),
+      // v105: ตู้ใบเสริมไม่เพิ่มไฟจริง (กันเชดเดอร์คอมไพล์ใหม่ทั้งเกม) ใช้ผนังหลังเรืองแสงอ่อนแทน
+      r = lit ? Ae(16770026, 0.9) : Ae(16770026, 0.9, { emissive: new ae(16767392), emissiveIntensity: 0.25 }),
       a = (m, E, g, y, x, b, w) => {
         let v = new R(new ee(m, E, g), y);
         return (v.position.set(x, b, w), i.add(v), v);
@@ -41073,8 +41083,10 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
     for (let m of [...c, t - 0.04]) a(e - 0.1, 0.06, n - 0.04, s, 0, m, 0);
     let l = new be({ color: 16773568 });
     for (let m of [0.92, 1.67, t - 0.1]) a(e - 0.3, 0.025, 0.04, l, 0, m, n / 2 - 0.08);
-    let h = new En(16767392, 2.2, 3.2, 1.6);
-    (h.position.set(0, 1.6, 0.2), i.add(h)); // v104: ไฟอยู่หลังกระจก กันแสงสะท้อนจ้ากลางตู้
+    if (lit) {
+      let h = new En(16767392, 2.2, 3.2, 1.6);
+      (h.position.set(0, 1.6, 0.2), i.add(h)); // v104: ไฟอยู่หลังกระจก กันแสงสะท้อนจ้ากลางตู้
+    }
     let f = new X({ color: 14677247, roughness: 0.05, metalness: 0.1, transparent: !0, opacity: 0.18, depthWrite: !1 });
     for (let m of [-1, 1]) {
       let E = new J();
@@ -41097,7 +41109,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       new Te(e - 0.3, 0.2),
       new be({
         map: ei(
-          "🧸 ตู้ตุ๊กตาของข้าวต้ม",
+          lbl,
           16774885,
           11875210,
           512,
@@ -41111,17 +41123,22 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       i.add(u),
       {
         group: i,
+        // v105: รับรายการ [ชื่อ, จำนวน] วางแบบละ 1 ตัว ตัวซ้ำมีป้าย ×N ที่ขอบชั้น
         fill: (m) => {
           (u.clear(),
             m.slice(0, 15).forEach((E, g) => {
-              let y = je(E, 0.44),
+              let [N, C] = Array.isArray(E) ? E : [E, 1],
+                y = je(N, 0.44),
                 x = Math.floor(g / 5),
-                b = g % 5;
-              (y.position.set(-e / 2 + 0.33 + b * ((e - 0.66) / 4), c[x] + 0.03, 0.02),
-                (y.rotation.y = (b - 2) * -0.08),
-                u.add(y));
+                b = g % 5,
+                P = -e / 2 + 0.33 + b * ((e - 0.66) / 4);
+              if ((y.position.set(P, c[x] + 0.03, 0.02), (y.rotation.y = (b - 2) * -0.08), u.add(y), C > 1)) {
+                let I = ccsCntTag(C);
+                (I.position.set(P + 0.13, c[x] + 0.1, n / 2 - 0.04), u.add(I));
+              }
             }));
         },
+        trim: o,
         size: { w: e, d: n },
       }
     );
@@ -42152,6 +42169,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         bedRect: { x: e.x + m.x, z: e.z + m.z, hw: g, hd: y },
         bowls: b.clone().add(e),
         cabinet: v,
+        cabinets: ccsCabMake(n, s, e, _, v),
       }
     );
   }
@@ -47122,6 +47140,17 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         ]
       : i === "petshop"
         ? [
+            // v105: ตู้โชว์ตุ๊กตาใบเสริม (ขายทีละใบ สูงสุด 3 ใบ)
+            ...(ccsCabN() < 3
+              ? [
+                  {
+                    key: "cab:" + (ccsCabN() + 1),
+                    label: `ตู้โชว์ตุ๊กตาใบที่ ${ccsCabN() + 1} 🗄️ (โชว์เพิ่มได้ 15 แบบ)`,
+                    price: ccsCabPrice[ccsCabN()],
+                    make: () => Q7("", !1).group,
+                  },
+                ]
+              : []),
             {
               key: "plush:Dog_01",
               label:
@@ -47150,8 +47179,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             },
             ...ccsPlush.filter(ze).map((e, t) => ({
               key: "plush:" + e,
-              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛", plush_shark: "🌊", plush_plane: "✈️" }[e] ?? "🧸"} (ใหม่!)`,
-              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250, plush_shark: 270, plush_plane: 230 }[e] ?? 240,
+              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛", plush_shark: "🌊", plush_plane: "✈️", plush_toydog: "🦮", plush_truck: "🚚", plush_police: "🚓" }[e] ?? "🧸"} (ใหม่!)`,
+              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250, plush_shark: 270, plush_plane: 230, plush_toydog: 240, plush_truck: 290, plush_police: 300 }[e] ?? 240,
               make: () => je(e, 0.5),
             })),
             ...(ze("Barney_01")
@@ -48680,7 +48709,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             rt("🧸 ได้แล้ว!", i.k.front.clone().setY(2)),
             ke("heart"),
             De(
-              `🎉 คีบได้ตุ๊กตา${Rp[e] ?? ""}! เก็บเข้าตู้โชว์ข้างบ้านแล้ว (${z.plush.length} ตัว)`,
+              `🎉 คีบได้ตุ๊กตา${Rp[e] ?? ""}! ${ccsPlushNote(e)}`,
               3e3,
             ))
           : (rt("หลุด! 😿", i.k.front.clone().setY(2), "bad"),
@@ -48693,8 +48722,119 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           }, 900));
       }));
   }
+  // v105: ตู้โชว์หลายใบ + สมุดสะสม
+  var ccsCabZ = [-0.6, -3.55, 2.35],
+    ccsCabPrice = [0, 500, 800],
+    ccsCabSolid = [];
+  function ccsCabMake(i, e, t, n, s) {
+    let o = [s];
+    for (let r = 1; r < 3; r++) {
+      let a = Q7(`🧸 ตู้ตุ๊กตาของข้าวต้ม ใบที่ ${r + 1}`, !1);
+      (a.group.position.set(e / 2 - 0.4, 0, ccsCabZ[r]), (a.group.rotation.y = -Math.PI / 2), (a.group.visible = !1), i.add(a.group), o.push(a));
+      ccsCabSolid[r] = { x: t.x + e / 2 - 0.4, z: t.z + ccsCabZ[r], hw: 0.4, hd: 1.35 };
+    }
+    return ((ccsCabSolid.list = n), o);
+  }
+  function ccsCabN() {
+    return Math.max(1, Math.min(3, z.cabinets ?? 1));
+  }
+  function ccsCabSync() {
+    let i = Rn?.cabinets;
+    if (!i) return;
+    let e = ccsCabN();
+    for (let t = 1; t < 3; t++) {
+      i[t].group.visible = t < e;
+      let n = ccsCabSolid.list,
+        s = ccsCabSolid[t];
+      n && s && t < e && !n.includes(s) && n.push(s);
+    }
+    let t = ccsAlbAll().every((n) => (z.plush ?? []).includes(n));
+    for (let n of i) (n.trim.color.setHex(t ? 14264627 : 16774885), (n.trim.metalness = t ? 0.45 : 0), (n.trim.roughness = t ? 0.35 : 0.5)); // สะสมครบ → ขอบตู้สีทอง
+  }
+  function ccsPlushUniq() {
+    let i = new Map();
+    for (let e of z.plush ?? []) i.set(e, (i.get(e) ?? 0) + 1);
+    return [...i];
+  }
+  function ccsAlbAll() {
+    return [...sM, ...ccsPlush, "Barney_01"].filter(ze);
+  }
+  function ccsPlushNote(i) {
+    let e = ccsPlushUniq(),
+      t = e.findIndex(([s]) => s === i),
+      n = (e[t]?.[1] ?? 0);
+    return n > 1
+      ? `มีแล้ว ×${n}`
+      : t >= ccsCabN() * 15
+        ? (ccsCabN() < 3 ? "ตู้เต็มแล้ว! ซื้อตู้ใบใหม่ได้ที่ร้านสัตว์เลี้ยง" : "ตู้ทุกใบเต็มแล้ว ดูได้ในสมุดสะสม")
+        : `แบบใหม่! สะสมแล้ว ${e.length}/${ccsAlbAll().length} แบบ`;
+  }
+  var ccsAlbGoal = [
+    [10, 200],
+    [20, 500],
+    [0, 1500],
+  ];
+  function ccsAlbum() {
+    let i = ccsAlbAll(),
+      e = new Map(ccsPlushUniq()),
+      t = i.filter((a) => e.has(a)).length,
+      n = z.albClaim ?? [],
+      s = new Set(["Dog_01", "Cat_01", "Unicorn_01", "Panda_01", "Barney_01", ...ccsPlush]),
+      o = ccsAlbGoal
+        .map(([a, c], l) => {
+          let h = a || i.length,
+            f = n.includes(l),
+            d = t >= h;
+          return `<button class="agoal" data-goal="${l}" ${f || !d ? "disabled" : ""}>${f ? "✅" : d ? "🎁" : "🔒"} ${a ? `สะสม ${a} แบบ` : "สะสมครบทุกแบบ"} · ${c}💰${a ? "" : " + ขอบตู้สีทอง"}${f ? " (รับแล้ว)" : ""}</button>`;
+        })
+        .join(""),
+      r = i
+        .map((a) => {
+          let c = e.get(a) ?? 0;
+          return `<button class="ptile${c ? "" : " miss"}" data-pl="${a}">${ccsThumb("alb:" + a, () => je(a, 0.5)) || "🧸"}<b>${c ? Rp[a] ?? a : "???"}</b><small>${c ? (c > 1 ? `×${c}` : "มี 1 ตัว") : s.has(a) ? "ตู้คีบ · ร้าน" : "ตู้คีบ"}</small></button>`;
+        })
+        .join("");
+    (Gi(
+      "สมุดสะสมตุ๊กตา 📒",
+      `<p class="note">สะสมแล้ว <b>${t}/${i.length}</b> แบบ · ตู้โชว์ ${ccsCabN()} ใบ (โชว์ได้ ${ccsCabN() * 15} แบบ)${ccsCabN() < 3 ? ` · ตู้ใบที่ ${ccsCabN() + 1} ซื้อได้ที่ร้านสัตว์เลี้ยง` : ""}</p><div class="abar"><i style="width:${Math.round((t / i.length) * 100)}%"></i></div><div class="agoals">${o}</div><div class="pgrid">${r}</div>`,
+    ),
+      document.querySelectorAll("[data-goal]").forEach((a) =>
+        a.addEventListener("click", () => {
+          let c = +a.dataset.goal,
+            l = z.albClaim ?? (z.albClaim = []);
+          l.includes(c) ||
+            (l.push(c),
+            (z.money += ccsAlbGoal[c][1]),
+            Ei(),
+            ke("heart"),
+            De(`🎁 รางวัลสมุดสะสม +${ccsAlbGoal[c][1]}💰${c === 2 ? " · ขอบตู้โชว์เป็นสีทองแล้ว!" : ""}`, 2600),
+            ccsCabSync(),
+            _t(z),
+            ccsAlbum());
+        }),
+      ),
+      document.querySelectorAll("[data-pl]").forEach((a) =>
+        a.addEventListener("click", () => {
+          let c = a.dataset.pl,
+            l = e.get(c) ?? 0;
+          (ke("pop"),
+            De(
+              l
+                ? `🧸 ตุ๊กตา${Rp[c] ?? c} มี ${l} ตัว`
+                : s.has(c)
+                  ? "ยังไม่มี · คีบได้จากตู้คีบ หรือซื้อที่ร้านสัตว์เลี้ยง"
+                  : "ยังไม่มี · คีบได้จากตู้คีบข้างสนามบอล",
+              1800,
+            ));
+        }),
+      ));
+  }
   function H1() {
-    _4?.fill(z.plush ?? []);
+    let i = ccsPlushUniq(),
+      e = Rn?.cabinets;
+    if (!e) return void _4?.fill(i);
+    ccsCabSync();
+    for (let t = 0; t < 3; t++) e[t].fill(t < ccsCabN() ? i.slice(t * 15, t * 15 + 15) : []);
   }
   var fI = new H(9999, 0, 9999),
     Rn = null,
@@ -55387,6 +55527,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   addEventListener("pagehide", () => _t(z));
   it("sniffBtn").addEventListener("click", () => xa());
   it("noteBtn").addEventListener("click", () => yC());
+  it("albumBtn")?.addEventListener("click", () => ccsAlbum());
   it("questBtn").addEventListener("click", () => {
     (ke("pop"), Rr());
   });
@@ -58440,6 +58581,17 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             : "💤 งีบบนเตียง",
           () => (h ? jH() : qH()),
         );
+      }
+      if (Rn.cabinets) {
+        let h = Rn.cabinets.slice(0, ccsCabN()).find((f) => {
+          let d = f.group.getWorldPosition(new H());
+          return Math.hypot(e.x - (d.x - 0.7), e.z - d.z) < 1.5;
+        });
+        if (h) {
+          let f = ccsAlbAll(),
+            d = new Set(z.plush ?? []);
+          return nt(`📒 สมุดสะสมตุ๊กตา (${f.filter((u) => d.has(u)).length}/${f.length})`, ccsAlbum);
+        }
       }
       return e.distanceTo(Rn.bowls) < 1.4 && ya() > 0 && k0("cook") < ul.cook && (z.hunger ?? 100) < 90
         ? nt(
@@ -61608,7 +61760,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       document.querySelectorAll("[data-ware]").forEach((a) =>
         a.addEventListener("click", () => {
           let c = t[+a.dataset.ware];
-          (P1({ key: c.key, label: c.label, price: c.price }), v1(i));
+          (P1({ key: c.key, label: c.label, price: c.price }), v1(i, e)); // v105: ซื้อแล้วอยู่หน้าเดิม (ไม่เด้งกลับหน้ารับเลี้ยง)
         }),
       ));
   }
@@ -61680,6 +61832,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       );
       return;
     }
+    if (i.key.startsWith("cab:") && ccsCabN() >= +i.key.slice(4)) {
+      De("มีตู้ใบนี้แล้ว 🗄️", 1800);
+      return;
+    }
     if (i.key === "chick" && z.chickens >= 4) {
       De("เล้าเต็มแล้ว (4 ตัว)", 1800);
       return;
@@ -61735,12 +61891,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     } else if (o6[e]) {
       let [t, n, s] = o6[e];
       (mi(t, n), s && (z.energy = Math.min(100, z.energy + s)), s6[e] && De(`😋 ${s6[e]}`, 2200));
+    } else if (e.startsWith("cab:")) {
+      ((z.cabinets = +e.slice(4)), H1(), ke("heart"), _t(z));
+      De(`🗄️ ได้ตู้โชว์ใบที่ ${z.cabinets} แล้ว! วางไว้ผนังเดียวกับตู้เดิมในบ้าน`, 2800);
     } else
       e.startsWith("plush:")
         ? ((z.plush ?? (z.plush = [])).push(e.slice(6)),
           H1(),
           De(
-            `🧸 ได้ตุ๊กตา${Rp[e.slice(6)] ?? ""} ไปวางในตู้โชว์ในบ้านแล้ว`,
+            `🧸 ได้ตุ๊กตา${Rp[e.slice(6)] ?? ""} · ${ccsPlushNote(e.slice(6))}`,
             2400,
           ))
         : e === "toy:ball"
@@ -62085,6 +62244,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r93")),
         bn(Zt("r102")),
         bn(Zt("r104")),
+        bn(Zt("r105")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
@@ -62191,6 +62351,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         balls: _d,
         home: () => Rn,
         enterHome: JE,
+        album: () => ccsAlbum(),
+        cabSync: () => H1(),
         wx: co,
         inside: () => Se,
         enterShop: MT,

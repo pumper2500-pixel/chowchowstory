@@ -226,3 +226,11 @@ body.pad.playing #bar:has(.slot) + #barhint{display:block}
 #clawCancel{display:none;position:fixed;right:24px;bottom:calc(112px + var(--sab,0px));z-index:7;padding:8px 16px;border-radius:18px;border:3px solid var(--ink);background:#fff;color:#c0392b;font:700 16px/1 Mitr,sans-serif;box-shadow:0 3px 0 var(--ink);cursor:pointer}
 #clawCancel.on{display:block}
 body.pad #clawCancel::after{content:"Ⓑ";margin-left:6px;color:#e2463f}
+
+/* v105: สมุดสะสมตุ๊กตา */
+.abar{height:10px;border-radius:6px;background:#eadfcf;overflow:hidden;margin:4px 0 10px}.abar i{display:block;height:100%;background:linear-gradient(90deg,#ffb84d,#ffd23f)}
+.agoals{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}.agoal{font:inherit;font-size:13px;padding:8px 10px;border-radius:12px;border:2px solid #f0c060;background:#fff6dc;text-align:left;cursor:pointer}.agoal:disabled{opacity:.55;cursor:default}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.ptile{font:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px 8px;border-radius:14px;border:2px solid #ead9bf;background:#fffaf1;cursor:pointer}
+.ptile .th{width:72px;height:72px}.ptile b{font-size:12.5px;line-height:1.2;text-align:center}.ptile small{font-size:11px;opacity:.7}
+.ptile.miss{background:#f1ece4}.ptile.miss .th{filter:brightness(0) opacity(.28)}.ptile.miss b{opacity:.6}
