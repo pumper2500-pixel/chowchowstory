@@ -39961,7 +39961,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       Unicorn_01: "ยูนิคอร์น",
     };
   // ขอบด้านในกระจกตู้คีบ (พิกัดในตู้) และช่องหย่อนรางวัล (หน้าซ้าย)
-  var CLW = { x0: -0.5, x1: 0.5, z0: -0.425, z1: 0.405, cx: 0.075, cz: -0.172 };
+  var CLW = { x0: -0.5, x1: 0.5, z0: -0.425, z1: 0.405, cx: 0.08, cz: -0.175 };
   function ccsClawFit(i, e) {
     let t = i.obj.position,
       n = i.hx ?? 0.11,
@@ -40069,17 +40069,19 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       (ccsClawFit(B), b.push(B));
     });
     {
-      // v97: ผนังอะคริลิกใสกั้นช่องหย่อนรางวัล (สูงขึ้น ตุ๊กตาไถลตกเองไม่ได้)
-      let N = new X({ color: 15134975, roughness: 0.05, transparent: !0, opacity: 0.28, depthWrite: !1 }),
-        he = new X({ color: 16777215, roughness: 0.4 });
+      // v99: กล่องช่องรางวัลทึบชั้นเดียว (แบบตู้คีบจริง) สูงพอกันตุ๊กตาไถลตก — ไม่มีแผ่นใสซ้อนเป็น 2 ชั้นแล้ว
+      let N = new X({ color: 16250871, roughness: 0.5 }),
+        he = new X({ color: 15123811, roughness: 0.4 }),
+        HB = 0.24,
+        y0 = 1.03;
       for (let [le, ve, He, at] of [
-        [0.008, 0.58, 0.075, 0.115],
-        [0.575, 0.008, -0.212, -0.172],
+        [0.03, 0.6, 0.06, 0.11],
+        [0.56, 0.03, -0.22, -0.157],
       ]) {
-        let Ge = new R(new ee(le, 0.4, ve), N);
-        (Ge.position.set(He, 1.225, at), (Ge.userData.noMerge = !0), e.add(Ge));
-        let V = new R(new ee(Math.max(le, 0.012), 0.015, Math.max(ve, 0.012)), he);
-        (V.position.set(He, 1.43, at), e.add(V));
+        let Ge = new R(new ee(le, HB, ve), N);
+        (Ge.position.set(He, y0 + HB / 2, at), (Ge.castShadow = !0), e.add(Ge));
+        let V = new R(new ee(le + 0.02, 0.025, ve + 0.02), he);
+        (V.position.set(He, y0 + HB + 0.012, at), e.add(V));
       }
     }
     let _ = -1,
@@ -40175,7 +40177,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           {
             let ox = ue.x,
               oz = ue.z,
-              ab = ue.y > 1.42;
+              ab = ue.y > 1.3;
             (ccsClawFit(De, ab || De.top), (De.top = ab || (De.top && inChute(ue.x, ue.z))), ue.x !== ox && (ye.x *= -0.35), ue.z !== oz && (ye.z *= -0.35));
           }
           for (let ke2 of b) {
@@ -52008,8 +52010,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               });
               u.material = Array.isArray(u.material) ? m : m[0];
             }));
-        let f = new R(new ee(0.75, 0.03, 0.06), new be({ color: 16777215 }));
-        if ((f.position.set(-0.05, 1.86, 0.18), h.group.add(f), c % 2 === 0)) {
+        if (c % 2 === 0) { // v99: เอาแถบขาว (หลอดไฟ) กลางตู้ออก
           let d = new En(a, 2.2, 3.4, 1.5); // v97: ไฟในตู้อ่อนลง (เดิมสว่างจ้า)
           (d.position.set(t / 2 / 1.15, 1.7, 0.1), h.group.add(d));
         }
