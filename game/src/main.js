@@ -35525,9 +35525,23 @@ vObj = position;`,
               `#include <map_fragment>
       { vec3 c0 = diffuseColor.rgb;
         float l = dot(c0, vec3(0.3, 0.59, 0.11));
-        bool tongue = uChow > 0.5 && vPosM.y < uNoseY - 0.05 * uH && vPosM.z > uNoseZ - 0.26 * uL && c0.r > 0.35 && c0.r > c0.g + 0.12 && c0.b > c0.g + 0.01;
-        if (tongue) diffuseColor.rgb = vec3(0.075, 0.045, 0.13) * (0.7 + c0.r * 0.5);   // v87: ลิ้นเชาเชาสีม่วงอมดำ (blue-black)
-        else if (uRecolor > 0.5 && l > 0.035) diffuseColor.rgb = mix(uDark, uLight, smoothstep(0.05, 0.7, l));
+        // v91: ปาก/ลิ้นสะอาดทุกสีขน — ลิ้นม่วงอมดำผสมแบบนุ่ม (ไม่เป็นจุดกระดำกระด่าง), ริมฝีปาก/เส้นปากเก็บสีเข้มเดิมไว้ ไม่โดนย้อมสีขน
+        float muz = uChow > 0.5 ? step(uNoseZ - 0.22 * uL, vPosM.z) * (1.0 - smoothstep(uNoseY + 0.0 * uH, uNoseY + 0.04 * uH, vPosM.y)) : 0.0;
+        float pink = smoothstep(0.05, 0.12, c0.r - c0.g) * smoothstep(-0.1, -0.02, c0.b - c0.g) * smoothstep(0.2, 0.34, c0.r) * smoothstep(0.03, 0.08, c0.r - c0.b);
+        float tgw = pink * muz * (1.0 - smoothstep(uNoseY - 0.045 * uH, uNoseY - 0.022 * uH, vPosM.y));
+        vec3 base = c0;
+        if (uRecolor > 0.5) {
+          vec3 fur = mix(uDark, uLight, smoothstep(0.05, 0.7, l));
+          float keep = 1.0 - smoothstep(0.012, 0.03, l);              // ช่องปากที่ดำสนิท
+          float nose = muz * step(uNoseZ - 0.045 * uL, vPosM.z) * smoothstep(uNoseY - 0.035 * uH, uNoseY - 0.015 * uH, vPosM.y);
+          float lip = muz * (1.0 - smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y));
+          float philtrum = muz * (1.0 - nose) * smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y);
+          keep *= 1.0 - philtrum;                                     // ร่องใต้จมูก: ย้อมเป็นสีขน (ไม่เป็นเส้นดำ)
+          fur *= 1.0 - 0.18 * philtrum * (1.0 - smoothstep(0.03, 0.15, l));
+          keep = max(keep, max(nose * (1.0 - smoothstep(0.08, 0.2, l)), lip * (1.0 - smoothstep(0.07, 0.15, l))));   // จมูกดำ + ริมฝีปากล่างดำ คงไว้
+          base = mix(fur, uDark * 0.1 + c0 * 0.4, keep);
+        }
+        diffuseColor.rgb = mix(base, vec3(0.032, 0.02, 0.06) * (0.8 + 0.4 * l), tgw);
         float shade = 0.78 + 0.3 * smoothstep(0.03, 0.55, l);
         // เสื้อ: คลุมลำตัว + ต้นขาหน้า (แขนเสื้อ) ไม่ทับหัวและหาง \xB7 ลวดลายฉายจาก 3 แกนตามทิศผิว (ไม่ยืดเป็นเส้นตรงกลางตัว)
         vec3 nM = normalize(cross(dFdx(vPosM), dFdy(vPosM)));
@@ -35693,7 +35707,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     (g.scale.set(1.3, 0.55, 0.6), E.add(g));
     let y = new we(0.042, 16, 12);
     y.translate(0, -0.03, 0.02);
-    let x = new R(y, new X({ color: 3021898, roughness: 0.35, metalness: 0.02, emissive: 657428 }));
+    let x = new R(y, new X({ color: 1180196, roughness: 0.55, metalness: 0, emissive: 131590 }));
     (x.scale.set(1.15, 1.9, 0.5), E.add(x));
     let b = new R(new ee(0.004, 0.08, 0.01), new X({ color: 3809888 }));
     (b.position.set(0, -0.03, 0.04),
