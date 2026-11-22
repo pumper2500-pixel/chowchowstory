@@ -48347,6 +48347,40 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let o = new J();
     return (o.add(s), K.add(o), { m: o, pos: new H(e, 0, t), vel: new H(), y: 0, vy: 0, r: i, beach: !0 });
   }
+  // v111: ห่วงยาง/ของลอยน้ำโมเดลใหม่ (Cartoon Float Pool Pack) + ฟิสิกส์ลอยน้ำสมจริง
+  var ccsFloatNew = !1;
+  function ccsFloatsBuild() {
+    if (ccsFloatNew || !vp.float_ringa) return;
+    ccsFloatNew = !0;
+    for (let i = ccsFloats.length - 1; i >= 0; i--) ccsFloats[i].kayak || (K.remove(ccsFloats[i].g), ccsFloats.splice(i, 1));
+    // [โมเดล, x, z (จากชายหาด), ขนาด, มวล]
+    for (let [i, e, t, n, s] of [
+      ["float_ringa", -6, 3.2, 0.95, 1],
+      ["float_unia", 9, 4.6, 1.35, 1.6],
+      ["float_flamingo", 18, 6.2, 1.3, 1.5],
+      ["float_duckring", -10.5, 4.4, 1.05, 1.2],
+      ["float_ringb", 3.5, 6.5, 0.95, 1],
+      ["float_unib", -18, 5.6, 1.25, 1.5],
+      ["float_ringc", 13.5, 3.4, 0.95, 1],
+      ["float_rainbow", -2, 8.2, 1.5, 1.8],
+      ["float_ball", 2, 3.8, 0.45, 0.35],
+      ["float_ducky", -2.5, 2.6, 0.42, 0.4],
+      ["float_ducky", 5.5, 2.4, 0.42, 0.4],
+      ["float_noodle1", 7.5, 7.6, 1.25, 0.6],
+      ["float_noodle2", -13.5, 7.4, 1.2, 0.6],
+      ["float_noodle3", 22, 4.2, 1.2, 0.6],
+    ]) {
+      if (!vp[i]) continue;
+      let o = je(i, n),
+        r = new J();
+      (o.traverse((c) => c.isMesh && ((c.castShadow = !0), (c.receiveShadow = !1))), r.add(o));
+      let a = new mt().setFromObject(o),
+        c = a.getSize(new H());
+      // ให้จมน้ำราว 35% ของความสูง (ห่วงยางลอยตื้น ลูกบอล/เป็ดลอยสูง)
+      ((o.position.y = -c.y * (s < 0.5 ? 0.3 : 0.38)), r.position.set(e, Ph, Rt + t), K.add(r));
+      ccsFloats.push({ g: r, x: e, z: Rt + t, hx: e, hz: Rt + t, vx: 0, vz: 0, vy: 0, y: Ph, r: Math.max(c.x, c.z) * 0.46, m: s, yaw: Math.random() * 6, yv: (Math.random() - 0.5) * 0.3, px: 0, pz: 0, pvx: 0, pvz: 0, nw: !0 });
+    }
+  }
   function ccsPhysSetup() {
     ccsPhysInit = !0;
     // กรวยจราจร/ถังขยะ ริมฟุตบาท
@@ -48505,25 +48539,76 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         let c = ccsWaveY(a.pos.x, a.pos.z, t);
         (a.m.position.y = Math.max(a.m.position.y, c + a.r * 0.55), (a.vel.z -= 0.25 * i), (a.vel.x += Math.sin(t * 0.3) * 0.05 * i));
       }
-    // ---- ของลอยน้ำ ----
+    // ---- ของลอยน้ำ (v111: แรงลอยตัว + คลื่นพัด + ลม + เอียงตามผิวน้ำ + ชนกันเอง) ----
+    ccsFloatsBuild();
     for (let a of ccsFloats) {
       if (Math.hypot(a.x - n.x, a.z - n.z) > 70) continue;
+      if (!a.nw) {
+        // เรือคายัค: ระบบเดิม
+        for (let f of o) {
+          let d = a.x - f.p.x,
+            u = a.z - f.p.z,
+            p = Math.hypot(d, u),
+            m = a.r + f.r;
+          p < m && p > 1e-3 && ((a.x = f.p.x + (d / p) * m), (a.z = f.p.z + (u / p) * m), (a.vx += (d / p) * Math.max(0.6, f.v) * 0.7), (a.vz += (u / p) * Math.max(0.6, f.v) * 0.7), (a.yv += (Math.random() - 0.5) * 2));
+        }
+        ((a.vx += ((a.hx - a.x) * 0.02 + Math.sin(t * 0.21 + a.hx) * 0.05) * i), (a.vz += ((a.hz - a.z) * 0.02 + Math.cos(t * 0.17 + a.hz) * 0.04) * i));
+        let c = Math.pow(0.97, i * 60);
+        ((a.vx *= c), (a.vz *= c), (a.yv *= c), (a.x += a.vx * i), (a.z = Math.max(Rt + 1.2, a.z + a.vz * i)), (a.yaw += (a.yv + 0.08) * i));
+        let l = ccsWaveY(a.x, a.z, t),
+          h = 0.35;
+        ((a.g.position.x = a.x), (a.g.position.z = a.z), (a.g.position.y += (l - a.g.position.y) * Math.min(1, i * 8)));
+        let f = (ccsWaveY(a.x + h, a.z, t) - ccsWaveY(a.x - h, a.z, t)) / (2 * h),
+          d = (ccsWaveY(a.x, a.z + h, t) - ccsWaveY(a.x, a.z - h, t)) / (2 * h);
+        a.g.rotation.set(Math.atan(d) * 1.4, a.yaw, -Math.atan(f) * 1.4, "YXZ");
+        continue;
+      }
+      let c = Math.min(i, 0.05),
+        l = a.m,
+        h = Math.max(0.3, a.r * 0.7);
+      // น้องว่ายชน/เดินชน → ดันออก + หมุน + กระดก
       for (let f of o) {
         let d = a.x - f.p.x,
           u = a.z - f.p.z,
           p = Math.hypot(d, u),
           m = a.r + f.r;
-        p < m && p > 1e-3 && ((a.x = f.p.x + (d / p) * m), (a.z = f.p.z + (u / p) * m), (a.vx += (d / p) * Math.max(0.6, f.v) * 0.7), (a.vz += (u / p) * Math.max(0.6, f.v) * 0.7), (a.yv += (Math.random() - 0.5) * 2));
+        if (p < m && p > 1e-3) {
+          let E = (m - p) / m,
+            g = Math.max(0.8, f.v) * (1.4 / l);
+          ((a.x = f.p.x + (d / p) * m), (a.z = f.p.z + (u / p) * m), (a.vx += (d / p) * g * 0.6), (a.vz += (u / p) * g * 0.6), (a.yv += ((d * f.v - u) / p) * 0.8 / l), (a.pvx += (u / p) * E * 6 / l), (a.pvz -= (d / p) * E * 6 / l), (a.vy -= E * 1.2 / l));
+          f.v > 1.2 && Math.random() < c * 8 && ccsSplashAt(a.x, a.y, a.z, 3);
+        }
       }
-      ((a.vx += ((a.hx - a.x) * 0.02 + Math.sin(t * 0.21 + a.hx) * 0.05) * i), (a.vz += ((a.hz - a.z) * 0.02 + Math.cos(t * 0.17 + a.hz) * 0.04) * i));
-      let c = Math.pow(0.97, i * 60);
-      ((a.vx *= c), (a.vz *= c), (a.yv *= c), (a.x += a.vx * i), (a.z = Math.max(Rt + 1.2, a.z + a.vz * i)), (a.yaw += (a.yv + 0.08) * i));
-      let l = ccsWaveY(a.x, a.z, t),
-        h = 0.35;
-      ((a.g.position.x = a.x), (a.g.position.z = a.z), (a.g.position.y += (l - a.g.position.y) * Math.min(1, i * 8)));
-      let f = (ccsWaveY(a.x + h, a.z, t) - ccsWaveY(a.x - h, a.z, t)) / (2 * h),
-        d = (ccsWaveY(a.x, a.z + h, t) - ccsWaveY(a.x, a.z - h, t)) / (2 * h);
-      a.g.rotation.set(Math.atan(d) * 1.4, a.yaw, -Math.atan(f) * 1.4, "YXZ");
+      // ชนกันเองระหว่างของลอยน้ำ
+      for (let f of ccsFloats) {
+        if (f === a || !f.nw) continue;
+        let d = a.x - f.x,
+          u = a.z - f.z,
+          p = Math.hypot(d, u),
+          m = a.r + f.r;
+        if (p < m && p > 1e-3) {
+          let E = (m - p) * 0.5,
+            g = ((a.vx - f.vx) * d + (a.vz - f.vz) * u) / p;
+          ((a.x += (d / p) * E), (a.z += (u / p) * E), g < 0 && ((a.vx -= (d / p) * g * 0.6 * (f.m / (a.m + f.m)) * 2), (a.vz -= (u / p) * g * 0.6 * (f.m / (a.m + f.m)) * 2), (a.yv += g * 0.3)));
+        }
+      }
+      // ผิวน้ำ: ความสูง + ความชันจากคลื่น
+      let f = ccsWaveY(a.x, a.z, t),
+        d = (ccsWaveY(a.x + h, a.z, t) - ccsWaveY(a.x - h, a.z, t)) / (2 * h),
+        u = (ccsWaveY(a.x, a.z + h, t) - ccsWaveY(a.x, a.z - h, t)) / (2 * h);
+      // แรงลอยตัวแบบสปริง-หน่วง (ของเบาเด้งไวกว่า) + คลื่นไหลลงตามความชัน + ลมทะเลพัดเข้าฝั่งเบา ๆ + ดึงกลับบริเวณเดิมช้า ๆ
+      ((a.vy += ((f - a.y) * (34 / l) - a.vy * (3.2 + 1.5 / l)) * c), (a.y += a.vy * c));
+      let p = 1.6 + 0.5 * Math.sin(t * 0.11 + a.hx);
+      ((a.vx += (-d * 9.8 * 0.35 + Math.sin(t * 0.07 + a.hz) * 0.06 + (a.hx - a.x) * 0.012) * c),
+        (a.vz += (-u * 9.8 * 0.35 - 0.05 * p * 0.3 + (a.hz - a.z) * 0.012) * c));
+      let m = Math.pow(0.55, c);
+      ((a.vx *= m), (a.vz *= m), (a.yv *= Math.pow(0.6, c)), (a.yv += (d - u) * 0.15 * c), (a.x += a.vx * c), (a.z += a.vz * c), (a.yaw += a.yv * c));
+      a.z < Rt + 1.1 && ((a.z = Rt + 1.1), (a.vz = Math.abs(a.vz) * 0.3));
+      // เอียงตามผิวน้ำแบบสปริง (มีแกว่งค้าง ไม่แข็งทื่อ)
+      let E = Math.atan(u) * 1.1,
+        g = -Math.atan(d) * 1.1;
+      ((a.pvx += ((E - a.px) * 22 - a.pvx * 3.5) * c), (a.pvz += ((g - a.pz) * 22 - a.pvz * 3.5) * c), (a.px += a.pvx * c), (a.pz += a.pvz * c));
+      (a.g.position.set(a.x, a.y, a.z), a.g.rotation.set(a.px, a.yaw, a.pz, "YXZ"));
     }
     // ---- น้ำกระเซ็นเมื่อน้องเดินลุยน้ำ ----
     let r = ccsSplash,
@@ -62507,6 +62592,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r104")),
         bn(Zt("r105")),
         bn(Zt("r109")),
+        bn(Zt("r111")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
@@ -62616,6 +62702,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         album: () => ccsAlbum(),
         clawPair: (d) => ccsClawPair(d),
         addComp: (k, p) => BE(k, p),
+        floats: () => ccsFloats,
         petKeys: () => T1.filter((n) => !n.need || n.need()).map((n) => n.key),
         clawDaily: () => ccsClawDaily(),
         cabSync: () => H1(),
