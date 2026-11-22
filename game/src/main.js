@@ -40051,6 +40051,20 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         e.add(at),
         b.push({ name: He, obj: at }));
     });
+    {
+      // v97: ผนังอะคริลิกใสกั้นช่องหย่อนรางวัล (สูงขึ้น ตุ๊กตาไถลตกเองไม่ได้)
+      let N = new X({ color: 15134975, roughness: 0.05, transparent: !0, opacity: 0.28, depthWrite: !1 }),
+        he = new X({ color: 16777215, roughness: 0.4 });
+      for (let [le, ve, He, at] of [
+        [0.008, 0.5, 0.075, 0.08],
+        [0.52, 0.008, -0.19, -0.17],
+      ]) {
+        let Ge = new R(new ee(le, 0.4, ve), N);
+        (Ge.position.set(He, 1.225, at), (Ge.userData.noMerge = !0), e.add(Ge));
+        let V = new R(new ee(Math.max(le, 0.012), 0.015, Math.max(ve, 0.012)), he);
+        (V.position.set(He, 1.43, at), e.add(V));
+      }
+    }
     let _ = -1,
       S = !1,
       M = -1,
@@ -40142,7 +40156,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           }
           // ขอบกั้นช่องหย่อนรางวัล: ตุ๊กตาที่ไถลข้าง ๆ ตกลงช่องไม่ได้ ต้องถูกปล่อยจากด้านบนเท่านั้น
           if (inChute(ue.x, ue.z)) {
-            if (!De.top && ue.y < 1.24) {
+            if (!De.top && ue.y < 1.42) {
               let ox = 0.07 - ue.x,
                 oz = ue.z + 0.17;
               ox < oz ? ((ue.x = 0.071), (ye.x = Math.abs(ye.x) * 0.3)) : ((ue.z = -0.171), (ye.z = -Math.abs(ye.z) * 0.3));
@@ -47950,7 +47964,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ccsShake > 0.001 && (Lt.position.x += (Math.random() - 0.5) * ccsShake, (Lt.position.y += (Math.random() - 0.5) * ccsShake), (ccsShake *= Math.pow(0.2, e)));
   }
   // ===== v93: เกาะภูเขาไฟกลางทะเล ปะทุ + ลาวาไหล =====
-  var ccsVol = null;
+  var ccsVol = null,
+    ccsIsle = null;
   function ccsSoftTex() {
     return ss(64, 64, (i) => {
       let e = i.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -47963,115 +47978,28 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       e = new J();
     ((e.userData.noCull = !0), e.position.copy(i), K.add(e)); // v95: วัตถุใหญ่ไกล ๆ ไม่ซ่อนตามระยะ
     // v96: เอาภูเขาไฟออก — เหลือเกาะ Tacana (ภูเขาป่าจริง) ตั้งกลางทะเลไกล ๆ เป็นวิว
-    let t = je("volcano_isle", 230);
-    (t.position.set(0, Ph - 3, 0), e.add(t));
+    let t = je("volcano_isle", 165);
+    (t.position.set(0, Ph - 2.5, 0), e.add(t));
     t.traverse((A) => {
-      A.isMesh && ((A.material = A.material.clone()), (A.material.fog = !1), A.material.color.setRGB(0.92, 0.97, 1.0), A.material.emissive?.setHex(7311536), A.material.emissive && (A.material.emissiveIntensity = 0.16), (A.receiveShadow = !0));
-    });
-    return;
-    let r = new mt().setFromObject(o),
-      a = (() => {
-        // ปากปล่อง = ค่าเฉลี่ยจุดยอดที่สูงใกล้ยอดสุด (ขอบปากปล่อง)
-        let A = new H(),
-          F = new H(),
-          C = 0;
-        o.traverse((P) => {
-          if (!P.isMesh) return;
-          let I = P.geometry.attributes.position;
-          for (let k = 0; k < I.count; k++) (F.fromBufferAttribute(I, k).applyMatrix4(P.matrixWorld), F.y > r.max.y - 3 && (A.add(F), C++));
-        });
-        return (C ? A.multiplyScalar(1 / C) : r.getCenter(A).setY(r.max.y), e.worldToLocal(A.setY(r.max.y - 2.5)));
-      })(),
-      c = [];
-    // ลาวาเรืองแสงเต้นเป็นจังหวะ (emissive ไหลลงตามความชัน)
-    let l = { uT: { value: 0 }, uErupt: { value: 0 } };
-    o.traverse((A) => {
       if (!A.isMesh) return;
-      ((A.castShadow = !0), (A.receiveShadow = !0), (A.material = A.material.clone()), (A.material.fog = !1));
-      let F = A.material;
-      ((F.emissive = new ae(16777215)),
-        (F.emissiveIntensity = 1.2),
-        (F.onBeforeCompile = (C) => {
-          ((C.uniforms.uT = l.uT),
-            (C.uniforms.uErupt = l.uErupt),
-            (C.vertexShader = C.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vWp;").replace("#include <project_vertex>", "#include <project_vertex>\nvWp = (modelMatrix * vec4(transformed,1.0)).xyz;")),
-            (C.fragmentShader = C.fragmentShader
-              .replace("#include <common>", "#include <common>\nuniform float uT, uErupt; varying vec3 vWp;\nfloat vh(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }\nfloat vno(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(vh(i),vh(i+vec2(1,0)),f.x), mix(vh(i+vec2(0,1)),vh(i+vec2(1,1)),f.x), f.y); }")
-              .replace(
-                "#include <emissivemap_fragment>",
-                "#include <emissivemap_fragment>\nfloat fl = vno(vec2(atan(vWp.z, vWp.x) * 9.0, vWp.y * 0.35 + uT * 1.6)) * 0.6 + vno(vec2(atan(vWp.z, vWp.x) * 23.0, vWp.y * 0.9 + uT * 3.1)) * 0.4;\nfloat lavaM = smoothstep(0.08, 0.3, totalEmissiveRadiance.r - totalEmissiveRadiance.b);\ntotalEmissiveRadiance *= lavaM * (0.55 + fl * 0.9) * (1.0 + uErupt * 1.8);",
-              )));
-        }));
+      ((A.material = A.material.clone()), (A.material.fog = !1), (A.receiveShadow = !0));
+      // หมอกระยะไกล (aerial perspective) ตามความใสของอากาศรายวัน
+      A.material.onBeforeCompile = (F) => {
+        ((F.uniforms.uHaze = ccsHaze),
+          (F.uniforms.uHazeCol = ccsHazeCol),
+          (F.fragmentShader = F.fragmentShader.replace("#include <common>", "#include <common>\nuniform float uHaze; uniform vec3 uHazeCol;").replace("#include <dithering_fragment>", "#include <dithering_fragment>\ngl_FragColor.rgb = mix(gl_FragColor.rgb, uHazeCol, clamp(uHaze, 0.0, 0.9));")));
+      };
     });
-    // ทางลาวาไหล: ริบบอนแนบผิวภูเขา จากปากปล่องลงทะเล (ยิงเรย์หาผิวจริง)
-    let h = new Ls(),
-      f = [];
-    o.traverse((A) => A.isMesh && f.push(A));
-    let d = new Qt({
-      uniforms: { uT: l.uT, uFlow: { value: 0 }, uHeat: { value: 0 } },
-      transparent: !0,
-      depthWrite: !1,
-      side: Ke,
-      vertexShader: "varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-      fragmentShader:
-        "uniform float uT, uFlow, uHeat; varying vec2 vU;\nfloat h1(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }\nfloat n2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h1(i),h1(i+vec2(1,0)),f.x), mix(h1(i+vec2(0,1)),h1(i+vec2(1,1)),f.x), f.y); }\nvoid main(){ float front = uFlow - vU.y; if (front < 0.0) discard; float e = 1.0 - abs(vU.x*2.0-1.0); float n = n2(vec2(vU.x*6.0, vU.y*40.0 - uT*2.5))*0.6 + n2(vec2(vU.x*14.0, vU.y*90.0 - uT*4.0))*0.4; float crust = smoothstep(0.35, 0.75, n) * (1.0 - uHeat*0.6); vec3 hot = mix(vec3(1.0,0.25,0.02), vec3(1.0,0.85,0.3), smoothstep(0.5,1.0,e*n)); vec3 c = mix(hot*2.2, vec3(0.12,0.05,0.03), crust*0.85); float a = smoothstep(0.0, 0.25, e) * smoothstep(0.0, 0.02, front) * (0.35 + 0.65*uHeat); gl_FragColor = vec4(c, a); }",
-    });
-    for (let A = 0; A < 5; A++) {
-      let F = (A / 5) * Math.PI * 2 + 0.4 + Math.random() * 0.5,
-        C = [],
-        P = 0;
-      for (let I = 0; I < 46; I++) {
-        let k = 2.5 + I * 1.55,
-          D = F + Math.sin(I * 0.35 + A) * 0.12,
-          L = e.localToWorld(new H(a.x + Math.cos(D) * k, 200, a.z + Math.sin(D) * k));
-        h.set(L, new H(0, -1, 0));
-        let q = h.intersectObjects(f, !1)[0];
-        if (!q) {
-          let W = t.children.length ? (h.intersectObject(t, !0)[0] ?? null) : null;
-          if (!W || W.point.y < Ph - 0.5) break;
-          q = W;
-        }
-        if (q.point.y < Ph - 0.3) break;
-        C.push(e.worldToLocal(q.point.clone()).add(new H(0, 0.35, 0)));
-      }
-      if (C.length < 6) continue;
-      let I = [],
-        k = [],
-        D = [];
-      for (let L = 0; L < C.length; L++) {
-        let q = C[Math.min(C.length - 1, L + 1)].clone().sub(C[Math.max(0, L - 1)]).setY(0).normalize(),
-          $ = new H(-q.z, 0, q.x).multiplyScalar(1.8 + L * 0.05);
-        (I.push(C[L].x - $.x, C[L].y, C[L].z - $.z, C[L].x + $.x, C[L].y, C[L].z + $.z), k.push(0, L / (C.length - 1), 1, L / (C.length - 1)), L < C.length - 1 && D.push(L * 2, L * 2 + 1, L * 2 + 2, L * 2 + 1, L * 2 + 3, L * 2 + 2));
-      }
-      let $ = new qe();
-      ($.setAttribute("position", new Fe(I, 3)), $.setAttribute("uv", new Fe(k, 2)), $.setIndex(D));
-      let te = new R($, d);
-      ((te.renderOrder = 3), (te.frustumCulled = !1), e.add(te), c.push({ m: te, end: e.localToWorld(C[C.length - 1].clone()) }));
+    e.updateMatrixWorld(!0);
+    let o = new mt().setFromObject(t),
+      r = ccsSoftTex(),
+      a = [];
+    for (let A = 0; A < 9; A++) {
+      let F = new zi(new vi({ map: r, color: 16777215, transparent: !0, opacity: 0, depthWrite: !1, fog: !1 }));
+      (e.add(F), a.push({ s: F, ang: (A / 9) * Math.PI * 2, rad: 12 + (A % 3) * 9, h: 0.68 + (A % 4) * 0.08, sz: 34 + (A % 3) * 14 }));
     }
-    // ควัน/ไอน้ำ/หินลาวา/แสงเรือง
-    let u = ccsSoftTex(),
-      p = [];
-    for (let A = 0; A < 70; A++) {
-      let F = new zi(new vi({ map: u, color: 5592405, transparent: !0, opacity: 0, depthWrite: !1, fog: !1 }));
-      ((F.visible = !1), e.add(F), p.push({ s: F, life: 0, max: 1, vx: 0, vy: 0, vz: 0, g0: 1, g1: 1, steam: !1 }));
-    }
-    let m = new be({ color: 16755200, toneMapped: !1 }),
-      E = [];
-    for (let A = 0; A < 46; A++) {
-      let F = new R(new Ps(0.9, 0), m);
-      ((F.visible = !1), e.add(F), E.push({ m: F, life: 0, v: new H() }));
-    }
-    // v95: น้ำพุลาวา/ไฟพุ่ง — อนุภาคเรืองแสง (additive) พุ่งจากปากปล่อง สีเหลืองขาว → ส้ม → แดง → ดับ
-    let FF = [];
-    for (let A = 0; A < 220; A++) {
-      let F = new zi(new vi({ map: u, color: 16777215, transparent: !0, opacity: 0, blending: $i, depthWrite: !1, fog: !1, toneMapped: !1 }));
-      ((F.visible = !1), e.add(F), FF.push({ s: F, life: 0, max: 1, v: new H(), big: 1 }));
-    }
-    let FL = new zi(new vi({ map: u, color: 16772528, transparent: !0, opacity: 0, blending: $i, depthWrite: !1, fog: !1, toneMapped: !1 }));
-    (FL.position.copy(a).add(new H(0, 6, 0)), e.add(FL));
-    let g = new zi(new vi({ map: u, color: 16737826, transparent: !0, opacity: 0.5, blending: $i, depthWrite: !1, fog: !1 }));
-    (g.position.copy(a).add(new H(0, 4, 0)), g.scale.setScalar(38), e.add(g));
-    ccsVol = { ff: FF, fi: 0, facc: 0, flash: FL, fl: 0, g: e, crater: a, uni: l, lava: c, lavaMat: d, smoke: p, si: 0, bombs: E, bi: 0, glow: g, state: "calm", t: 25 + Math.random() * 30, eru: 0, flow: 0, heat: 0, acc: 0, bacc: 0, told: !1 };
+    ccsIsle = { g: e, top: e.worldToLocal(new H((o.min.x + o.max.x) / 2, o.max.y, (o.min.z + o.max.z) / 2)), cap: a, amt: 0 };
+    return;
   }
   function ccsVolRumble(i) {
     let e = _i();
@@ -48086,6 +48014,19 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ((o.buffer = t), (r.type = "lowpass"), (r.frequency.value = 140), (a.gain.value = 0.55), o.connect(r).connect(a).connect(e.destination), o.start());
   }
   function ccsVolcanoTick(i, e) {
+    if (ccsIsle) {
+      // เมฆปกคลุมยอดเขา: มากตอนเช้า/เย็น, วันฟ้าหม่น, ฟ้าครึ้ม; วันฟ้าใสแทบไม่มี
+      let n = j.time % 1,
+        s = Math.max(0, 1 - Math.abs(n - 0.27) / 0.08) * 0.9 + Math.max(0, 1 - Math.abs(n - 0.75) / 0.07) * 0.6,
+        o = Math.min(1, s * (1 - 0.6 * ccsClar) + (1 - ccsClar) * 0.55 + co.cur.o * 0.8 + 0.25 * Math.max(0, Math.sin(e * 0.021)));
+      ccsIsle.amt += (o - ccsIsle.amt) * Math.min(1, i * 0.3);
+      let r = n > 0.79 || n < 0.21,
+        a = ccsIsle.top;
+      for (let c of ccsIsle.cap) {
+        c.ang += i * 0.012;
+        (c.s.position.set(a.x + Math.cos(c.ang) * c.rad, a.y * c.h + Math.sin(e * 0.05 + c.ang) * 2, a.z + Math.sin(c.ang) * c.rad * 0.6), c.s.scale.set(c.sz * 1.6, c.sz * 0.7, 1), (c.s.material.opacity = ccsIsle.amt * 0.75), c.s.material.color.copy(ccsHazeCol.value).lerp(oa.setHex(16777215), r ? 0.1 : 0.7));
+      }
+    }
     let t = ccsVol;
     if (!t) return;
     ((t.uni.uT.value = e), (t.t -= i));
@@ -48193,14 +48134,27 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let n = new R(new re(0.03, 0.16, 0.56, 14), e);
     ((n.position.y = 0.32), i.add(n));
     let s = new R(new re(0.075, 0.1, 0.1, 14), new X({ color: 16777215, roughness: 0.4 }));
-    return ((s.position.y = 0.36), i.add(s), { g: i, r: 0.19, h: 0.6, snd: "pop" });
+    return ((s.position.y = 0.36), i.add(s), { g: i, r: 0.19, lr: 0.16, h: 0.6, snd: "pop" });
   }
   function ccsMkBin() {
+    // v97: ถังขยะทรงกระบอกมีฝา ห่วงจับ ร่องคาด และป้ายรีไซเคิล
     let i = new J(),
-      e = new R(new re(0.24, 0.2, 0.7, 16), new X({ color: 2984521, roughness: 0.6 }));
-    ((e.position.y = 0.35), i.add(e));
-    let t = new R(new re(0.26, 0.26, 0.06, 16), new X({ color: 2237995, roughness: 0.5 }));
-    return ((t.position.y = 0.73), i.add(t), { g: i, r: 0.24, h: 0.76, snd: "pop" });
+      e = new X({ color: 2984521, roughness: 0.55, metalness: 0.1 }),
+      t = new X({ color: 1856570, roughness: 0.5 }),
+      n = new R(new re(0.22, 0.19, 0.68, 20, 1, !0), e);
+    ((n.position.y = 0.36), (n.material.side = Ke), i.add(n));
+    let s = new R(new re(0.19, 0.19, 0.02, 20), t);
+    ((s.position.y = 0.03), i.add(s));
+    for (let r of [0.16, 0.56]) {
+      let a = new R(new vt(0.205 + r * 0.03, 0.012, 6, 24), t);
+      ((a.rotation.x = Math.PI / 2), (a.position.y = r), i.add(a));
+    }
+    let o = new R(new re(0.235, 0.235, 0.045, 20), t);
+    ((o.position.y = 0.72), i.add(o));
+    let r = new R(new vt(0.06, 0.012, 6, 12, Math.PI), new X({ color: 13421772, roughness: 0.4, metalness: 0.5 }));
+    ((r.position.y = 0.745), i.add(r));
+    let a = new R(new Te(0.16, 0.16), new be({ map: ss(64, 64, (c) => ((c.fillStyle = "#fff"), (c.font = "48px sans-serif"), (c.textAlign = "center"), c.fillText("♻", 32, 48))), transparent: !0 }));
+    return ((a.position.set(0, 0.42, 0.214), (a.rotation.x = -0.04)), i.add(a), { g: i, r: 0.22, lr: 0.235, h: 0.75, snd: "pop", bin: !0 });
   }
   function ccsMkCrate() {
     let i = new J(),
@@ -48347,7 +48301,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           f = (9.8 / (a.h * 0.75)) * Math.sin(a.tilt - h + (a.tilt > h ? 0 : 0));
         ((a.tv += (a.tilt > 0.001 || a.tv > 0 ? f : 0) * i), (a.tv *= Math.pow(0.6, i)), (a.tilt += a.tv * i));
         if (a.tilt <= 0) ((a.tilt = 0), (a.tv = Math.abs(a.tv) > 0.4 ? -a.tv * 0.3 : 0));
-        a.tilt >= Math.PI / 2 && ((a.tilt = Math.PI / 2), (a.lying = !0), (a.tv = 0), ke("pop"), (a.vx += a.nx * 0.6), (a.vz += a.nz * 0.6));
+        a.tilt >= Math.PI / 2 && ((a.tilt = Math.PI / 2), (a.lying = !0), (a.tv = 0), ke("pop"), (a.x += a.nx * (a.r + a.h / 2)), (a.z += a.nz * (a.r + a.h / 2)), (a.vx += a.nx * 0.3 + -a.nz * (Math.random() - 0.5) * 1.2), (a.vz += a.nz * 0.3 + a.nx * (Math.random() - 0.5) * 1.2));
       }
       let h = a.x + a.vx * i,
         f = a.z + a.vz * i;
@@ -48357,7 +48311,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         let u = a.vx * a.nx + a.vz * a.nz,
           p = Math.pow(0.86, i * 60),
           m = Math.pow(0.985, i * 60);
-        ((u *= p), (d *= m), (a.vx = a.nx * u - a.nz * d), (a.vz = a.nz * u + a.nx * d), (a.roll += (d / a.r) * i));
+        ((u *= p), (d *= m), (a.vx = a.nx * u - a.nz * d), (a.vz = a.nz * u + a.nx * d), (a.roll += (d / (a.lr ?? a.r)) * i));
       } else ((a.vx *= Math.pow(0.8, i * 60)), (a.vz *= Math.pow(0.8, i * 60)));
       // ตั้งกลับที่เดิมเมื่อน้องไปไกล
       let u = Math.hypot(a.x - a.hx, a.z - a.hz) > 0.2 || a.tilt > 0.01;
@@ -48369,8 +48323,18 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         let m = new At().setFromAxisAngle(new H(a.nx, 0, a.nz), a.roll);
         ccsQa.premultiply(m);
       }
-      (a.g.quaternion.copy(ccsQa).multiply(ccsQb), ccsVa.set(-a.nx * a.r, 0, -a.nz * a.r).applyQuaternion(ccsQa));
-      a.g.position.set(a.x + a.nx * a.r + ccsVa.x, Math.max(0, ccsVa.y) - (a.lying ? a.r * 0.15 : 0), a.z + a.nz * a.r + ccsVa.z);
+      a.g.quaternion.copy(ccsQa).multiply(ccsQb);
+      let gy = (a.gy = a.gy ?? b4(a.x, a.z));
+      (Math.abs(a.x - (a.gx ?? 1e9)) + Math.abs(a.z - (a.gz ?? 1e9)) > 0.3 && ((a.gy = gy = b4(a.x, a.z)), (a.gx = a.x), (a.gz = a.z)));
+      if (a.lying) {
+        // นอนราบ: แกนกระบอกสูงจากพื้นเท่ารัศมี (ไม่จมพื้น), กลิ้งรอบแกนตัวเอง
+        let m = a.lr ?? a.r;
+        ccsVa.set(0, a.h / 2, 0).applyQuaternion(ccsQa);
+        a.g.position.set(a.x - ccsVa.x, gy + m - ccsVa.y * 0, a.z - ccsVa.z);
+      } else {
+        ccsVa.set(-a.nx * a.r, 0, -a.nz * a.r).applyQuaternion(ccsQa);
+        a.g.position.set(a.x + a.nx * a.r + ccsVa.x, gy + Math.max(0, ccsVa.y), a.z + a.nz * a.r + ccsVa.z);
+      }
     }
     // ลูกบอลชายหาดลอยน้ำ
     for (let a of _d)
@@ -48738,7 +48702,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       ((gr = -1),
         s(0) && (j.started ? Ad?.() : it("start").click()),
         s(2) && (Ed = !0),
-        s(1) && qs(),
+        s(1) && (Oo && !Oo.dropped ? ccsClawCancel() : qs()),
         s(3) && _0(),
         s(8) && it("poopBtn").click(),
         (s(6) || s(11)) && xa(),
@@ -48757,6 +48721,21 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   var gl = [];
   var Oo = null;
+  // v97: ยกเลิกการคีบ (ยังไม่กดปล่อย) → คืนเงิน
+  function ccsClawCancel() {
+    let i = Oo;
+    !i || i.dropped || ((Oo = null), (z.money += 20), Ei(), ke("pop"), De("✖ ยกเลิกการคีบแล้ว คืนเงิน 20💰", 1800), ccsClawUI());
+  }
+  var ccsClawBtn = null;
+  function ccsClawUI() {
+    ccsClawBtn ||
+      ((ccsClawBtn = document.createElement("button")),
+      (ccsClawBtn.id = "clawCancel"),
+      (ccsClawBtn.textContent = "✖ ยกเลิก"),
+      ccsClawBtn.addEventListener("click", (i) => (i.stopPropagation(), ccsClawCancel())),
+      document.body.appendChild(ccsClawBtn));
+    ccsClawBtn.classList.toggle("on", !!(Oo && !Oo.dropped));
+  }
   function fE() {
     let i = Oo;
     !i ||
@@ -51988,7 +51967,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         [13809919, 13215999],
         [16769658, 16773280],
       ],
-      e = (i.splice(3), i.length), // v83: เหลือ 3 ตู้
+      e = (i.splice(1), i.length), // v97: เหลือตู้เดียว
       t = 1.75,
       n = -36 - ((e - 1) * t) / 2,
       s = -Mt - 1,
@@ -52015,13 +51994,13 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             }));
         let f = new R(new ee(0.75, 0.03, 0.06), new be({ color: 16777215 }));
         if ((f.position.set(-0.05, 1.86, 0.18), h.group.add(f), c % 2 === 0)) {
-          let d = new En(a, 9, 3.4, 1.5);
+          let d = new En(a, 2.2, 3.4, 1.5); // v97: ไฟในตู้อ่อนลง (เดิมสว่างจ้า)
           (d.position.set(t / 2 / 1.15, 1.7, 0.1), h.group.add(d));
         }
         {
           // v87: ไฟส่องหน้าตู้คีบตอนกลางคืน (สปอตไลต์ติดชายคา + แสงตกพื้น)
           let d = new En(16773336, 0, 7, 1.3);
-          (d.position.set(l, 2.7, s + 1.3), K.add(d), H0.push({ l: d, on: 12 }), pd(l, s + 1.1, 2.2));
+          (d.position.set(l, 2.7, s + 1.3), K.add(d), H0.push({ l: d, on: 3.5 }), pd(l, s + 1.1, 2.2));
         }
         (gl.push({ c: h, pos: new H(l, 0, s), front: new H(l, 0, s + 1.35) }),
           pt.push({ x: l, z: s + 0.1, hw: 0.8, hd: 0.72 }));
@@ -53623,7 +53602,26 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   var R6 = !1,
     qA = new ae(),
     oa = new ae();
+  // v97: สภาพอากาศรายวัน (ความใสของอากาศ) — บางวันฟ้าใสแดดจ้าเห็นวิวไกลชัด บางวันมีหมอกควัน/ฟ้าหม่น เปลี่ยนนุ่ม ๆ ระหว่างวัน
+  var ccsClar = 0.6,
+    ccsClarT = 0.6,
+    ccsClarDay = -1,
+    ccsHaze = { value: 0.3 },
+    ccsHazeCol = { value: new ae(14676471) };
+  function ccsWeatherDay(i) {
+    let e = typeof I0 == "function" ? I0() : 0;
+    if (e !== ccsClarDay) {
+      ccsClarDay = e;
+      let n = Math.abs(Math.sin(e * 12.9898 + 7.7) * 43758.5453) % 1;
+      ((ccsClarT = n < 0.42 ? 0.92 + n * 0.15 : n < 0.78 ? 0.5 + (n - 0.42) * 0.5 : 0.1 + (n - 0.78) * 0.6),
+        j.started && !Se && n < 0.42 && De("☀️ วันนี้ฟ้าใส แดดจ้า มองเห็นวิวได้ไกลสุดตา", 2600),
+        j.started && !Se && n >= 0.78 && De("🌫 วันนี้อากาศหม่น มีหมอกบาง ๆ ปกคลุม", 2600));
+    }
+    let t = ccsClarT * (1 - 0.6 * co.cur.o) * (1 - 0.8 * co.cur.r) - (i > 0.2 && i < 0.3 ? 0.25 : 0);
+    return ((ccsClar += (Math.max(0, Math.min(1, t)) - ccsClar) * 0.004), ccsClar);
+  }
   function G4(i) {
+    let CL = ccsWeatherDay(i);
     let e = 0;
     for (; e < Gp.length - 2 && i > Gp[e + 1].t;) e++;
     let t = Gp[e],
@@ -53641,14 +53639,18 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         .lerp(new ae(16777215), 0.12 * Math.min(1, Math.max(0, (t.light + (n.light - t.light) * s - 0.1) / 0.6)))
         .lerp(oa.setHex(10134445), 0.7 * r * c)
         .multiplyScalar(1 - 0.28 * a),
+      h0.top.value.lerp(oa.setHex(2324708), 0.4 * CL * c).lerp(oa.setHex(11125980), 0.45 * (1 - CL) * c),
+      h0.bottom.value.lerp(oa.setHex(11131875), 0.22 * CL * c).lerp(oa.setHex(14211296), 0.5 * (1 - CL) * c),
       K.fog.color.copy(h0.bottom.value),
-      (K.fog.near = 70 - 45 * a),
-      (K.fog.far = 240 - 130 * a));
+      (K.fog.near = 45 + 70 * CL - 30 * a),
+      (K.fog.far = 170 + 170 * CL - 100 * a),
+      ccsHaze.value = 0.62 - 0.46 * CL + 0.3 * a,
+      ccsHazeCol.value.copy(h0.bottom.value));
     let l = (t.light + (n.light - t.light) * s) * (1 - 0.42 * r - 0.12 * a);
     ((x0.intensity = 0.19 + l * 1.25 + co.cur.flash * 2.2),
       x0.color.setHex(14478591).lerp(oa.setHex(3820154), Math.max(0, Math.min(1, (0.6 - l) / 0.5))),
       x0.groundColor.setHex(8034908).lerp(oa.setHex(1053720), Math.max(0, Math.min(1, (0.6 - l) / 0.5))),
-      (ii.intensity = l * 1.3),
+      (ii.intensity = l * 1.3 * (0.82 + 0.38 * CL)),
       ii.color.setHex(t.sun).lerp(oa.setHex(n.sun), s));
     let h = (i - 0.25) * Math.PI * 2;
     // v83: แสงต่ำมากตอนกลางคืน/เช้ามืดทำเงายาวคลุมทั้งหาด ตัดเป็นเส้นตรงที่ขอบเงา → ให้แสงสูงพอ และเงาจางลงตอนมืด
@@ -53863,7 +53865,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         if (!b.dropped) {
           b.t -= e;
           let v = w.pos();
-          (w.steer(v.x + s * e * 0.35, v.y + o * e * 0.35), b.t <= 0 && fE(), ts.has(" ") && fE());
+          let CA = Math.max(-1.25, Math.min(1.25, j.yaw - (b.yaw0 ?? j.yaw))),
+            CX = s * Math.cos(CA) + o * Math.sin(CA),
+            CZ = -s * Math.sin(CA) + o * Math.cos(CA);
+          (w.steer(v.x + CX * e * 0.35, v.y + CZ * e * 0.35), b.t <= 0 && fE(), ts.has(" ") && fE(), ts.has("escape") && ccsClawCancel());
         }
         ((s = 0), (o = 0));
       }
@@ -54119,8 +54124,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         );
       }
       if ((T4(e, n), Oo)) {
-        let b = Oo.k.pos;
-        (Lt.position.lerp(Xt.set(b.x - 0.05, 2.45, b.z + 2.35), Math.min(1, e * 5)),
+        let b = Oo.k.pos,
+          CA = Math.max(-1.25, Math.min(1.25, j.yaw - (Oo.yaw0 ?? j.yaw)));
+        // v97: หมุนกล้องดูตู้จากด้านข้างได้ (ลากจอ / จอยขวา / Q-E)
+        (Lt.position.lerp(Xt.set(b.x - 0.05 + Math.sin(CA) * 2.35, 2.45, b.z + Math.cos(CA) * 2.35), Math.min(1, e * 5)),
           Lt.lookAt(b.x - 0.05, 1.55, b.z),
           r4(),
           a4(n));
@@ -57513,7 +57520,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     N6 = 0.4;
     let e = Lt.position;
     {
-      let t = pa || si === "low" ? 85 : si === "high" ? 150 : 115,
+      let t = (pa || si === "low" ? 85 : si === "high" ? 150 : 115) * (1 + 0.6 * ccsClar),
         n = pa || si === "low" ? 55 : 80,
         s = new H();
       for (let o of E1) {
@@ -58770,7 +58777,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           return nt(`${h.icon} ${h.name} \xB7 Lv.${f.lvl}`, () => UH(h));
         }
     }
-    if (Oo) {
+    if ((ccsClawUI(), Oo)) {
       let h = Oo;
       return h.dropped
         ? nt("🕹 กำลังคีบ…", null, !0)
@@ -58799,10 +58806,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 ((z.money -= 20),
                   ke("coin"),
                   Ei(),
-                  (Oo = { k: h, t: 20, dropped: !1 }),
+                  (Oo = { k: h, t: 30, dropped: !1, yaw0: j.yaw }),
                   f.steer(f.pos().x, f.pos().y),
                   De(
-                    "🕹 เลื่อนจอย/ลูกศร เล็งกรงเล็บ แล้วกดปุ่ม ⬇️ ปล่อยคีบ (มีเวลา 20 วิ)",
+                    "🕹 เลื่อนจอย/ลูกศร เล็งกรงเล็บ · ลากจอ/จอยขวา/Q-E หมุนดูด้านข้าง · ⬇️ ปล่อยคีบ · ✖ ยกเลิก (Esc/Ⓑ) คืนเงิน (30 วิ)",
                     3600,
                   ));
               })
@@ -62347,6 +62354,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         shopIds: () => zn.map((t) => t.def.id),
         enterHome: () => JE(),
         vol: () => ccsVol,
+        setClar: (v) => ((ccsClar = ccsClarT = v), (ccsClarDay = typeof I0 == "function" ? I0() : 0)),
+        clawStart: () => ((Oo = { k: gl[0], t: 30, dropped: !1, yaw0: j.yaw }), !0),
+        clawState: () => (Oo ? [Oo.t, Oo.dropped, gl.length] : null),
+        isle: () => ccsIsle,
         volTick: (d, t) => ccsVolcanoTick(d, t),
         fwTick: (d, t) => ccsFWTick(d, t),
         fw: () => ccsFW,

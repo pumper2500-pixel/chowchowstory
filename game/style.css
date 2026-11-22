@@ -222,3 +222,7 @@ body.sniffing #app canvas{filter:grayscale(.85) brightness(.72) contrast(1.08)}
 @media (hover:hover) and (pointer:fine){body:not(.pad) .slot .kn{display:block}}
 #barhint{display:none;position:fixed;left:50%;bottom:calc(74px + var(--sab,0px));translate:-50% 0;padding:1px 10px;border-radius:10px;background:rgba(40,40,40,.85);color:#fff;font:700 11px/18px Mitr,sans-serif;white-space:nowrap;pointer-events:none;z-index:6}
 body.pad.playing #bar:has(.slot) + #barhint{display:block}
+/* v97: ปุ่มยกเลิกตู้คีบ */
+#clawCancel{display:none;position:fixed;right:24px;bottom:calc(112px + var(--sab,0px));z-index:7;padding:8px 16px;border-radius:18px;border:3px solid var(--ink);background:#fff;color:#c0392b;font:700 16px/1 Mitr,sans-serif;box-shadow:0 3px 0 var(--ink);cursor:pointer}
+#clawCancel.on{display:block}
+body.pad #clawCancel::after{content:"Ⓑ";margin-left:6px;color:#e2463f}
