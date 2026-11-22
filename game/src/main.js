@@ -36571,6 +36571,66 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       f = { root: r, body: a, head: c, legs: [], arms: [], eyes: [], quad: !0, t: 0, blink: 9, yaw: 0, height: e.H };
     return ((f.person = h), f);
   }
+  // v109: สัตว์เลี้ยงโมเดลมีเท็กซ์เจอร์จริง (ลาบราดอร์ ฟาโรห์ แมว ลูกบูลด็อก) เดินด้วยการแกว่งขาในเชเดอร์แบบเดียวกับ Kr
+  function ccsTB(i, e = 0.42, t) {
+    let n = vp[i];
+    if (!n) return t ? t() : null;
+    let s = n.clone(!0);
+    (s.position.set(0, 0, 0), s.rotation.set(0, 0, 0), s.scale.setScalar(1), s.updateMatrixWorld(!0));
+    let o = new mt().setFromObject(s),
+      r = o.max.y,
+      a = {
+        uT: { value: Math.random() * 6 },
+        uWalk: { value: 0 },
+        uLegTop: { value: r * e },
+        uCZ: { value: (o.min.z + o.max.z) / 2 },
+        uHH: { value: r },
+      };
+    s.traverse((u) => {
+      if (!u.isMesh) return;
+      ((u.castShadow = !0), (u.receiveShadow = !0), (u.frustumCulled = !1));
+      let p = (Array.isArray(u.material) ? u.material : [u.material]).map((m) => {
+        let E = m.clone();
+        return (
+          (E.onBeforeCompile = (g) => {
+            (Object.assign(g.uniforms, a),
+              (g.vertexShader =
+                `uniform float uT, uWalk, uLegTop, uCZ, uHH;
+` +
+                g.vertexShader.replace(
+                  "#include <begin_vertex>",
+                  `#include <begin_vertex>
+      { float w = smoothstep(uLegTop, uLegTop * 0.45, position.y);
+        float front = step(uCZ, position.z), left = step(0.0, position.x);
+        float off = abs(front - left) * 3.14159;
+        float a = sin(uT + off) * 0.5 * uWalk; float d = max(0.0, uLegTop - position.y);
+        transformed.z += d * sin(a) * w; transformed.y += d * (1.0 - cos(a)) * w * 0.4 + abs(sin(uT)) * 0.012 * uHH * uWalk; }`,
+                )));
+          }),
+          (E.customProgramCacheKey = () => "ccsTB"),
+          E
+        );
+      });
+      u.material = Array.isArray(u.material) ? p : p[0];
+    });
+    let c = new J(),
+      l = new J(),
+      h = new J();
+    (c.add(l), l.add(s), (h.position.y = r), l.add(h));
+    let f = 0,
+      d = {
+        mixer: {
+          update: (u) => {
+            ((a.uT.value += u * (f > 0.05 ? 3 + f * 2.2 : 0)), (a.uWalk.value += ((f > 0.05 ? 1 : 0) - a.uWalk.value) * Math.min(1, u * 6)));
+          },
+        },
+        mood: "idle",
+        set: (u, p) => {
+          f = u === "walk" ? p : 0;
+        },
+      };
+    return { root: c, body: l, head: h, legs: [], arms: [], eyes: [], quad: !0, t: 0, blink: 9, yaw: 0, height: r, person: d };
+  }
   var yy = new WeakMap();
   function Jg(i) {
     let e = i.slots;
@@ -39938,7 +39998,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       "Unicorn_01",
     ],
     // v82: ตุ๊กตาสะสมชุดใหม่ (ตู้คีบ + ร้าน)
-    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo", "plush_shark", "plush_plane", "plush_toydog", "plush_truck", "plush_police"],
+    ccsPlush = ["plush_shiba", "plush_beaver", "plush_penguin", "plush_hound", "plush_gura", "plush_hippo", "plush_shark", "plush_plane", "plush_toydog", "plush_truck", "plush_police", "plush_sharpei"],
     Rp = {
       plush_shiba: "ชิบะ",
       plush_beaver: "บีเวอร์ฟันโต",
@@ -39951,6 +40011,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       plush_toydog: "หมาปั๊กหน้าย่น",
       plush_truck: "รถดั๊มพ์ขนหิน",
       plush_police: "รถตำรวจจิ๋ว",
+      plush_sharpei: "ชาไป่ย่นนุ่ม",
       Barney_01: "ไดโนเสาร์ม่วง",
       Bear_01: "หมี",
       Cat_01: "แมว",
@@ -47188,8 +47249,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             },
             ...ccsPlush.filter(ze).map((e, t) => ({
               key: "plush:" + e,
-              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛", plush_shark: "🌊", plush_plane: "✈️", plush_toydog: "🦮", plush_truck: "🚚", plush_police: "🚓" }[e] ?? "🧸"} (ใหม่!)`,
-              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250, plush_shark: 270, plush_plane: 230, plush_toydog: 240, plush_truck: 290, plush_police: 300 }[e] ?? 240,
+              label: `ตุ๊กตา${Rp[e]} ${{ plush_shiba: "🐕", plush_beaver: "🦫", plush_penguin: "🐧", plush_hound: "🐶", plush_gura: "🦈", plush_hippo: "🦛", plush_shark: "🌊", plush_plane: "✈️", plush_toydog: "🦮", plush_truck: "🚚", plush_police: "🚓", plush_sharpei: "🥟" }[e] ?? "🧸"} (ใหม่!)`,
+              price: { plush_shiba: 260, plush_beaver: 240, plush_penguin: 220, plush_hound: 200, plush_gura: 280, plush_hippo: 250, plush_shark: 270, plush_plane: 230, plush_toydog: 240, plush_truck: 290, plush_police: 300, plush_sharpei: 320 }[e] ?? 240,
               make: () => je(e, 0.5),
             })),
             ...(ze("Barney_01")
@@ -61737,8 +61798,49 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         icon: "🦮",
         price: 1100,
         note: "ว่ายน้ำเก่ง",
-        make: () => Kr("labrador"),
+        make: () => ccsTB("pet_labrador", 0.46, () => Kr("labrador")), // v109: โมเดลลาบราดอร์ใหม่ มีเท็กซ์เจอร์จริง
       },
+      // v109: สัตว์เลี้ยงใหม่
+      {
+        key: "sharpei",
+        need: () => !!Xg("sharpei"),
+        name: "ชาไป่",
+        icon: "🫓",
+        price: 1250,
+        note: "หน้าย่น ลิ้นสีม่วงเหมือนเชาเชา",
+        make: () => Yg("sharpei", 0.56),
+      },
+
+      {
+        key: "pharaoh",
+        need: () => !!vp.pet_pharaoh,
+        name: "ฟาโรห์ฮาวด์",
+        icon: "🏺",
+        price: 1500,
+        note: "หมาโบราณ ยิ้มแล้วหน้าแดง",
+        make: () => ccsTB("pet_pharaoh", 0.5),
+      },
+
+      {
+        key: "bulldogpup",
+        need: () => !!vp.pet_bulldogpup,
+        name: "ลูกบูลด็อก",
+        icon: "🍼",
+        price: 1000,
+        note: "ตัวป้อม หน้าย่น ขี้เซา",
+        make: () => ccsTB("pet_bulldogpup", 0.42),
+      },
+
+      {
+        key: "cat",
+        need: () => !!vp.pet_cat,
+        name: "แมวส้ม",
+        icon: "🐈",
+        price: 800,
+        note: "ขี้อ้อน เดินตามน้องหมาได้",
+        make: () => ccsTB("pet_cat", 0.36),
+      },
+
       {
         key: "rott",
         name: "ร็อตไวเลอร์",
@@ -61875,6 +61977,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let e = z.comps ?? [],
       t = T1.map(
         (n, s) =>
+          n.need && !n.need() ? "" :
           `<div class="row"><span class="ic">${(n.make && ccsThumb("dog:" + n.key, n.make)) || n.icon}</span><div><b>${n.name}</b><small>${n.price} 💰 \xB7 ${n.note}</small></div><button data-dog="${s}" ${z.money < n.price || e.length >= w1 ? "disabled" : ""}>รับเลี้ยง</button></div>`,
       ).join("");
     (Gi(
@@ -62403,7 +62506,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r102")),
         bn(Zt("r104")),
         bn(Zt("r105")),
+        bn(Zt("r109")),
         $g(Zt("horse2")),
+        $g(Zt("pets109")),
         QM(Zt("fish"), Zt("dolphin")),
       ]),
       nM(ze, je),
@@ -62511,6 +62616,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         enterHome: JE,
         album: () => ccsAlbum(),
         clawPair: (d) => ccsClawPair(d),
+        addComp: (k, p) => BE(k, p),
+        petKeys: () => T1.filter((n) => !n.need || n.need()).map((n) => n.key),
         clawDaily: () => ccsClawDaily(),
         cabSync: () => H1(),
         wx: co,
