@@ -47731,7 +47731,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let i = 57,
       e = new H(40, 0, 45),
       t = new J();
-    (t.position.copy(e), K.add(t));
+    ((t.userData.noCull = !0), t.position.copy(e), K.add(t));
     let n = vp.fw_base.clone(!0);
     (n.position.set(0, 0, 0), n.scale.setScalar(i), t.add(n));
     let s = new J();
@@ -47753,17 +47753,126 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       l.emissiveMap && !a.includes(l) && ((c.material = l = l.clone()), a.push(l));
     }),
       pt.push({ x: e.x, z: e.z, hw: 7.9, hd: 3.7 }));
-    // ประตูทางขึ้น + ป้าย
-    let c = new H(e.x, 0, e.z + 4.6),
-      l = ro("🎡 ชิงช้าสวรรค์ 20💰", 0, 2.6, 0.55);
-    (l.position.set(c.x - 2.2, 2.6, c.z + 0.2), K.add(l));
-    for (let h of [-3.2, -1.2]) {
-      let f = new R(new re(0.07, 0.07, 2.6, 8), new X({ color: 13369344, roughness: 0.5 }));
-      (f.position.set(c.x + h, 1.3, c.z + 0.2), K.add(f));
-    }
+    // v95: ทางเข้าเครื่องเล่น — ซุ้มประตูโค้งไฟวิบวับ, ป้ายชื่อ, ตู้ขายตั๋ว, ทางเดินปูหิน, ราวกั้นคิว, กระถางดอกไม้, เสาไฟ
+    let c = new H(e.x, 0, e.z + 4.6);
+    ccsFWEntrance(e, c, a);
     pd(c.x, c.z, 3);
     ccsFW = { root: t, hub: s, cabs: r, mats: a, gate: c, S: i, ang: 0, w: (Math.PI * 2) / 75, hold: 0, hue: 0 };
   }
+  function ccsFWEntrance(i, e, t) {
+    let n = new J();
+    K.add(n);
+    let s = (A, F) => new X({ color: A, roughness: F ?? 0.55 }),
+      o = (A, F, C, P, I, k, D) => {
+        let L = new R(new ee(A, F, C), P);
+        return (L.position.set(I, k, D), (L.castShadow = !0), (L.receiveShadow = !0), n.add(L), L);
+      },
+      r = i.x,
+      a = i.z + 3.75,
+      c = 11.5;
+    // ทางเดินปูหินลายหมากรุกจากซุ้มถึงชานชาลา
+    let l = ss(256, 512, (A) => {
+      for (let F = 0; F < 8; F++)
+        for (let C = 0; C < 16; C++) ((A.fillStyle = (F + C) % 2 ? "#e9d8b8" : "#d7b98e"), A.fillRect(F * 32, C * 32, 32, 32), (A.strokeStyle = "#b99a70"), A.strokeRect(F * 32 + 0.5, C * 32 + 0.5, 31, 31));
+      ((A.fillStyle = "#c0392b"), A.fillRect(0, 0, 14, 512), A.fillRect(242, 0, 14, 512));
+    });
+    let h = new R(new Te(3.4, c), new X({ map: l, roughness: 0.8 }));
+    ((h.rotation.x = -Math.PI / 2), h.position.set(r, 0.025, a + c / 2), (h.receiveShadow = !0), n.add(h));
+    // ซุ้มประตูโค้ง
+    let f = a + c - 0.6,
+      d = new X({ color: 16777215, roughness: 0.4 }),
+      u = new X({ color: 14031922, roughness: 0.4 });
+    for (let A of [-2.3, 2.3]) {
+      for (let F = 0; F < 8; F++) {
+        let C = new R(new re(0.2, 0.2, 0.5, 14), F % 2 ? d : u);
+        ((C.position.set(r + A, 0.25 + F * 0.5, f), (C.castShadow = !0)), n.add(C));
+      }
+      let F = new R(new we(0.3, 16, 12), new X({ color: 16766720, roughness: 0.3, metalness: 0.4 }));
+      (F.position.set(r + A, 4.25, f), n.add(F));
+      pt.push({ x: r + A, z: f, hw: 0.25, hd: 0.25 });
+    }
+    let p = new R(new vt(2.3, 0.16, 10, 32, Math.PI), u);
+    (p.position.set(r, 4.1, f), n.add(p));
+    let m = ss(1024, 256, (A) => {
+        let F = A.createLinearGradient(0, 0, 0, 256);
+        (F.addColorStop(0, "#ff5f6d"), F.addColorStop(1, "#c81d4e"), (A.fillStyle = F), A.fillRect(0, 0, 1024, 256), (A.strokeStyle = "#ffd84d"), (A.lineWidth = 14), A.strokeRect(10, 10, 1004, 236));
+        ((A.fillStyle = "#fff"), (A.textAlign = "center"), (A.font = "700 92px Mitr, sans-serif"), A.fillText("ชิงช้าสวรรค์", 512, 118), (A.fillStyle = "#ffe066"), (A.font = "700 58px Mitr, sans-serif"), A.fillText("CHOWCHOW SKY WHEEL", 512, 205));
+      }),
+      E = new R(new ee(4.2, 1.05, 0.12), [s(13113422), s(13113422), s(13113422), s(13113422), new be({ map: m }), new be({ map: m })]);
+    (E.position.set(r, 4.95, f), n.add(E));
+    // หลอดไฟวิบวับรอบซุ้ม
+    let g = [];
+    for (let A = 0; A <= 16; A++) {
+      let F = (A / 16) * Math.PI,
+        C = new be({ color: 16768358 }),
+        P = new R(new we(0.07, 8, 6), C);
+      (P.position.set(r + Math.cos(F) * 2.52, 4.1 + Math.sin(F) * 2.52, f + 0.05), n.add(P), g.push(C));
+    }
+    for (let A = 0; A < 8; A++)
+      for (let F of [-1, 1]) {
+        let C = new be({ color: 16768358 }),
+          P = new R(new we(0.06, 8, 6), C);
+        (P.position.set(r + F * 2.12, 0.5 + A * 0.5, f + 0.12), n.add(P), g.push(C));
+      }
+    // ราวกั้นคิว (เสาทองเหลือง + เชือกแดง) 2 ข้างทางเดิน
+    let y = s(13938487, 0.3);
+    ((y.metalness = 0.7), (y.roughness = 0.3));
+    let x = s(11867158, 0.7);
+    for (let A of [-1.35, 1.35]) {
+      let F = [];
+      for (let C = a + 0.8; C < f - 0.9; C += 1.6) {
+        let P = new R(new re(0.05, 0.05, 0.95, 10), y);
+        (P.position.set(r + A, 0.475, C), n.add(P));
+        let I = new R(new re(0.16, 0.18, 0.05, 14), y);
+        (I.position.set(r + A, 0.025, C), n.add(I));
+        let k = new R(new we(0.07, 10, 8), y);
+        (k.position.set(r + A, 0.97, C), n.add(k), F.push(C));
+      }
+      for (let C = 0; C < F.length - 1; C++) {
+        let P = new ah(new H(r + A, 0.9, F[C]), new H(r + A, 0.7, (F[C] + F[C + 1]) / 2), new H(r + A, 0.9, F[C + 1])),
+          I = new R(new Yi(P, 10, 0.025, 6, !1), x);
+        n.add(I);
+      }
+      pt.push({ x: r + A, z: (a + f) / 2, hw: 0.08, hd: (f - a) / 2 - 0.6, low: !0 });
+    }
+    // ตู้ขายตั๋ว (ข้างซุ้ม)
+    {
+      let A = r + 3.9,
+        F = f - 0.6;
+      (o(1.6, 1.05, 1.3, s(16249318), A, 0.525, F), o(1.6, 1.0, 1.3, new X({ color: 9419999, roughness: 0.1, transparent: !0, opacity: 0.35 }), A, 1.55, F), o(1.7, 0.1, 1.4, s(16249318), A, 2.1, F));
+      for (let C of [-0.75, 0.75]) for (let P of [-0.6, 0.6]) o(0.08, 1.0, 0.08, s(16249318), A + C, 1.55, F + P);
+      let C = new R(new yt(1.35, 0.75, 4), new X({ color: 14031922, roughness: 0.5 }));
+      ((C.rotation.y = Math.PI / 4), C.position.set(A, 2.53, F), (C.castShadow = !0), n.add(C));
+      let P = ro("🎟 ตั๋ว 20💰", 3, 1.3, 0.34);
+      (P.position.set(A, 2.0, F + 0.72), n.add(P));
+      pt.push({ x: A, z: F, hw: 0.85, hd: 0.7 });
+    }
+    // กระถางดอกไม้ + เสาไฟข้างซุ้ม
+    let b = [16733525, 16766720, 16738740, 10053375, 16777215];
+    for (let A of [-3.6, 3.6]) {
+      if (A > 0) continue;
+      let F = new R(new re(0.55, 0.45, 0.55, 16), s(11699253, 0.8));
+      (F.position.set(r + A, 0.275, f - 0.3), n.add(F));
+      for (let C = 0; C < 9; C++) {
+        let P = new R(new we(0.13, 8, 6), s(b[C % b.length], 0.6));
+        (P.position.set(r + A + Math.cos(C * 0.7) * 0.32, 0.62 + (C % 3) * 0.06, f - 0.3 + Math.sin(C * 0.7) * 0.32), n.add(P));
+      }
+      pt.push({ x: r + A, z: f - 0.3, hw: 0.55, hd: 0.55 });
+    }
+    for (let A of [-1.6, 1.6])
+      for (let F of [a + 3.2, a + 7.2]) {
+        let C = new R(new we(0.06, 6, 4), s(16766720));
+        (C.position.set(r + A * 1.18, 0.15, F), n.add(C));
+      }
+    // แสงไฟส่องทางตอนกลางคืน
+    for (let A of [a + 2, f - 1.2]) pd(r, A, 2.6);
+    {
+      let A = new En(16766880, 0, 9, 1.4);
+      (A.position.set(r, 3.6, f - 0.8), K.add(A), H0.push({ l: A, on: 10 }));
+    }
+    ccsFWBulbs = g;
+  }
+  var ccsFWBulbs = [];
   function ccsFWTick(i, e) {
     if (!ccsFW) return;
     let t = ccsFW,
@@ -47785,6 +47894,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     // ไฟ LED ตอนกลางคืนไล่สี
     let a = j.time % 1 > 0.79 || j.time % 1 < 0.21;
     t.hue = (t.hue + i * 0.08) % 1;
+    ccsFWBulbs.forEach((r, c) => r.color.setHSL(a ? (c * 0.06 + t.hue) % 1 : 0.13, a ? 1 : 0.9, (Math.floor(e * 4) + c) % 3 ? (a ? 0.6 : 0.75) : 0.95));
     for (let r of t.mats) (r.emissive.setHSL(a ? t.hue : 0, a ? 0.9 : 0, a ? 0.6 : 0.35), (r.emissiveIntensity = a ? 2.2 : 0.4));
     // จบรอบ: กระเช้ากลับมาล่างสุด → ลง
     if (n && n.k >= 0) {
@@ -47811,7 +47921,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ((() => {
       // หันหน้าน้องและกล้องไปทางทะเล/ภูเขาไฟ
       let n = (ccsVol ? ccsVol.g.position.x : -95) - i.root.position.x,
-        s = (ccsVol ? ccsVol.g.position.z : Rt + 190) - i.root.position.z;
+        s = (ccsVol ? ccsVol.g.position.z : Rt + 305) - i.root.position.z;
       ((ccsRide = { k: e, trav: 0, topDone: !1, yaw: Math.atan2(n, s) }), (j.yaw = Math.atan2(-n, -s)), (j.pitch = 0.12));
     })(),
       (i.hold = 0), De("🎡 ขึ้นกระเช้าแล้ว! ลากจอ (หรือจอยขวา) หมุนมุมมองชมวิว · หมุนครบ 1 รอบแล้วลงเอง", 3600));
@@ -47849,16 +47959,16 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   function ccsVolcano() {
     if (!ze("volcano_isle") || !ze("volcano_cone")) return;
-    let i = new H(-95, 0, Rt + 190),
+    let i = new H(-60, 0, Rt + 305),
       e = new J();
-    (e.position.copy(i), K.add(e));
+    ((e.userData.noCull = !0), e.position.copy(i), K.add(e)); // v95: วัตถุใหญ่ไกล ๆ ไม่ซ่อนตามระยะ
     // เกาะป่าข้าง ๆ (Tacana) + เกาะภูเขาไฟ (กรวยลาวา) ฐานจมทะเล
-    let t = je("volcano_isle", 120);
-    (t.position.set(-110, Ph - 2.5, 40), e.add(t));
+    let t = je("volcano_isle", 130);
+    (t.position.set(-150, Ph - 2.5, 30), e.add(t));
     t.traverse((A) => {
       A.isMesh && ((A.material = A.material.clone()), (A.material.fog = !1), A.material.color.setRGB(0.82, 0.88, 0.92), (A.receiveShadow = !0));
     });
-    let o = je("volcano_cone", 160);
+    let o = je("volcano_cone", 210);
     (o.position.set(0, Ph - 1.6, 0), e.add(o), e.updateMatrixWorld(!0));
     let r = new mt().setFromObject(o),
       a = (() => {
@@ -47946,15 +48056,23 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let F = new zi(new vi({ map: u, color: 5592405, transparent: !0, opacity: 0, depthWrite: !1, fog: !1 }));
       ((F.visible = !1), e.add(F), p.push({ s: F, life: 0, max: 1, vx: 0, vy: 0, vz: 0, g0: 1, g1: 1, steam: !1 }));
     }
-    let m = new be({ color: 16747520, toneMapped: !1 }),
+    let m = new be({ color: 16755200, toneMapped: !1 }),
       E = [];
     for (let A = 0; A < 46; A++) {
       let F = new R(new Ps(0.9, 0), m);
       ((F.visible = !1), e.add(F), E.push({ m: F, life: 0, v: new H() }));
     }
+    // v95: น้ำพุลาวา/ไฟพุ่ง — อนุภาคเรืองแสง (additive) พุ่งจากปากปล่อง สีเหลืองขาว → ส้ม → แดง → ดับ
+    let FF = [];
+    for (let A = 0; A < 220; A++) {
+      let F = new zi(new vi({ map: u, color: 16777215, transparent: !0, opacity: 0, blending: $i, depthWrite: !1, fog: !1, toneMapped: !1 }));
+      ((F.visible = !1), e.add(F), FF.push({ s: F, life: 0, max: 1, v: new H(), big: 1 }));
+    }
+    let FL = new zi(new vi({ map: u, color: 16772528, transparent: !0, opacity: 0, blending: $i, depthWrite: !1, fog: !1, toneMapped: !1 }));
+    (FL.position.copy(a).add(new H(0, 6, 0)), e.add(FL));
     let g = new zi(new vi({ map: u, color: 16737826, transparent: !0, opacity: 0.5, blending: $i, depthWrite: !1, fog: !1 }));
     (g.position.copy(a).add(new H(0, 4, 0)), g.scale.setScalar(38), e.add(g));
-    ccsVol = { g: e, crater: a, uni: l, lava: c, lavaMat: d, smoke: p, si: 0, bombs: E, bi: 0, glow: g, state: "calm", t: 25 + Math.random() * 30, eru: 0, flow: 0, heat: 0, acc: 0, bacc: 0, told: !1 };
+    ccsVol = { ff: FF, fi: 0, facc: 0, flash: FL, fl: 0, g: e, crater: a, uni: l, lava: c, lavaMat: d, smoke: p, si: 0, bombs: E, bi: 0, glow: g, state: "calm", t: 25 + Math.random() * 30, eru: 0, flow: 0, heat: 0, acc: 0, bacc: 0, told: !1 };
   }
   function ccsVolRumble(i) {
     let e = _i();
@@ -47976,7 +48094,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       s = n ? Math.hypot(n.pos.x - t.g.position.x, n.pos.z - t.g.position.z) : 999,
       o = !Se && j.started;
     if (t.state === "calm" && t.t <= 0) ((t.state = "rumble"), (t.t = 4), o && (ccsVolRumble(4), De("🌋 พื้นสั่น… ภูเขาไฟกลางทะเลกำลังจะปะทุ!", 3e3)));
-    else if (t.state === "rumble") ((ccsShake = Math.max(ccsShake, o ? 0.06 : 0)), t.t <= 0 && ((t.state = "erupt"), (t.t = 18), o && (ccsVolRumble(3), ke("pop"), De("🌋💥 ภูเขาไฟปะทุ! ลาวาพุ่งและไหลลงทะเล", 3200)), (ccsShake = o ? 0.35 : 0)));
+    else if (t.state === "rumble") ((ccsShake = Math.max(ccsShake, o ? 0.06 : 0)), t.t <= 0 && ((t.state = "erupt"), (t.t = 18), (t.fl = 1), o && (ccsVolRumble(3), ke("pop"), De("🌋💥 ภูเขาไฟปะทุ! ลาวาพุ่งและไหลลงทะเล", 3200)), (ccsShake = o ? 0.35 : 0)));
     else if (t.state === "erupt") ((ccsShake = Math.max(ccsShake, o ? 0.05 + (s < 300 ? 0.05 : 0) : 0)), t.t <= 0 && ((t.state = "cool"), (t.t = 40)));
     else if (t.state === "cool" && t.t <= 0) ((t.state = "calm"), (t.t = 70 + Math.random() * 80));
     let r = t.state === "erupt" ? 1 : t.state === "rumble" ? 0.35 : 0;
@@ -48008,6 +48126,36 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let l = 1 - c.life / c.max;
       (c.s.position.x += c.vx * i, (c.s.position.y += c.vy * i), (c.s.position.z += c.vz * i), (c.vy *= Math.pow(0.82, i)), c.s.scale.setScalar(c.g0 + (c.g1 - c.g0) * l), (c.s.material.opacity = Math.min(1, l * 6) * (1 - l) * (c.steam ? 0.55 : 0.85)), c.life <= 0 && (c.s.visible = !1));
     }
+    // ไฟพุ่ง: ปะทุ = น้ำพุลาวาสูง 60-120 ม. เป็นระลอก, ช่วงพื้นสั่น/เย็นตัว = ประทุเบา ๆ
+    // ระเบิดครั้งแรก: ลูกไฟกระจายเป็นดอกไม้ไฟลาวา
+    if (t.state === "erupt" && !t.burst) {
+      t.burst = !0;
+      for (let c = 0; c < 110; c++) {
+        let l = t.ff[t.fi++ % t.ff.length],
+          h = Math.random() * Math.PI * 2,
+          f = 8 + Math.random() * 22;
+        ((l.life = l.max = 2.5 + Math.random() * 2.5), l.s.position.copy(t.crater).add(new H(0, 2, 0)), l.v.set(Math.cos(h) * f, 30 + Math.random() * 40, Math.sin(h) * f), (l.big = 5 + Math.random() * 7), (l.s.visible = !0), (l.s.material.blending = a ? $i : Qo));
+      }
+    }
+    t.state !== "erupt" && (t.burst = !1);
+    let FR = t.state === "erupt" ? 150 * (0.6 + 0.4 * Math.abs(Math.sin(e * 1.7)) + (Math.sin(e * 0.9) > 0.85 ? 0.8 : 0)) : t.state === "rumble" ? 6 : t.state === "cool" ? t.heat * 5 : 0;
+    t.facc += i * FR;
+    for (; t.facc > 1; ) {
+      t.facc -= 1;
+      let c = t.ff[t.fi++ % t.ff.length],
+        l = Math.random() * Math.PI * 2,
+        h = t.state === "erupt" ? 1 : 0.35,
+        f = Math.pow(Math.random(), 1.3) * 13 * h;
+      ((c.life = c.max = 2.2 + Math.random() * 2.2 * h), c.s.position.copy(t.crater).add(new H((Math.random() - 0.5) * 5, 1, (Math.random() - 0.5) * 5)), c.v.set(Math.cos(l) * f, (26 + Math.random() * 26) * h + 6, Math.sin(l) * f), (c.big = 3.5 + Math.random() * 6 * h), (c.s.visible = !0), (c.s.material.blending = a ? $i : Qo));
+    }
+    for (let c of t.ff) {
+      if (c.life <= 0) continue;
+      ((c.life -= i), (c.v.y -= 15 * i), c.s.position.addScaledVector(c.v, i));
+      let l = 1 - c.life / c.max;
+      (c.s.material.color.setRGB(1, Math.max(0.08, (a ? 0.8 : 0.5) - l * 1.0), Math.max(0, (a ? 0.35 : 0.05) - l * 1.0)), (c.s.material.opacity = Math.min(1, (1 - l) * 1.6) * (a ? 1 : 0.95)), c.s.scale.setScalar(c.big * (1 - l * 0.45)), (c.life <= 0 || c.s.position.y < t.crater.y - 55) && ((c.life = 0), (c.s.visible = !1)));
+    }
+    // แสงวาบตอนระเบิด
+    ((t.fl = Math.max(0, t.fl - i * 0.7)), (t.flash.material.opacity = t.fl * 0.95 + (t.state === "erupt" ? 0.25 + 0.15 * Math.sin(e * 11) : 0)), t.flash.scale.setScalar(25 + t.fl * 90 + (t.state === "erupt" ? 15 : 0)));
     // หินลาวาพุ่ง (วิถีโปรเจกไทล์)
     if (t.state === "erupt") {
       t.bacc += i * 14;
@@ -57204,6 +57352,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       if (
         _r.includes(t) ||
         t.userData.grassTile ||
+        t.userData.noCull ||
         t === ii ||
         t.isLight ||
         (i.setFromObject(t), i.isEmpty()) ||
