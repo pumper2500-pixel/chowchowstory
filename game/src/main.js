@@ -41690,8 +41690,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       s("Clock_03", 3.6, -5.95, 0, 3, !1),
       s("b_nessie", 6.1, 3.6, -0.8),
       s("b_coolbox", 2.1, -5.3, 0.1),
-      s("b_towel2", -5.2, -1.2, 0.1, 0.012, !1),
-      s("b_seagull", e / 2 - 0.4, -0.55, -Math.PI / 2, 2.56, !1));
+      s("b_towel2", -5.2, -1.2, 0.1, 0.012, !1)); // v106: เอานกนางนวลบนตู้โชว์ออก
     let o = new R(
       new Te(2.4, 1.2),
       new be({
@@ -44650,6 +44649,15 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         splash: [
           [300, 0.05, "sine"],
           [900, 0.1, "sine"],
+        ],
+        // v106: เสียงแตรสำเร็จภารกิจ (ต่างจากเสียงอื่นชัดเจน)
+        quest: [
+          [523, 0.11, "square"],
+          [659, 0.11, "square"],
+          [784, 0.11, "square"],
+          [1047, 0.16, "square"],
+          [784, 0.09, "triangle"],
+          [1047, 0.5, "triangle"],
         ],
       },
       n = e.currentTime;
@@ -47825,6 +47833,79 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ccsFWEntrance(e, c, a);
     pd(c.x, c.z, 3);
     ccsFW = { root: t, hub: s, cabs: r, mats: a, gate: c, S: i, ang: 0, w: (Math.PI * 2) / 75, hold: 0, hue: 0 };
+    ccsFWLeds();
+  }
+  // v106: ไฟ LED RGB หลายเอฟเฟกต์บนวงล้อ (แทนไฟเดิม) + ไฟในกระเช้าทุกใบ
+  function ccsFWLeds() {
+    let i = ccsFW,
+      e = [],
+      t = [],
+      n = (d, u, p, m, E) => (e.push(Math.cos(d) * u, Math.sin(d) * u, p), t.push({ a: d, r: u, k: m, s: E }));
+    for (let d of [-1.38, 1.38]) {
+      for (let u = 0; u < 150; u++) n((u / 150) * Math.PI * 2, 10.05, d, 0, u / 150);
+      for (let u = 0; u < 80; u++) n((u / 80) * Math.PI * 2, 5.45, d, 1, u / 80);
+      for (let u of i.cabs) for (let p = 0; p < 26; p++) n(u.a, 1.3 + (p / 25) * 8.4, d, 2, p / 25);
+    }
+    let s = new qe();
+    s.setAttribute("position", new Fe(e, 3));
+    let o = new Float32Array(t.length * 3);
+    s.setAttribute("color", new Je(o, 3));
+    let r = ss(64, 64, (d) => {
+        let u = d.createRadialGradient(32, 32, 0, 32, 32, 32);
+        (u.addColorStop(0, "rgba(255,255,255,1)"), u.addColorStop(0.25, "rgba(255,255,255,.85)"), u.addColorStop(0.6, "rgba(255,255,255,.18)"), u.addColorStop(1, "rgba(255,255,255,0)"), (d.fillStyle = u), d.fillRect(0, 0, 64, 64));
+      }),
+      a = new bs(s, new ls({ size: 0.42, map: r, vertexColors: !0, transparent: !0, depthWrite: !1, blending: $i, toneMapped: !1 })),
+      c = new bs(s, new ls({ size: 1.5, map: r, vertexColors: !0, transparent: !0, opacity: 0.38, depthWrite: !1, blending: $i, toneMapped: !1 }));
+    for (let d of [a, c]) ((d.frustumCulled = !1), (d.visible = !1), i.hub.add(d));
+    // ไฟในกระเช้า: หลอดไฟ + แสงฟุ้ง + ตัวกระเช้าเรืองแสงอุ่น ๆ
+    let l = [],
+      h = [];
+    for (let d of i.cabs) {
+      d.g.traverse((m) => {
+        if (!m.isMesh) return;
+        let E = m.material;
+        i.mats.includes(E) && ((E.emissiveMap = E.map), (E.needsUpdate = !0), h.push(E));
+      });
+      let u = new R(new we(0.16, 10, 8), new be({ color: 16770992, toneMapped: !1 }));
+      (u.position.set(0, -0.05 * i.S + 1.55, 0), d.g.add(u));
+      let p = new zi(new vi({ map: r, color: 16764032, transparent: !0, depthWrite: !1, blending: $i, opacity: 0, toneMapped: !1 }));
+      (p.scale.setScalar(3.2), p.position.copy(u.position), d.g.add(p), l.push({ b: u, g: p }));
+    }
+    ((i.mats = i.mats.filter((d) => !h.includes(d))), (i.led = { pts: [a, c], col: o, info: t, geo: s, cabL: l, cabM: h, mode: 0, mt: 0, tw: new Float32Array(t.length) }));
+  }
+  var ccsFWC = null;
+  function ccsFWLedTick(i, e, t) {
+    let n = ccsFW?.led;
+    if (!n) return;
+    for (let o of n.pts) o.visible = t;
+    for (let o of n.cabL) ((o.g.material.opacity = t ? 0.55 + 0.08 * Math.sin(e * 3 + o.b.id) : 0), (o.b.material.color.setHex(t ? 16770992 : 13421772)));
+    for (let o of n.cabM) (o.emissive.setHex(16767392), (o.emissiveIntensity = t ? 0.55 : 0));
+    if (!t) return;
+    ((n.mt += i), n.mt > 9 && ((n.mt = 0), (n.mode = (n.mode + 1) % 6)));
+    let s = ccsFWC ?? (ccsFWC = new ae()),
+      o = n.col,
+      r = n.mode,
+      a = e;
+    for (let c = 0; c < n.info.length; c++) {
+      let l = n.info[c],
+        h = 1,
+        f = 0,
+        d = 1;
+      if (r === 0) f = l.a / (Math.PI * 2) + a * 0.15; // รุ้งหมุนรอบวง
+      else if (r === 1) ((f = a * 0.07 + l.k * 0.33), (h = 0.25 + 0.75 * Math.max(0, Math.sin(l.r * 0.9 - a * 6)))); // คลื่นสีวิ่งจากแกนออกขอบ
+      else if (r === 2) {
+        // ประกายสุ่ม 16 ล้านสี
+        (n.tw[c] -= i * 1.6), n.tw[c] <= 0 && Math.random() < i * 1.4 && (n.tw[c] = 1);
+        ((f = (c * 0.6180339) % 1), (h = 0.12 + 0.88 * Math.max(0, n.tw[c])));
+      } else if (r === 3) ((f = a * 0.12), (h = 0.55 + 0.45 * Math.sin(a * 3.2))); // หายใจเปลี่ยนสีทั้งวง
+      else if (r === 4) {
+        // ดาวหางไล่รอบวง
+        let u = (l.s - a * 0.25 + 10) % 1;
+        ((f = l.k === 2 ? a * 0.1 + 0.5 : a * 0.1), (h = l.k === 2 ? 0.35 + 0.65 * ((Math.floor(a * 4) + Math.floor(l.s * 8)) % 2) : Math.max(0.08, Math.pow(1 - u, 4))));
+      } else ((f = Math.floor(l.a / (Math.PI / 5) + a * 1.5) * 0.17 + l.k * 0.08), (d = 1), (h = (Math.floor(a * 3) + l.k) % 2 ? 1 : 0.45)); // บล็อกสีกระพริบสลับ
+      (s.setHSL(((f % 1) + 1) % 1, d, 0.55), (o[c * 3] = s.r * h), (o[c * 3 + 1] = s.g * h), (o[c * 3 + 2] = s.b * h));
+    }
+    n.geo.attributes.color.needsUpdate = !0;
   }
   function ccsFWEntrance(i, e, t) {
     let n = new J();
@@ -47906,13 +47987,69 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     {
       let A = r + 3.9,
         F = f - 0.6;
-      (o(1.6, 1.05, 1.3, s(16249318), A, 0.525, F), o(1.6, 1.0, 1.3, new X({ color: 9419999, roughness: 0.1, transparent: !0, opacity: 0.35 }), A, 1.55, F), o(1.7, 0.1, 1.4, s(16249318), A, 2.1, F));
-      for (let C of [-0.75, 0.75]) for (let P of [-0.6, 0.6]) o(0.08, 1.0, 0.08, s(16249318), A + C, 1.55, F + P);
+      let BM = s(16249318),
+        BG = new X({ color: 9419999, roughness: 0.1, transparent: !0, opacity: 0.35 });
+      (o(1.6, 1.05, 1.3, BM, A, 0.525, F), o(1.6, 1.0, 1.3, BG, A, 1.55, F), o(1.7, 0.1, 1.4, BM, A, 2.1, F));
+      for (let C of [-0.75, 0.75]) for (let P of [-0.6, 0.6]) o(0.08, 1.0, 0.08, BM, A + C, 1.55, F + P);
       let C = new R(new yt(1.35, 0.75, 4), new X({ color: 14031922, roughness: 0.5 }));
       ((C.rotation.y = Math.PI / 4), C.position.set(A, 2.53, F), (C.castShadow = !0), n.add(C));
-      let P = ro("🎟 ตั๋ว 20💰", 3, 1.3, 0.34);
+      let P = ro("🎟 ตั๋ว 50💰", 3, 1.3, 0.34);
       (P.position.set(A, 2.0, F + 0.72), n.add(P));
       pt.push({ x: A, z: F, hw: 0.85, hd: 0.7 });
+      // v106: ไฟในซุ้ม (หลอดไฟเพดาน + แสงฟุ้ง + แสงตกพื้น) และคนขายตั๋ว
+      {
+        let I = new R(new we(0.11, 10, 8), new be({ color: 16770992, toneMapped: !1 }));
+        (I.position.set(A, 1.88, F), n.add(I));
+        {
+          let O = new En(16767392, 0, 3.8, 1.5);
+          (O.position.set(A, 1.8, F + 0.15), K.add(O), H0.push({ l: O, on: 7 }));
+        }
+        let k = new R(new re(0.02, 0.02, 0.06, 6), s(3355443));
+        (k.position.set(A, 1.98, F), n.add(k));
+        let D = ss(64, 64, (q) => {
+            let O = q.createRadialGradient(32, 32, 0, 32, 32, 32);
+            (O.addColorStop(0, "rgba(255,240,200,1)"), O.addColorStop(0.35, "rgba(255,220,150,.5)"), O.addColorStop(1, "rgba(255,200,120,0)"), (q.fillStyle = O), q.fillRect(0, 0, 64, 64));
+          }),
+          L = new zi(new vi({ map: D, transparent: !0, depthWrite: !1, blending: $i, toneMapped: !1, opacity: 0 }));
+        (L.scale.setScalar(2.2), L.position.copy(I.position), n.add(L));
+        let q = pd(A, F + 0.9, 1.6);
+        ccsBooth = { bulb: I, glow: L, mats: [BM, BG], at: new H(A, 0, F), front: new H(A, 0, F + 1.45) };
+      }
+      try {
+        let I = mr()
+            ? Zr([
+                "Body_10",
+                "Ears_10",
+                "Female_Emotion_Happy_02",
+                "Hairstyle_Female_07",
+                "Outwear_33",
+                "Pants_05",
+                "Shoe_Slippers_02",
+                "Hat_01",
+              ])
+            : Ic(Sh[5]),
+          k = new H(A, 0.48, F - 0.15); // ยืนบนแท่นในซุ้ม ให้เห็นตัวเหนือเคาน์เตอร์
+        (I.root.position.copy(k),
+          (I.yaw = Math.PI),
+          K.add(I.root),
+          y0.push({
+            rig: I,
+            at: k.clone(),
+            yaw: Math.PI,
+            t: 5,
+            moodT: 2,
+            happy: !1,
+            lines: [
+              "ตั๋วชิงช้าสวรรค์ใบละ 50💰 จ้า!",
+              "ขึ้นไปบนยอด เห็นทะเลทั้งอ่าวเลยนะ",
+              "กลางคืนวงล้อเปิดไฟหลากสี สวยมาก ✨",
+              "น้องหมาขึ้นได้ ปลอดภัย มีราวกั้นครบ",
+              "รับตั๋วไหมจ๊ะ หนึ่งรอบประมาณนาทีกว่า ๆ",
+            ],
+          }));
+      } catch (I) {
+        console.warn("ticket npc", I);
+      }
     }
     // กระถางดอกไม้ + เสาไฟข้างซุ้ม
     let b = [16733525, 16766720, 16738740, 10053375, 16777215];
@@ -47939,7 +48076,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     ccsFWBulbs = g;
   }
-  var ccsFWBulbs = [];
+  var ccsFWBulbs = [],
+    ccsBooth = null;
   function ccsFWTick(i, e) {
     if (!ccsFW) return;
     let t = ccsFW,
@@ -47962,7 +48100,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let a = j.time % 1 > 0.79 || j.time % 1 < 0.21;
     t.hue = (t.hue + i * 0.08) % 1;
     ccsFWBulbs.forEach((r, c) => r.color.setHSL(a ? (c * 0.06 + t.hue) % 1 : 0.13, a ? 1 : 0.9, (Math.floor(e * 4) + c) % 3 ? (a ? 0.6 : 0.75) : 0.95));
-    for (let r of t.mats) (r.emissive.setHSL(a ? t.hue : 0, a ? 0.9 : 0, a ? 0.6 : 0.35), (r.emissiveIntensity = a ? 2.2 : 0.4));
+    for (let r of t.mats) (r.emissive.setHSL(0, 0, 0.35), (r.emissiveIntensity = a ? 0 : 0.4)); // v106: ปิดไฟแถบเดิมตอนกลางคืน ใช้ LED RGB แทน
+    ccsFWLedTick(i, e, a);
+    ccsBooth && ((ccsBooth.glow.material.opacity = a ? 0.85 : 0), ccsBooth.bulb.material.color.setHex(a ? 16770992 : 14540253), ccsBooth.mats.forEach((r, c) => (r.emissive.setHex(16767392), (r.emissiveIntensity = a ? (c ? 0.55 : 0.3) : 0))));
     // จบรอบ: กระเช้ากลับมาล่างสุด → ลง
     if (n && n.k >= 0) {
       let r = t.cabs[n.k].a + t.ang;
@@ -47976,8 +48116,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   function ccsRideStart() {
     if (ccsRide || !ccsFW) return;
-    if (z.money < 20) return (De("เงินไม่พอ ต้องมี 20 💰", 1800), ke("nope"));
-    ((z.money -= 20), ke("coin"), Ei());
+    if (z.money < 50) return (De("เงินไม่พอ ตั๋วชิงช้าสวรรค์ 50 💰", 1800), ke("nope"));
+    ((z.money -= 50), ke("coin"), Ei());
     let i = ccsFW,
       e = 0,
       t = 9;
@@ -53966,7 +54106,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         Xt.copy(c0).divideScalar(m);
         let b = n.pos.clone().addScaledVector(c0, e),
           w = vr(n.pos, 0.45),
-          v = !Se && Math.abs(Math.hypot(n.pos.x - kn.x, n.pos.z - kn.z) - 7.31) < 0.75,
+          v = !Se && Math.abs(Math.hypot(n.pos.x - kn.x, n.pos.z - kn.z) - 7.31) < 0.75 && j.gy > 0.45, // v106: ข้ามขอบบ่อได้เฉพาะตอนกระโดด/ยืนอยู่บนขอบ (เดิมเดินทะลุออกจากในบ่อได้)
           _ = hl(n.pos),
           S = (F) => ba(F.x, F.z) !== null,
           M = (F) => Rd(F.x, F.z) !== null,
@@ -54970,27 +55110,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   function Y4() {
     if (Pn.prize || !gi.bq?.done) return;
-    let i = new J(),
-      e = new H(Math.cos(In), 0, -Math.sin(In)),
-      t = new H(Math.sin(In), 0, Math.cos(In));
-    (i.position.copy(ni).addScaledVector(e, -2.5).addScaledVector(t, 1.1), (i.rotation.y = In), K.add(i));
-    let n = new X({ color: 9067059, roughness: 0.8 });
-    for (let a of [-0.55, 0.55]) {
-      let c = new R(new ee(0.07, 1.5, 0.07), n);
-      (c.position.set(a, 0.75, 0), (c.castShadow = !0), i.add(c));
-    }
-    let s = ro(
-      "ขอบคุณน้องเชา! 🐶🍞",
-      1,
-      1.4,
-      0.55,
-      "ช่วยตามหาตะกร้าขนมปังของลุงปั้ม",
-    );
-    if (((s.position.y = 1.3), i.add(s), ze("breadbasket_0"))) {
-      let a = je("breadbasket_0", 0.42);
-      (a.position.set(0, 0, 0.35), i.add(a));
-    }
-    (pt.push({ x: i.position.x, z: i.position.z, hw: 0.7, hd: 0.7 }), (Pn.prize = i));
+    Pn.prize = !0; // v106: ไม่ตั้งป้ายขอบคุณกลางทาง (บันทึกไว้ในสมุดภารกิจแทน)
     let o = y0.find((a) => a.rig === md),
       r = pl[0].name;
     o &&
@@ -55135,16 +55255,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                   (z.money += 150),
                   Rs(60, Le[0]),
                   (j.score += 20),
-                  ke("coin"),
+                  ke("quest"),
                   Ai("greet"),
                   Ln(
                     ni.clone().setY(2.4),
                     `ตะกร้าของลุง! ${pl[0].name} เก่งที่สุดเลย ต่อไปนี้ซื้อขนมปังลด 20% ตลอดไปนะ 🥐`,
                   ),
-                  rt("🎉 +150💰 +60 EXP", ni.clone().setY(2.8), "big"),
                   De(
-                    '🎉 จบเควส "ขนมปังของลุงปั้มหายไปไหน" \xB7 ได้ 150💰 +60 EXP \xB7 ร้านลุงปั้มลด 20% ตลอดไป \xB7 ลุงตั้งป้ายขอบคุณไว้หน้าร้านด้วย!',
-                    5200,
+                    "🏆 สำเร็จภารกิจ! +150💰 +60 EXP \xB7 ดูได้ในสมุด 📋",
+                    3e3,
                   ),
                   rb(),
                   Y4(),
@@ -55828,7 +55947,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       e > V3 &&
         V3 >= 0 &&
         e > 0 &&
-        (ke("heart"),
+        (ke("quest"),
         De(
           "✅ ภารกิจสำเร็จ! กด 📋 เพื่อรับรางวัล",
           2400,
@@ -55895,6 +56014,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             return `<div class="qrow${a.got ? " got" : ""}"><div><b>${a.t}</b><div class="qprog">${s(l, a.n)}</div></div>${a.got ? "<span>✅</span>" : `<button data-dq="${c}" ${h ? "" : "disabled"}>+${a.m}💰</button>`}</div>`;
           })
           .join("")));
+      // v106: เควสพิเศษ (เดิมตั้งป้ายในเมือง → ตอนนี้บันทึกในสมุด)
+      if (gi.bq) {
+        let a = gi.bq;
+        o += `<h4 class="qh">🏆 เควสพิเศษ</h4><div class="qcard${a.done ? " ok" : ""}"><b>${a.done ? "✅ " : ""}ขนมปังของลุงปั้มหายไปไหน</b><p>${a.done ? `ช่วยลุงปั้มตามหาตะกร้าขนมปังสำเร็จ ลุงฝากขอบคุณ${pl[0]?.name ?? "น้อง"}มาก` : `${hC[a.s]} (${a.s + 1}/5)`}</p><p class="qrw">🎁 150💰 \xB7 +60 EXP \xB7 ร้านลุงปั้มลด 20% ตลอดไป${a.done ? " (ได้รับแล้ว)" : ""}</p></div>`;
+      }
       let r = i.q.every((a) => a.got);
       o += `<div class="qrow box"><div><b>🎁 กล่องของขวัญประจำวัน</b><small>ทำภารกิจวันนี้ครบ 3 อย่าง \xB7 สุ่มชุดมีพลัง (ของหายากจากภารกิจก็มีลุ้น)</small></div>${i.box ? "<span>✅</span>" : `<button id="qBox" ${r ? "" : "disabled"}>เปิด</button>`}</div>`;
     } else {
@@ -55937,7 +56061,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 De(`และได้ ${_n[a]?.icon ?? ""} ${_n[a]?.name ?? a} (${A0(a)})`, 3200));
             }, 1600);
           } else r.gear2 && (z.money += 60);
-          (r.gear
+          (ke("quest"),
+            r.gear
             ? p1(r.gear, `📖 จบบท "${r.t}" `)
             : (ke("coin"),
               De(
@@ -58868,7 +58993,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     if (ccsRide) return nt(ccsRide.k >= 0 ? "🎡 กำลังชมวิว… ลากจอ/จอยขวา หมุนมุมมอง" : "🎡 กำลังขึ้นกระเช้า…", null, !0);
     if (ccsFW && !Se && e.distanceTo(ccsFW.gate) < 2.2)
-      return nt("🎡 ขึ้นชิงช้าสวรรค์ชมวิว 20💰", ccsRideStart);
+      return nt("🎡 ขึ้นชิงช้าสวรรค์ชมวิว 50💰", ccsRideStart);
+    if (ccsBooth && !Se && e.distanceTo(ccsBooth.front) < 1.6)
+      return nt("🎟 ซื้อตั๋วชิงช้าสวรรค์ 50💰 แล้วขึ้นเลย", ccsRideStart);
     for (let h of gl)
       if (e.distanceTo(h.front) < 1.3) {
         let f = h.c;
