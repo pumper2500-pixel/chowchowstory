@@ -47989,23 +47989,25 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         F = f - 0.6;
       let BM = s(16249318),
         BG = new X({ color: 9419999, roughness: 0.1, transparent: !0, opacity: 0.35 });
-      (o(1.6, 1.05, 1.3, BM, A, 0.525, F), o(1.6, 1.0, 1.3, BG, A, 1.55, F), o(1.7, 0.1, 1.4, BM, A, 2.1, F));
-      for (let C of [-0.75, 0.75]) for (let P of [-0.6, 0.6]) o(0.08, 1.0, 0.08, BM, A + C, 1.55, F + P);
+      // v107: เคาน์เตอร์เตี้ยลง (0.7) ให้เห็นตัวคนขายตั๋วตั้งแต่อกขึ้นไป ไม่จมในซุ้ม
+      // ซุ้มสูงขึ้น (หลังคา 2.45) + แท่นยืนในซุ้ม 0.45 → เห็นคนขายตั้งแต่อกขึ้นไป
+      (o(1.6, 0.7, 1.3, BM, A, 0.35, F), o(1.6, 1.7, 1.3, BG, A, 1.55, F), o(1.7, 0.1, 1.4, BM, A, 2.45, F), o(1.7, 0.06, 1.4, BM, A, 0.73, F), o(1.4, 0.45, 0.6, BM, A, 0.225, F - 0.25));
+      for (let C of [-0.75, 0.75]) for (let P of [-0.6, 0.6]) o(0.08, 1.7, 0.08, BM, A + C, 1.55, F + P);
       let C = new R(new yt(1.35, 0.75, 4), new X({ color: 14031922, roughness: 0.5 }));
-      ((C.rotation.y = Math.PI / 4), C.position.set(A, 2.53, F), (C.castShadow = !0), n.add(C));
+      ((C.rotation.y = Math.PI / 4), C.position.set(A, 2.88, F), (C.castShadow = !0), n.add(C));
       let P = ro("🎟 ตั๋ว 50💰", 3, 1.3, 0.34);
-      (P.position.set(A, 2.0, F + 0.72), n.add(P));
+      (P.position.set(A, 2.33, F + 0.72), n.add(P));
       pt.push({ x: A, z: F, hw: 0.85, hd: 0.7 });
       // v106: ไฟในซุ้ม (หลอดไฟเพดาน + แสงฟุ้ง + แสงตกพื้น) และคนขายตั๋ว
       {
         let I = new R(new we(0.11, 10, 8), new be({ color: 16770992, toneMapped: !1 }));
-        (I.position.set(A, 1.88, F), n.add(I));
+        (I.position.set(A, 2.28, F), n.add(I));
         {
           let O = new En(16767392, 0, 3.8, 1.5);
-          (O.position.set(A, 1.8, F + 0.15), K.add(O), H0.push({ l: O, on: 7 }));
+          (O.position.set(A, 2.15, F + 0.2), K.add(O), H0.push({ l: O, on: 8 }));
         }
         let k = new R(new re(0.02, 0.02, 0.06, 6), s(3355443));
-        (k.position.set(A, 1.98, F), n.add(k));
+        (k.position.set(A, 2.37, F), n.add(k));
         let D = ss(64, 64, (q) => {
             let O = q.createRadialGradient(32, 32, 0, 32, 32, 32);
             (O.addColorStop(0, "rgba(255,240,200,1)"), O.addColorStop(0.35, "rgba(255,220,150,.5)"), O.addColorStop(1, "rgba(255,200,120,0)"), (q.fillStyle = O), q.fillRect(0, 0, 64, 64));
@@ -48028,7 +48030,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                 "Hat_01",
               ])
             : Ic(Sh[5]),
-          k = new H(A, 0.48, F - 0.15); // ยืนบนแท่นในซุ้ม ให้เห็นตัวเหนือเคาน์เตอร์
+          k = new H(A, 0.45, F - 0.2); // ยืนบนแท่นในซุ้ม
         (I.root.position.copy(k),
           (I.yaw = Math.PI),
           K.add(I.root),
