@@ -38013,6 +38013,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     F && !o && i.id !== "petshop" && (C(2.4, -0.4, 0, 3.6, !0), P.push({ x: t.x + 2.4, z: t.z - 0.4, hw: 2, hd: 0.8 })); // v112: ร้านสัตว์เลี้ยงไม่ตั้งชั้นกลางร้าน (บังคอกน้องหมา)
     let I = [];
     return (
+      (n = n.filter((k) => !k.noShelf)), // v113: ตู้โชว์ (สินค้าชิ้นใหญ่) ไม่วางบนชั้น
       n.slice(0, T.length).forEach((k, D) => {
         let [L, q, $] = T[D],
           te = k.make();
@@ -47218,6 +47219,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                     label: `ตู้โชว์ตุ๊กตาใบที่ ${ccsCabN() + 1} 🗄️ (โชว์เพิ่มได้ 15 แบบ)`,
                     price: ccsCabPrice[ccsCabN()],
                     make: () => Q7("", !1).group,
+                    noShelf: !0,
                   },
                 ]
               : []),
@@ -53367,19 +53369,21 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         key: "b3",
         beast: "pitt",
         name: "ตูบตูบ",
-        kind: "พิทบูล",
+        kind: "ชาไป่",
+        real: "pet_sharpei",
         home: [6, 17],
-        speed: 2,
+        speed: 1.6,
         roam: 6,
         lines: [
-          "ยิ้มกว้างสุดในเมือง 😁",
-          "ชอบกอดที่สุด",
+          "หน้าย่นแต่ยิ้มกว้างสุดในเมือง 😁",
+          "ลิ้นม่วงเหมือนเชาเชาเลยนะ",
           "เล่นชักเย่อกันไหม",
         ],
       },
       {
         key: "b4",
         beast: "labrador",
+        real: "pet_labrador",
         name: "ข้าวปั้น",
         kind: "ลาบราดอร์",
         home: [28, 20],
@@ -53606,7 +53610,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     for (let i of NA) {
       let e = (i.anim === "horse" || i.beast === "horse") && Xg("horse2");
       if (!e && (i.beast ? !Kg(i.beast) : i.anim ? !Xg(i.anim) : !Fc(i.key))) continue;
-      let t = e
+      let t = i.real && vp[i.real]
+        ? ccsTB(i.real, i.real === "pet_labrador" ? 0.46 : 0.42) // v113: หมาในเมืองใช้โมเดลหมาจริง
+        : e
         ? Yg("horse2", i.beast ? 2 : 1.85)
         : i.beast
           ? Kr(i.beast)
@@ -60975,8 +60981,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       t.hop > 0 && ((t.hop -= i), (c = Math.max(0, Math.sin((0.6 - t.hop) * Math.PI * 3.3)) * 0.12));
       s.root.position.set(t.pos.x, c, t.pos.z);
       // ยืนเฉย ๆ หันมองน้องเชาที่มาดูคอก
-      let a = t.st === 1 ? t.yawT : e && e.distanceTo(t.pos) < 3.5 ? Math.atan2(e.x - t.pos.x, e.z - t.pos.z) : null;
-      Qi(s, i, t.sp * 2.2, a);
+      let a = t.st === 1 ? (t.yawT ?? null) : e && e.distanceTo(t.pos) < 3.5 ? Math.atan2(e.x - t.pos.x, e.z - t.pos.z) : null;
+      (Number.isFinite(s.yaw) || (s.yaw = 0), Qi(s, i, t.sp * 2.2, a)); // v113: กันมุม NaN (เดิมทำให้น้องหมาในคอกหายทั้งคอก)
     }
   }
   var Q3 = {};
