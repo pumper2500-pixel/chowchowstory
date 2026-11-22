@@ -35304,6 +35304,37 @@ vObj = position;`,
         v = 0;
       for (let M = 0; M < l.count; M++)
         l.getY(M) > e * 0.4 && Math.abs(l.getX(M)) < 0.05 && l.getZ(M) > w && ((w = l.getZ(M)), (v = l.getY(M)));
+      // v92: หาตำแหน่งจมูกจริงจากสีเท็กซ์เจอร์ (จุดดำสุดที่อยู่หน้าสุดของหัว) — หน้าเชาเชาแบน แก้มยื่นพอ ๆ กับจมูก
+      let N3 = [0, 0, -9];
+      try {
+        let M0 = o.material.map?.image,
+          uvA = r.getAttribute("uv");
+        if (M0 && uvA) {
+          let cv = document.createElement("canvas"),
+            W0 = (cv.width = Math.min(512, M0.width)),
+            H0b = (cv.height = Math.min(512, M0.height)),
+            cx = cv.getContext("2d", { willReadFrequently: !0 });
+          cx.drawImage(M0, 0, 0, W0, H0b);
+          let px = cx.getImageData(0, 0, W0, H0b).data,
+            zmax = -9;
+          for (let M = 0; M < l.count; M++) l.getY(M) > e * 0.45 && l.getZ(M) > zmax && (zmax = l.getZ(M));
+          let sx = 0, sy = 0, sz = 0, sw = 0, fy = o.material.map.flipY;
+          for (let M = 0; M < l.count; M++) {
+            if (l.getY(M) < e * 0.45 || l.getZ(M) < zmax - 0.12) continue;
+            let U = uvA.getX(M) % 1, V = uvA.getY(M) % 1;
+            (U < 0 && (U += 1), V < 0 && (V += 1));
+            let ix = Math.min(W0 - 1, (U * W0) | 0), iy = Math.min(H0b - 1, ((fy ? 1 - V : V) * H0b) | 0), k = (iy * W0 + ix) * 4,
+              lum = (px[k] * 0.3 + px[k + 1] * 0.59 + px[k + 2] * 0.11) / 255;
+            if (lum < 0.13) {
+              let w0 = (0.13 - lum) * (1 + (l.getZ(M) - zmax + 0.12) * 20);
+              ((sx += l.getX(M) * w0), (sy += l.getY(M) * w0), (sz += l.getZ(M) * w0), (sw += w0));
+            }
+          }
+          sw > 0 && (N3 = [sx / sw, sy / sw, sz / sw]);
+        }
+      } catch (M) {}
+      if (N3[2] < -1) for (let M = 0; M < l.count; M++) l.getY(M) > e * 0.4 && l.getZ(M) > N3[2] && (N3 = [l.getX(M), l.getY(M), l.getZ(M)]);
+      window.__ccsNose = N3;
       let _ = -9;
       for (let M = 0; M < l.count; M++)
         Math.abs(Math.abs(l.getX(M)) - 0.15) < 0.03 &&
@@ -35344,6 +35375,7 @@ vObj = position;`,
           eyeZ: _,
           noseY: v,
           noseZ: w,
+          nose3: N3,
         }),
         !0
       );
@@ -35414,6 +35446,7 @@ vObj = position;`,
         (Object.assign(v.uniforms, l, f, d, {
           uNoseY: { value: s.noseY },
           uNoseZ: { value: s.noseZ },
+          uNose3: { value: new H(...(s.nose3 || [0, 0, -9])) },
           uH: { value: s.H },
           uL: { value: s.L },
           uHip: { value: s.hip },
@@ -35426,7 +35459,7 @@ vObj = position;`,
           uTailPZ: { value: s.tailPZ },
         }),
           (v.fragmentShader =
-            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe; varying vec3 vPosM;
+            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
       // ลายผ้า 2 มิติ (ใช้คู่กับการฉาย 3 แกน): 0 = สีหลัก, 1 = สีรอง
       float wearPat(vec2 u, float st, float ax) {
         if (st < 1.5) return 0.0;
@@ -35527,21 +35560,25 @@ vObj = position;`,
         float l = dot(c0, vec3(0.3, 0.59, 0.11));
         // v91: ปาก/ลิ้นสะอาดทุกสีขน — ลิ้นม่วงอมดำผสมแบบนุ่ม (ไม่เป็นจุดกระดำกระด่าง), ริมฝีปาก/เส้นปากเก็บสีเข้มเดิมไว้ ไม่โดนย้อมสีขน
         float muz = uChow > 0.5 ? step(uNoseZ - 0.22 * uL, vPosM.z) * (1.0 - smoothstep(uNoseY + 0.0 * uH, uNoseY + 0.04 * uH, vPosM.y)) : 0.0;
-        float pink = smoothstep(0.05, 0.12, c0.r - c0.g) * smoothstep(-0.1, -0.02, c0.b - c0.g) * smoothstep(0.2, 0.34, c0.r) * smoothstep(0.03, 0.08, c0.r - c0.b);
-        float tgw = pink * muz * (1.0 - smoothstep(uNoseY - 0.045 * uH, uNoseY - 0.022 * uH, vPosM.y));
+        // v92: ลิ้นทั้งลิ้นม่วงอมดำ (ทุกเฉดชมพู/แดงในช่องปาก) + จมูกดำสนิทเรียบทั้งก้อน
+        float pinkish = smoothstep(0.0, 0.05, c0.r - c0.g) * smoothstep(-0.12, -0.03, c0.b - c0.g) * smoothstep(0.12, 0.22, c0.r);
+        vec3 mq = vPosM - uNose3;
+        float mouthZone = uChow > 0.5 ? (1.0 - smoothstep(0.05 * uL, 0.075 * uL, abs(mq.x))) * (1.0 - smoothstep(-0.075 * uH, -0.05 * uH, mq.y)) * smoothstep(-0.22 * uH, -0.18 * uH, mq.y) * smoothstep(-0.24 * uL, -0.2 * uL, mq.z) : 0.0;
+        float tgw = clamp(pinkish * 1.6, 0.0, 1.0) * mouthZone;
+        vec3 nd = (vPosM - uNose3) / vec3(0.07 * uL, 0.065 * uH, 0.07 * uL);
+        float noseM = uChow > 0.5 ? (1.0 - smoothstep(0.85, 1.0, length(nd))) * smoothstep(-0.05, 0.2, nd.y) * (1.0 - smoothstep(0.14, 0.26, l)) : 0.0;
         vec3 base = c0;
         if (uRecolor > 0.5) {
           vec3 fur = mix(uDark, uLight, smoothstep(0.05, 0.7, l));
-          float keep = 1.0 - smoothstep(0.012, 0.03, l);              // ช่องปากที่ดำสนิท
-          float nose = muz * step(uNoseZ - 0.045 * uL, vPosM.z) * smoothstep(uNoseY - 0.035 * uH, uNoseY - 0.015 * uH, vPosM.y);
+          float keep = 1.0 - smoothstep(0.012, 0.03, l);
           float lip = muz * (1.0 - smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y));
-          float philtrum = muz * (1.0 - nose) * smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y);
-          keep *= 1.0 - philtrum;                                     // ร่องใต้จมูก: ย้อมเป็นสีขน (ไม่เป็นเส้นดำ)
-          fur *= 1.0 - 0.18 * philtrum * (1.0 - smoothstep(0.03, 0.15, l));
-          keep = max(keep, max(nose * (1.0 - smoothstep(0.08, 0.2, l)), lip * (1.0 - smoothstep(0.07, 0.15, l))));   // จมูกดำ + ริมฝีปากล่างดำ คงไว้
+          float philtrum = muz * smoothstep(uNoseY - 0.05 * uH, uNoseY - 0.035 * uH, vPosM.y);
+          keep *= 1.0 - philtrum;
+          keep = max(keep, lip * (1.0 - smoothstep(0.07, 0.15, l)));
           base = mix(fur, uDark * 0.1 + c0 * 0.4, keep);
         }
-        diffuseColor.rgb = mix(base, vec3(0.032, 0.02, 0.06) * (0.8 + 0.4 * l), tgw);
+        base = mix(base, vec3(0.035, 0.03, 0.035) * (0.8 + 1.2 * l), noseM);   // จมูกดำเรียบ (เงาวาวตามผิวเดิม)
+        diffuseColor.rgb = mix(base, vec3(0.032, 0.02, 0.06) * (0.8 + 0.5 * l), tgw);
         float shade = 0.78 + 0.3 * smoothstep(0.03, 0.55, l);
         // เสื้อ: คลุมลำตัว + ต้นขาหน้า (แขนเสื้อ) ไม่ทับหัวและหาง \xB7 ลวดลายฉายจาก 3 แกนตามทิศผิว (ไม่ยืดเป็นเส้นตรงกลางตัว)
         vec3 nM = normalize(cross(dFdx(vPosM), dFdy(vPosM)));
