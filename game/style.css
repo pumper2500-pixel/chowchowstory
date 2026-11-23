@@ -279,3 +279,13 @@ body.training #act{display:none!important}
 #pkHud .pks{font:900 30px Mitr,sans-serif;color:#ffe100}#pkHud .pkm{grid-column:1/-1;text-align:center;font-size:12px;opacity:.9}
 .pkbar,#trHud .trbar{background-image:repeating-linear-gradient(90deg,transparent 0 calc(5% - 1px),rgba(0,0,0,.22) calc(5% - 1px) 5%)}
 .trlv{display:flex;gap:6px;margin:4px 0 8px}.trlv button{flex:1;font:700 13px Mitr,sans-serif;padding:6px 4px;border-radius:12px;border:2.5px solid #3b2a1a;background:#fff;cursor:pointer}.trlv button.on{background:#FFD23F}.trlv small{display:block;font-size:10.5px;font-weight:400;opacity:.75}
+
+/* v125 */
+.snapflash{position:fixed;inset:0;background:#fff;z-index:200;pointer-events:none;animation:snapf .55s ease-out forwards}
+@keyframes snapf{from{opacity:.85}to{opacity:0}}
+.phgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:8px}
+.phgrid button{border:2.5px solid #3b2a1a;border-radius:12px;background:#fff;padding:4px;cursor:pointer;font:400 11px Mitr,sans-serif;text-align:left}
+.phgrid img{width:100%;border-radius:8px;display:block;aspect-ratio:16/9;object-fit:cover}
+.phgrid small{display:block;margin-top:3px;line-height:1.25;max-height:2.6em;overflow:hidden}
+.phview img{width:100%;border-radius:12px;border:3px solid #3b2a1a}
+.phview p{margin:6px 0}

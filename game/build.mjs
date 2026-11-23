@@ -23,7 +23,15 @@ for (const f of all) {
 }
 
 // 2) โค้ดเกม (Three.js r170 + ตัวเกม รวมอยู่ในไฟล์เดียว)
-const src = readFileSync(join(here, "src", "main.js"), "utf8");
+// v125: โค้ดแบ่งเป็นหลายไฟล์ตามระบบใน src/parts/ (ต่อกันตามลำดับชื่อไฟล์ = โค้ดเดิมทุกตัวอักษร)
+//   ทุกไฟล์อยู่ใน scope เดียวกัน (IIFE เปิดใน 00 ปิดใน 90) จึงเรียกฟังก์ชันข้ามไฟล์ได้ตามปกติ
+//   อย่าย้ายโค้ดข้ามไฟล์โดยไม่ดูลำดับ: var ที่มีค่าเริ่มต้นต้องถูกประกาศก่อนถูกใช้ตอนเริ่มเกม
+const partsDir = join(here, "src", "parts");
+const src = readdirSync(partsDir)
+  .filter((f) => f.endsWith(".js"))
+  .sort()
+  .map((f) => readFileSync(join(partsDir, f), "utf8"))
+  .join("");
 const { code } = await transform(src, {
   loader: "js",
   minify: !dev,
