@@ -48945,7 +48945,18 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       };
     if (C0() && ccsPK) {
       // v115: ดวลจุดโทษ: D-pad ◀ ▼ ▶ = เรียด/พุ่งต่ำ, ▲/Ⓨ = โด่งกลาง, LB/RB = โด่งซ้าย/ขวา, Ⓐ ยิง, Ⓑ ยกเลิก
-      (s(14) && ccsPKInput("L"), s(15) && ccsPKInput("R"), s(13) && ccsPKInput("C"), (s(12) || s(3)) && ccsPKInput("HC"), s(4) && ccsPKInput("HL"), s(5) && ccsPKInput("HR"), s(0) && ccsPKInput(ccsPK.ph === "power" ? "K" : "C"), (s(1) || s(9)) && qs());
+      // v116: เลือกทิศด้วย D-pad/สติ๊กซ้ายแบบ 8 ทิศ (กดเฉียงขึ้นได้ = โด่งซ้าย/ขวา) · ตอนเล็งใช้ Ⓐ ยืนยัน · ตอนรับเลือกทันที
+      let r = (n(15) ? 1 : 0) - (n(14) ? 1 : 0) || (t(e.axes[0] ?? 0) > 0.5 ? 1 : t(e.axes[0] ?? 0) < -0.5 ? -1 : 0),
+        a = n(12) || t(e.axes[1] ?? 0) < -0.5 ? -1 : n(13) || t(e.axes[1] ?? 0) > 0.5 ? 1 : 0,
+        c = a < 0 ? ["HL", "HC", "HR"][r + 1] : r ? ["L", "", "R"][r + 1] : a > 0 ? "C" : null;
+      (s(3) && (c = "HC"), s(4) && (c = "HL"), s(5) && (c = "HR"), s(2) && (c = "C"));
+      if (c && c !== ccsPK.padSel) {
+        ccsPK.padSel = c;
+        ccsPK.ph === "dive" ? ccsPKInput(c) : ccsPK.ph === "aim" && document.querySelectorAll("[data-pk]").forEach((l) => l.classList.toggle("on", l.dataset.pk === c));
+      }
+      (c || (ccsPK.padSel = null),
+        s(0) && (ccsPK.ph === "power" ? ccsPKInput("K") : ccsPK.ph === "aim" ? ccsPKInput(document.querySelector("[data-pk].on")?.dataset.pk ?? "C") : 0),
+        (s(1) || s(9)) && qs());
     } else if (C0()) {
       let r = eA(),
         a = (c) => {
@@ -51441,7 +51452,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           : `<div class="pkgrid">${t("HL", e ? "↖ พุ่งสูงซ้าย" : "↖ โด่งซ้าย")}${t("HC", e ? "⬆ กระโดดกลาง" : "⬆ โด่งกลาง")}${t("HR", e ? "↗ พุ่งสูงขวา" : "↗ โด่งขวา")}${t("L", e ? "↙ พุ่งต่ำซ้าย" : "↙ เรียดซ้าย")}${t("C", e ? "⬇ ยืนกลาง" : "⬇ เรียดกลาง")}${t("R", e ? "↘ พุ่งต่ำขวา" : "↘ เรียดขวา")}</div>`;
     (Gi(
       `⚽ ดวลจุดโทษ vs ${i.foe.n} (${i.foe.lv})`,
-      `<p class="note">${e ? `ลูกที่ ${i.cpu.length + 1} · ${i.foe.n} ยิง · เดาทางแล้วพุ่งรับ (ซ้าย/ขวา ตามที่น้องมองออกไป)` : `ลูกที่ ${i.me.length + 1} · ${pl[0]?.name ?? "น้อง"} ยิง · ${i.ph === "aim" ? "เลือกทิศยิง" : "กดยิงตอนแถบอยู่ในช่องเขียว"}`} <small>(คีย์ Q W E / A S D หรือ ← ↓ → ↑ · Space ยิง · จอย ◀ ▼ ▶ = เรียด, LB ▲ RB = โด่ง, Ⓐ ยิง)</small></p>${n}`,
+      `<p class="note">${e ? `ลูกที่ ${i.cpu.length + 1} · ${i.foe.n} ยิง · เดาทางแล้วพุ่งรับ (ซ้าย/ขวา ตามจอ) · เปลี่ยนใจได้จนกว่าจะเตะ` : `ลูกที่ ${i.me.length + 1} · ${pl[0]?.name ?? "น้อง"} ยิง · ${i.ph === "aim" ? "เลือกทิศยิง" : "กดยิงตอนแถบอยู่ในช่องเขียว"}`} <small>(คีย์ Q W E = โด่ง / A S D = เรียด · Space ยิง · จอย: D-pad/สติ๊กซ้าย 8 ทิศ เฉียงขึ้น = โด่งซ้าย/ขวา, ขึ้น = โด่งกลาง · Ⓐ ยืนยัน/ยิง)</small></p>${n}`,
     ),
       js.classList.add("dress"),
       document.querySelectorAll("[data-pk]").forEach((o) => o.addEventListener("click", () => ccsPKInput(o.dataset.pk))));
@@ -51451,7 +51462,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (!e) return;
     if (e.ph === "aim" && ccsPKDir[i]) ((e.aim = i), (e.ph = "power"), (e.t = 0), ke("pop"), ccsPKUI());
     else if (e.ph === "power" && i === "K") ((e.ph = "kick"), (e.t = 0), (e.shooter = "me"), qs(), js.classList.remove("dress"));
-    else if (e.ph === "dive" && ccsPKDir[i] && !e.dive) {
+    else if (e.ph === "dive" && ccsPKDir[i] && e.t < 1.7) {
       ((e.dive = i), ke("pop"));
       document.querySelectorAll("[data-pk]").forEach((t) => t.classList.toggle("on", t.dataset.pk === i));
     }
@@ -51499,7 +51510,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     let a = n?.rig,
       c = r ? s.keep : s.spot.clone().add(new H(-0.9, 0, 0)),
-      l = r ? s.spot.clone().add(new H(-1.1, 0, 0)) : s.keep;
+      l = r ? s.spot.clone().add(new H(-1.1, 0, -0.75)) : s.keep; // คนยิงวิ่งเข้าเฉียง ไม่บังกล้อง
     if (t.ph !== "kick" && t.ph !== "result") {
       (e.pos.copy(c), (j.yaw = r ? Math.PI / 2 : -Math.PI / 2), (j.pitch = 0.18));
       n && n.pos.copy(l);
@@ -51526,7 +51537,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         } else {
           // ชาวเมืองยิง: น้องเลือกทิศรับจากมุมมองตัวเอง (หันออกจากประตู → ซ้ายของน้อง = ขวาของคนยิง)
           let E = ccsPKDir[t.dive ?? "C"];
-          ((u = [-E[0], E[1]]), (p = Math.random() < t.foe.miss + (d ? 0.06 : 0)), (m = Math.random() < 0.6 ? "clean" : "ok"));
+          ((u = [E[0], E[1]]), (p = Math.random() < t.foe.miss + (d ? 0.06 : 0)), (m = Math.random() < 0.6 ? "clean" : "ok"));
         }
         // ตัดสินเซฟ: ต้องพุ่งถูกคอลัมน์ ถ้าความสูงไม่ตรงยังมีลุ้นนิดหน่อย; ลูกแม่นเข้ามุมเซฟยากกว่า, ลูกเบาเซฟง่าย
         let E = u[0] === f,
@@ -54804,6 +54815,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           Lt.lookAt(b.x - 0.05, 1.55, b.z),
           r4(),
           a4(n));
+      } else if (ccsPK && fo) {
+        // v116: ดวลจุดโทษ ใช้มุมกล้องเดียวกันทั้งตอนยิงและตอนรับ (หลังจุดโทษ มองเข้าประตู)
+        let b = ccsPKGeo();
+        (Lt.position.lerp(Xt.set(b.spot.x - 6.2, 3.5, b.spot.z + 0.9), Math.min(1, e * 5)), Lt.lookAt(b.gx - 1.2, 0.7, b.spot.z), r4(), a4(n));
       } else {
         let b = uo ? 3.1 : Se ? Math.min(j.dist, 7.5) : j.dist,
           w = uo ? 0.12 : j.pitch,
@@ -63073,6 +63088,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         pkInput: (k) => ccsPKInput(k),
         pkNpc: () => ccsPKNpc,
         pkTick: (d) => ccsPKTick(d, Le[0]),
+        padPoll: () => tA(),
         clawPair: (d) => ccsClawPair(d),
         addComp: (k, p) => BE(k, p),
         floats: () => ccsFloats,
