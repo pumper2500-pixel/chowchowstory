@@ -243,3 +243,18 @@ body.pad #clawCancel::after{content:"Ⓑ";margin-left:6px;color:#e2463f}
 .pkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}.pkgrid button{font:700 15px Mitr,sans-serif;padding:11px 4px;border-radius:14px;border:3px solid var(--ink);background:#FFD23F;cursor:pointer}.pkgrid button.on{background:#4cd964}
 .pkbar em{position:absolute;top:0;bottom:0;width:3px;background:#c0392b}
 .pkbar b{z-index:2;background:rgba(46,204,64,.45);border-left:2px solid #1e8c3a;border-right:2px solid #1e8c3a}.pkbar em{z-index:3}.pkbar i{z-index:1}
+
+/* v117: สนามฝึกแบบใช้ฝีมือ */
+#trHud{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,94vw);display:none;flex-direction:column;gap:8px;z-index:40;pointer-events:none}
+#trHud.on{display:flex}
+#trHud .trp{align-self:center;font:700 20px Mitr,sans-serif;color:#fff;background:rgba(40,30,20,.78);padding:6px 16px;border-radius:999px;text-shadow:0 2px 0 #000}
+#trHud .trp::after{content:"  " attr(data-cnt);font-size:14px;opacity:.8}
+#trHud.hot .trp{background:#2ecc71;transform:scale(1.08)}
+#trHud .trbar{position:relative;height:16px;border-radius:10px;background:rgba(255,255,255,.75);border:2px solid #3b2a1a;overflow:hidden}
+#trHud .trbar b{position:absolute;top:0;bottom:0;background:rgba(46,204,64,.6)}
+#trHud .trbar i{position:absolute;top:-2px;bottom:-2px;width:10px;margin-left:-5px;background:#e74c3c;border-radius:4px;z-index:2}
+#trHud .trbtn{display:flex;gap:10px;pointer-events:auto}
+#trHud .trbtn button{flex:1;font:700 22px Mitr,sans-serif;padding:14px 0;border-radius:16px;border:3px solid #3b2a1a;background:#FFD23F;touch-action:manipulation}
+#trHud .trbtn button.big{flex:2;background:#ff9f43}
+#trHud{bottom:calc(112px + env(safe-area-inset-bottom))}
+body.training #act{display:none!important}

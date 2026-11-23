@@ -47545,6 +47545,162 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     GH = new H(),
     Ma = () => z.train ?? (z.train = { xp: 0, lvl: 1, runs: 0 }),
     rd = (i) => Math.round(80 * Math.pow(i, 1.5) + 20);
+  // ===== v117: สนามฝึกแบบต้องใช้ฝีมือ (กดตามจังหวะ / เลี้ยวสลาลอม / ทรงตัว / นั่งคอย) + ดาว 1-3 =====
+  var ccsTRHud = null;
+  function ccsTRBuild(i) {
+    let e = i.path,
+      t = [0];
+    for (let r = 1; r < e.length; r++) t.push(t[r - 1] + e[r].distanceTo(e[r - 1]));
+    let n = t[t.length - 1],
+      s = [],
+      o = [];
+    // หาจุดเริ่มกระโดด/ขึ้น และจุดลง
+    for (let r = 1; r < e.length; r++) {
+      if (e[r].y > 0.06 && e[r - 1].y <= 0.06) {
+        let a = r - 1;
+        for (; a > 0 && e[a].y > 0.02; ) a--;
+        s.push(t[a]);
+      }
+      e[r].y <= 0.06 && e[r - 1].y > 0.06 && o.push(t[r]);
+    }
+    let r = [],
+      a = (c, l, h, f) => r.push({ d: Math.max(0.3, c), k: l, lab: h, ok: f ?? "✨ เป๊ะ!", res: null });
+    switch (i.id) {
+      case "weave": {
+        for (let c = 2; c < e.length; c++) {
+          let l = Math.atan2(e[c - 1].x - e[c - 2].x, e[c - 1].z - e[c - 2].z),
+            h = Math.atan2(e[c].x - e[c - 1].x, e[c].z - e[c - 1].z),
+            f = h - l;
+          for (; f > Math.PI; ) f -= Math.PI * 2;
+          for (; f < -Math.PI; ) f += Math.PI * 2;
+          Math.abs(f) > 0.5 && (!r.length || t[c - 1] - r[r.length - 1].d > 0.9) && a(t[c - 1], f > 0 ? "L" : "R", f > 0 ? "⬅ เลี้ยวซ้าย!" : "เลี้ยวขวา ➡", "👌 อ้อมเสาสวย");
+        }
+        break;
+      }
+      case "tunnel":
+        a(t[1] ?? 1, "A", "🕳️ ก้มลอดอุโมงค์!");
+        break;
+      case "aframe":
+      case "steps":
+        (s[0] !== void 0 && a(s[0], "A", "⬆ ก้าวขึ้น!"), o[0] !== void 0 && a(o[0] - 0.7, "A", "🟡 แตะโซนเหลือง!"));
+        break;
+      case "seesaw": {
+        let c = 0;
+        for (let l = 1; l < e.length; l++) e[l].y > e[c].y && (c = l);
+        (s[0] !== void 0 && a(s[0], "A", "⬆ ขึ้นกระดาน!"), a(t[c], "A", "✋ รอกระดานลง!", "👌 นิ่งมาก"), (r[r.length - 1].hold = 0.7));
+        break;
+      }
+      case "beam":
+        (s[0] !== void 0 && a(s[0], "A", "⬆ ขึ้นสะพาน!"), r.push({ d: s[0] ?? 2, d1: o[0] ?? n - 1, k: "bal", lab: "⚖️ ทรงตัว! กด ⬅ ➡ ให้อยู่กลาง", res: null }));
+        break;
+      case "table": {
+        let c = 0;
+        for (let l = 1; l < e.length; l++) e[l].y > 0.6 && !c && (c = l);
+        (s[0] !== void 0 && a(s[0], "A", "⬆ กระโดดขึ้นโต๊ะ!"), r.push({ d: t[c] + 0.3, k: "stay", lab: "🪑 สั่งนั่ง!", res: null }));
+        break;
+      }
+      default:
+        for (let c of s) a(c, "A", i.id === "broad" ? "🦘 กระโดดไกล!" : i.id === "hoops" ? "⭕ ลอดห่วง!" : i.id === "tire" ? "🛞 กระโดดลอดยาง!" : "🚧 กระโดด!", "✨ เป๊ะ!");
+        r.length || a(n / 2, "A", "⚡ กดเลย!");
+    }
+    return { ev: r, len: n };
+  }
+  function ccsTRHudSet(i) {
+    if (!ccsTRHud) {
+      let e = document.createElement("div");
+      ((e.id = "trHud"),
+        (e.innerHTML = `<div class="trp"></div><div class="trbar"><i></i><b></b></div><div class="trbtn"><button data-tr="L">⬅</button><button data-tr="A" class="big">⤴ กด!</button><button data-tr="R">➡</button></div>`),
+        document.body.appendChild(e),
+        e.querySelectorAll("[data-tr]").forEach((t) =>
+          t.addEventListener("pointerdown", (n) => {
+            (n.preventDefault(), n.stopPropagation(), ccsTRInput(t.dataset.tr));
+          }),
+        ),
+        (ccsTRHud = e));
+    }
+    ccsTRHud.classList.toggle("on", !!i);
+    document.body.classList.toggle("training", !!i);
+  }
+  function ccsTRInput(i) {
+    let e = ho?.tr;
+    if (!e) return;
+    let t = e.ev.find((s) => s.res === null);
+    if (!t) return;
+    if (t.k === "bal") return void (ho.d >= t.d && (e.bv += i === "L" ? -1.1 : i === "R" ? 1.1 : 0));
+    if (t.k === "stay") {
+      if (e.stay === "sit" && i === "A") ((e.stay = "wait"), (e.st = 0), ke("pop"), rt("🐕 นั่ง!", Le[0].pos, "big"));
+      else if (e.stay === "wait") ccsTRRes(t, !1, "🙈 ลุกก่อนเวลา!");
+      return;
+    }
+    let n = t.d - ho.d;
+    if (n > 1.7) return;
+    n > 1.25 ? ccsTRRes(t, !1, "⏩ เร็วไป!") : t.k !== i ? ccsTRRes(t, !1, t.k === "A" ? "❌ ผิดปุ่ม" : "❌ ผิดทาง!") : ccsTRRes(t, !0, n <= 0.65 ? t.ok : "👍 ดี", n <= 0.65 ? 1 : 0.75);
+  }
+  function ccsTRRes(i, e, t, n = 1) {
+    ((i.res = e ? n : 0), rt(t, Le[0].pos, e ? "big" : "bad"), ke(e ? (n >= 1 ? "heart" : "pop") : "nope"), e && i.hold && (ho.tr.hold = i.hold));
+  }
+  addEventListener(
+    "keydown",
+    (i) => {
+      if (!ho?.tr) return;
+      let e = i.key.length === 1 ? i.key.toLowerCase() : i.key,
+        t = { " ": "A", Enter: "A", ArrowUp: "A", w: "A", f: "A", ArrowLeft: "L", a: "L", ArrowRight: "R", d: "R" }[e];
+      t && (i.preventDefault(), i.stopPropagation(), i.repeat || ccsTRInput(t));
+    },
+    !0,
+  );
+  function ccsTRTick(i, e) {
+    let t = ho.tr,
+      n = t.ev.find((l) => l.res === null),
+      s = 4.2;
+    // ตั้งค่าเริ่ม
+    if (t.hold > 0) ((t.hold -= e), (s = 0));
+    else if (n) {
+      let l = n.d - ho.d;
+      if (n.k === "bal" && ho.d >= n.d) {
+        // ทรงตัวบนสะพาน: เอียงไปเองเรื่อย ๆ ต้องกดแก้
+        ((s = 2.3), (t.bv += ((Math.random() - 0.5) * 7 + t.bal * 2.4) * e), (t.bv *= Math.pow(0.35, e)), (t.bal += t.bv * e));
+        if (Math.abs(t.bal) > 1) {
+          ((n.res = 0), (t.fell = !0), rt("💦 ตกสะพาน!", i.pos, "bad"), ke("nope"));
+          return void ((ho.d = t.len), VH(i));
+        }
+        ho.d >= n.d1 && ((n.res = Math.abs(t.bal) < 0.45 ? 1 : 0.75), rt(n.res >= 1 ? "⚖️ ทรงตัวเยี่ยม!" : "👍 ผ่านสะพาน", i.pos, "big"), ke("heart"));
+      } else if (n.k === "stay" && ho.d >= n.d) {
+        ((s = 0), (t.st = (t.st ?? 0) + e), (t.stay = t.stay ?? "sit"));
+        if (t.stay === "sit" && t.st > 1.6) ccsTRRes(n, !1, "😜 ไม่ยอมนั่ง");
+        else if (t.stay === "wait") {
+          t.st > 3 && ccsTRRes(n, !0, "🏅 นั่งคอยเก่งมาก!");
+        }
+      } else {
+        l < 3 && (s = 2.8);
+        l < -0.25 && ccsTRRes(n, !1, n.k === "A" ? (ho.st.id === "hurdle" ? "💥 ชนไม้!" : "💥 ช้าไป!") : "😵 ข้ามเสา!");
+      }
+    }
+    ho.d += e * s;
+    let o = yM(ho.st.path, ho.d, GH),
+      r = o.p.y,
+      a = t.ev.find((l) => l.k === "A" && l.res === 0 && ho.d > l.d - 0.3 && ho.d < l.d + 2.6);
+    a && ["hurdle", "tire", "hoops", "broad"].includes(ho.st.id) && (r *= 0.35);
+    let c = t.ev.find((l) => l.k === "bal" && ho.d >= l.d && ho.d <= l.d1 + 0.3);
+    (i.pos.set(o.p.x + (c ? Math.cos(o.dir) * t.bal * 0.22 : 0), 0, o.p.z - (c ? Math.sin(o.dir) * t.bal * 0.22 : 0)), (j.jy = r), (i.dir = o.dir), (i.spd = s), i.rig.root && (i.rig.root.rotation.z = c ? -t.bal * 0.35 : 0));
+    // HUD
+    if (ccsTRHud) {
+      let l = ccsTRHud.querySelector(".trp"),
+        h = ccsTRHud.querySelector(".trbar i"),
+        f = ccsTRHud.querySelector(".trbar b"),
+        d = t.ev.filter((p) => p.res !== null),
+        u = n && n.res === null ? n : null;
+      if (u && u.k === "bal" && ho.d >= u.d) ((l.textContent = u.lab), (h.style.left = `${50 + t.bal * 50}%`), (f.style.cssText = "left:28%;width:44%"), ccsTRHud.classList.add("bal"));
+      else if (u && u.k === "stay" && ho.d >= u.d) ((l.textContent = t.stay === "wait" ? `🦋 คอย… ห้ามกด! ${Math.max(0, 3 - t.st).toFixed(1)}` : "🪑 สั่งนั่ง! กด ⤴"), (h.style.left = "50%"), (f.style.cssText = "display:none"), ccsTRHud.classList.remove("bal"));
+      else if (u) {
+        let p = u.d - ho.d;
+        ((l.textContent = p < 1.7 ? u.lab : "เตรียมตัว…"), (h.style.left = `${Math.max(0, Math.min(100, 100 - (p / 3) * 100))}%`), (f.style.cssText = "left:58.3%;width:20.8%"), ccsTRHud.classList.remove("bal"), ccsTRHud.classList.toggle("hot", p < 1.25 && p > -0.25));
+      } else ((l.textContent = "🏁 เข้าเส้นชัย!"), (f.style.cssText = "display:none"));
+      ccsTRHud.dataset.cnt = `${d.filter((p) => p.res > 0).length}/${t.ev.length}`;
+      ccsTRHud.querySelector(".trp").dataset.cnt = ccsTRHud.dataset.cnt;
+    }
+    o.done && VH(i);
+  }
   function UH(i) {
     if (z.energy < i.stamina) {
       (De(
@@ -47562,19 +47718,27 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         ke("nope"));
       return;
     }
-    ((z.energy -= i.stamina), mi(-4, -6), (ho = { st: i, d: 0 }), ke("pop"));
+    ((z.energy -= i.stamina), mi(-4, -6), (ho = { st: i, d: 0, tr: Object.assign(ccsTRBuild(i), { bal: 0, bv: 0, hold: 0 }) }), ke("pop"), ccsTRHudSet(!0));
   }
   function VH(i) {
-    let e = ho.st;
-    ((ho = null), (j.jy = 0));
+    let e = ho.st,
+      a = ho.tr;
+    ((ho = null), (j.jy = 0), ccsTRHudSet(!1), i.rig.root && (i.rig.root.rotation.z = 0));
     let t = Ma();
     t.runs += 1;
-    let n = Math.round(e.xp * (1 + Math.random() * 0.3));
-    ((j.score += n),
-      (z.money += 10),
+    // v117: ดาวตามฝีมือ (ตกสะพาน = 0 ดาว)
+    let c = a?.ev.length ? a.ev.reduce((h, f) => h + (f.res ?? 0), 0) / a.ev.length : 1,
+      l = a?.fell ? 0 : c >= 0.95 ? 3 : c >= 0.6 ? 2 : c > 0 ? 1 : 0,
+      n = Math.round(e.xp * [0.25, 0.7, 1, 1.5][l] * (1 + Math.random() * 0.2)),
+      h = z.trainStars ?? (z.trainStars = {}),
+      f = l > (h[e.id] ?? 0);
+    ((window.__trLast = [l, a ? a.ev.map((d) => d.res) : []]), f && (h[e.id] = l),
+      (j.score += n),
+      (z.money += 5 + l * 5),
       (fa.money.textContent = String(z.money)),
-      rt(`${e.icon} +${n} XP`, i.pos.clone().setY(1.6), "big"),
-      ke("heart"),
+      rt(`${"⭐".repeat(l) || "💤"} ${e.icon} +${n} XP`, i.pos.clone().setY(1.6), l ? "big" : "bad"),
+      ke(l === 3 ? "quest" : l ? "heart" : "nope"),
+      De(`${e.icon} ${e.name}: ${"⭐".repeat(l)}${"☆".repeat(3 - l)} (${a ? a.ev.filter((d) => d.res > 0).length : 0}/${a?.ev.length ?? 0})${f && l ? " · สถิติใหม่!" : ""} · +${n} XP +${5 + l * 5}💰`, 2600),
       Rs(n, i),
       _t(z));
   }
@@ -48943,7 +49107,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           c = a6[r];
         return ((a6[r] = a), a && !c);
       };
-    if (C0() && ccsPK) {
+    if (ho?.tr) {
+      // v117: สนามฝึก: Ⓐ = กด, ◀ ▶ / สติ๊กซ้าย = เลี้ยว/ทรงตัว
+      let r = t(e.axes[0] ?? 0);
+      (s(0) && ccsTRInput("A"), (s(14) || (r < -0.6 && !ho.tr.ax)) && ccsTRInput("L"), (s(15) || (r > 0.6 && !ho.tr.ax)) && ccsTRInput("R"), (ho.tr.ax = Math.abs(r) > 0.6));
+    } else if (C0() && ccsPK) {
       // v115: ดวลจุดโทษ: D-pad ◀ ▼ ▶ = เรียด/พุ่งต่ำ, ▲/Ⓨ = โด่งกลาง, LB/RB = โด่งซ้าย/ขวา, Ⓐ ยิง, Ⓑ ยกเลิก
       // v116: เลือกทิศด้วย D-pad/สติ๊กซ้ายแบบ 8 ทิศ (กดเฉียงขึ้นได้ = โด่งซ้าย/ขวา) · ตอนเล็งใช้ Ⓐ ยืนยัน · ตอนรับเลือกทันที
       let r = (n(15) ? 1 : 0) - (n(14) ? 1 : 0) || (t(e.axes[0] ?? 0) > 0.5 ? 1 : t(e.axes[0] ?? 0) < -0.5 ? -1 : 0),
@@ -54623,11 +54791,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           }
       }
       if (((n.spd = m > 0.06 ? m : 0), ccsRide)) ccsRideStep(n, e);
-      else if (ho) {
-        ho.d += e * 5.2;
-        let b = yM(ho.st.path, ho.d, GH);
-        (n.pos.set(b.p.x, 0, b.p.z), (j.jy = b.p.y), (n.dir = b.dir), (n.spd = 5.2), b.done && VH(n));
-      } else
+      else if (ho) ccsTRTick(n, e);
+      else
         (Ed && j.jy <= 0.001 && j.started && !Se && ((j.vy = 7.4), (j.jt = 0), ke("pop")),
           (j.jy > 0 || j.vy > 0) &&
             ((j.vy -= 24 * e), (j.jy = Math.max(0, j.jy + j.vy * e)), (j.jt += e), j.jy === 0 && (j.vy = 0)));
@@ -59460,7 +59625,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       for (let h of Cr.stations)
         if (e.distanceTo(h.start) < 1.25) {
           let f = Ma();
-          return nt(`${h.icon} ${h.name} \xB7 Lv.${f.lvl}`, () => UH(h));
+          let d = z.trainStars?.[h.id] ?? 0;
+          return nt(`${h.icon} ${h.name} ${"⭐".repeat(d)}${"☆".repeat(3 - d)} \xB7 Lv.${f.lvl}`, () => UH(h));
         }
     }
     if ((ccsClawUI(), Oo)) {
@@ -63088,6 +63254,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         pkInput: (k) => ccsPKInput(k),
         pkNpc: () => ccsPKNpc,
         pkTick: (d) => ccsPKTick(d, Le[0]),
+        trainSt: () => Cr?.stations,
+        trainStart: (k) => UH(Cr.stations.find((h) => h.id === k)),
+        tr: () => ho,
+        trTick: (d) => ho && ccsTRTick(Le[0], d),
+        trIn: (k) => ccsTRInput(k),
         padPoll: () => tA(),
         clawPair: (d) => ccsClawPair(d),
         addComp: (k, p) => BE(k, p),
