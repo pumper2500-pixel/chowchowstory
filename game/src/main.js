@@ -57332,6 +57332,8 @@ varying float vJz;
     } catch {}
   }
   function ab() {
+    // v124: เลิกใช้ระบบวิญญาณเงา (ไม่บันทึก/ไม่อัปโหลดเส้นทางเดินแล้ว)
+    if (((en.rec = []), !0)) return;
     let i = en.rec;
     if (((en.rec = []), i.length < 30)) return;
     let e = { dog_name: pl[0].name, coat: z.coat ?? "orange", pts: i };
@@ -57340,12 +57342,11 @@ varying float vJz;
     t && xd("ghost_walks", { method: "POST", body: JSON.stringify(e) }, t).catch(() => {});
   }
   async function xC() {
-    let i = u1(_E).map((s) => ({ ...s, own: !0 })),
+    let i = [],
       e = [],
       t = [];
     try {
-      let s = await xd("ghost_walks?select=dog_name,coat,pts&order=created_at.desc&limit=12");
-      s.ok && ((e = await s.json()), (en.server = !0));
+      localStorage.removeItem(_E);
     } catch {}
     try {
       let s = await xd("paw_notes?select=dog_name,x,z,msg&order=created_at.desc&limit=40");
@@ -57450,15 +57451,15 @@ varying float vJz;
   }
   function sT(i, e) {
     if (j.started) {
-      if (((en.fetchT -= i) < 0 && ((en.fetchT = 300), xC()), !Se && (en.recT -= i) < 0)) {
+      if (((en.fetchT -= i) < 0 && ((en.fetchT = 300), xC()), !1)) {
         en.recT = 1;
         let t = en.rec[en.rec.length - 1],
           n = Math.round(e.pos.x * 10),
           s = Math.round(e.pos.z * 10);
         ((!t || Math.hypot(t[0] - n, t[1] - s) > 4) && en.rec.push([n, s]), en.rec.length >= 200 && ab());
       }
-      (en.spawnT -= i) < 0 &&
-        ((en.spawnT = 6), en.live.length < 2 && !Se && MC(e), en.used.size >= en.walks.length && en.used.clear());
+      // v124: ไม่เรียกวิญญาณเงาออกมาแล้ว · ลบตัวที่ค้างอยู่ทิ้ง
+      for (let t of en.live.splice(0)) (K.remove(t.rig.root), K.remove(t.label));
       for (let t = en.live.length - 1; t >= 0; t--) {
         let n = en.live[t],
           s = n.w.pts;
@@ -64503,6 +64504,7 @@ varying float vJz;
         freeChick: () => ccsFreeGift && { p: ccsFreeGift.p, k: ccsFreeGift.k },
         hg: (k) => ccsHG(k),
         hatShop: () => OE(),
+        ghostSys: () => en,
         wear: (k) => ccsWear(k),
         setLv: (l) => (z.trLv = l),
         trBuy: (k) => ccsTRBuy(k),
