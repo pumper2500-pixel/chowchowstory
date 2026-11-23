@@ -47659,7 +47659,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     ((e.t += i), c0.set(0, 0, 0), (Ed = !1));
     let n = e.t < e.dur;
     if (n) {
-      (t.pos.set(e.at.x, 0, e.at.z), (j.jy = 0.4), (t.dir = 2.66), (t.spd = 0));
+      (t.pos.set(e.at.x, 0, e.at.z), (j.jy = 0.4), (j.vy = 0), (t.dir = 2.66), (t.spd = 0), t.rig.root.position.set(e.at.x, j.gy + 0.4, e.at.z));
       let s = Math.min(1, e.t / 1.2) * (e.t > e.dur - 0.5 ? (e.dur - e.t) / 0.5 : 1);
       for (let o of e.fo) {
         let r = Math.min(1, Math.max(0, (e.t - o.d) / 0.6)) * s;
@@ -47680,26 +47680,127 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function ccsWear(i) {
     return Object.values(Ar()).includes(i);
   }
-  var ccsFreeChick = null;
+  // ===== v122: ความสามารถพิเศษของหมวกทุกใบ (พลัง + ลูกเล่นเฉพาะ) =====
+  var ccsHatStat = {
+      Hat_01: { heat: 1, speed: 1 }, Hat_02: { charm: 1, luck: 1 }, Hat_03: { speed: 1, charm: 1 }, Hat_04: { heat: 2, charm: 1 },
+      Hat_05: { stam: 2 }, Hat_06: { luck: 1, charm: 1 }, Hat_07: { charm: 2 }, Hat_08: { heat: 1, speed: 1 },
+      Hat_09: { stam: 2, speed: 1 }, Hat_10: { speed: 2 }, Hat_11: { stam: 2 }, Hat_12: { dig: 1, stam: 1 },
+      Hat_13: { stam: 1 }, Hat_14: { heat: 2 }, Hat_15: { charm: 3, luck: 2 }, Hat_16: { det: 3, nose: 1 },
+      Hat_17: { stam: 2, dig: 1 }, Hat_18: { charm: 2, det: 1 }, Hat_19: { luck: 1, stam: 1 }, Hat_20: { speed: 1 },
+      Hat_21: { charm: 2 }, Hat_22: { luck: 2 }, Hat_23: { charm: 2 }, Hat_24: { speed: 2 },
+      Hat_25: { dig: 3, nose: 1 }, Hat_26: { luck: 2, speed: 1 }, Hat_27: { det: 3, nose: 2 }, Hat_28: { charm: 1, det: 1 },
+      Hat_29: { heat: 3 }, Hat_30: { charm: 3 }, Hat_31: { charm: 2 }, Hat_32: { luck: 2, nose: 1 },
+      Hat_33: { speed: 1 }, Hat_34: { charm: 2, luck: 1 }, Hat_35: { luck: 1, charm: 1 }, Hat_36: { charm: 2 },
+      Hat_37: { speed: 2, stam: 1 }, Hat_38: { det: 1, luck: 1 }, Hat_39: { heat: 2, stam: 1 }, Hat_40: { heat: 2 },
+      Hat_41: { charm: 2, luck: 1 }, Hat_42: { stam: 2 }, Hat_43: { stam: 2 }, Hat_44: { speed: 1, charm: 1 },
+      Hat_46: { luck: 1, nose: 1 }, Hat_47: { speed: 3 }, Hat_48: { charm: 1 }, Hat_49: { stam: 3 },
+      Hat_50: { luck: 3 }, Hat_51: { stam: 2 }, Hat_53: { charm: 2 }, Hat_54: { det: 1, luck: 1 },
+      Hat_55: { speed: 1, charm: 1 }, Hat_56: { charm: 2 }, Hat_58: { charm: 2 }, Hat_59: { charm: 2 },
+    },
+    // ลูกเล่นเฉพาะใบ: [คีย์, คำอธิบายสั้น]
+    ccsHatGim = {
+      Hat_48: ["chick", "🍗 บ้านมีไก่ย่างฟรีวันละจาน · ป้าอู้ดลด 40%"],
+      Hat_41: ["santa", "🎁 บ้านมีกล่องของขวัญทุกวัน (เงิน 30-90💰)"],
+      Hat_53: ["pumpkin", "🥧 บ้านมีพายฟักทองฟรีวันละชิ้น"],
+      Hat_04: ["rain", "☔ ฝนตกตัวไม่เลอะ · สกปรกช้าลงครึ่งหนึ่ง"],
+      Hat_03: ["swim", "🏊 ว่ายน้ำเร็วเต็มสปีด (ไม่ช้าลงในน้ำ)"],
+      Hat_44: ["swim", "🏊 ว่ายน้ำเร็วเต็มสปีด (ไม่ช้าลงในน้ำ)"],
+      Hat_33: ["swim", "🏊 ว่ายน้ำเร็วเต็มสปีด (ไม่ช้าลงในน้ำ)"],
+      Hat_43: ["swim", "🏊 ว่ายน้ำเร็วเต็มสปีด (ไม่ช้าลงในน้ำ)"],
+      Hat_55: ["shark", "🐳 ความผูกพันปลาวาฬ ×2 · เหยื่อปลาวาฬลด 30%"],
+      Hat_19: ["sailor", "⚓ แผงปลาลุงทะเลลด 25%"],
+      Hat_15: ["crown", "👑 ทุกร้านอาหารลด 15%"],
+      Hat_25: ["miner", "🔦 ไฟฉายส่องทางตอนกลางคืน"],
+      Hat_20: ["prop", "🚁 กระโดดสูงขึ้น 25% · ร่อนลงช้า"],
+      Hat_13: ["drink", "🥤 กระหายน้ำช้าลงครึ่งหนึ่ง"],
+      Hat_38: ["grad", "🎓 ฝึกได้พลังเพิ่ม 30% · ค่าฝึกลด 20%"],
+      Hat_17: ["viking", "⚔️ จุดโทษ: ช่องพลังเขียวกว้างขึ้น"],
+      Hat_36: ["clown", "🤡 ทิปจากการโชว์คำสั่ง ×2"],
+      Hat_59: ["clown", "🤡 ทิปจากการโชว์คำสั่ง ×2"],
+      Hat_51: ["helmet", "⛑ วิ่งใช้พลังน้อยลงครึ่งหนึ่ง"],
+      Hat_06: ["plunger", "🪠 ปวดฉี่/อึช้าลงครึ่งหนึ่ง"],
+      Hat_49: ["koala", "🐨 หิวช้าลง 30%"],
+      Hat_16: ["police", "👮 ชาวเมืองให้ทิปเพิ่ม 50%"],
+    };
+  function ccsHG(k) {
+    let i = Ar().head;
+    if (!i || !i.startsWith("cc:")) return !1;
+    let e = ccsHatGim[i.slice(3)];
+    return !!e && e[0] === k;
+  }
+  function ccsPriceF(m, r) {
+    // ตัวคูณราคาเมนูอาหาร (ส่วนลดเบเกอรี่ + หมวก)
+    let i = m === DE ? G3() : 1;
+    return (
+      m === Xk && ccsHG("chick") && (i *= 0.6),
+      m === Yk && ccsHG("sailor") && !r.bait && (i *= 0.75),
+      r.bait && ccsHG("shark") && (i *= 0.7),
+      ccsHG("crown") && !r.bait && (i *= 0.85),
+      i
+    );
+  }
+  var ccsFreeGift = null,
+    ccsLamp = null;
+  function ccsGiftMesh(k) {
+    let i = new J(),
+      e = new R(new re(0.32, 0.26, 0.05, 24), Ae(16777215, 0.4));
+    if (k === "chick") {
+      i.add(e);
+      let t = ze("roast") ? je("roast", 0.42) : new R(new we(0.17, 12, 10), Ae(12088115, 0.6));
+      (t.position.y = 0.04), i.add(t);
+    } else if (k === "pumpkin") {
+      i.add(e);
+      let t = new R(new re(0.24, 0.2, 0.07, 24), Ae(14251782, 0.6));
+      t.position.y = 0.065;
+      let n = new R(new vt(0.235, 0.025, 6, 24), Ae(14201950, 0.7));
+      ((n.rotation.x = Math.PI / 2), (n.position.y = 0.1), i.add(t, n));
+    } else {
+      let t = new R(new ee(0.46, 0.38, 0.46), Ae(14366250, 0.5));
+      t.position.y = 0.19;
+      let n = new R(new ee(0.48, 0.06, 0.1), Ae(16766720, 0.4)),
+        o = n.clone();
+      ((n.position.y = o.position.y = 0.2), (o.rotation.y = Math.PI / 2), (n.scale.y = o.scale.y = 6.6));
+      let r = new R(new vt(0.08, 0.025, 6, 12), Ae(16766720, 0.4));
+      ((r.position.set(0, 0.42, 0)), i.add(t, n, o, r));
+    }
+    i.traverse((t) => t.isMesh && (t.castShadow = !0));
+    return i;
+  }
   function ccsHatTick(i) {
-    // หมวกลูกไก่: ในบ้านมีไก่ย่างฟรีวันละจาน
-    let e = ccsWear("cc:Hat_48") && Rn && Se === Rn && z.freeChick !== z.day;
-    if (e && !ccsFreeChick) {
-      let t = new J(),
-        n = new R(new re(0.32, 0.26, 0.05, 24), Ae(16777215, 0.4));
-      t.add(n);
-      let s = new R(new we(0.17, 12, 10), Ae(12088115, 0.6));
-      (s.scale.set(1.3, 0.75, 1), (s.position.y = 0.11), t.add(s));
-      for (let a of [-1, 1]) {
-        let c = new R(new re(0.035, 0.05, 0.22, 8), Ae(12088115, 0.6));
-        ((c.rotation.z = (a * Math.PI) / 2.6), c.position.set(a * 0.2, 0.14, 0.05), t.add(c));
-      }
-      let o = Rn.bowls.clone().add(new H(0.9, 0, 0));
-      (t.position.copy(o).setY(0.03), K.add(t), (ccsFreeChick = { g: t, p: o }));
-      let r = new zi(new vi({ map: ei("🍗 ฟรี!", 16765503, 9067051, 256, 96), transparent: !0, depthWrite: !1 }));
-      (r.scale.set(0.9, 0.34, 1), (r.position.y = 0.75), t.add(r));
-    } else !e && ccsFreeChick && (K.remove(ccsFreeChick.g), (ccsFreeChick = null));
-    ccsFreeChick && (ccsFreeChick.g.rotation.y += i * 0.6);
+    let e = Ar().head?.slice(3),
+      t = e && ccsHatGim[e]?.[0],
+      n = ["chick", "santa", "pumpkin"].includes(t) && Rn && Se === Rn && (z.hatGift ?? {})[t] !== z.day ? t : null;
+    if (n && ccsFreeGift?.k !== n) {
+      ccsFreeGift && K.remove(ccsFreeGift.g);
+      let s = ccsGiftMesh(n),
+        o = Rn.bowls.clone().add(new H(0.9, 0, 0));
+      (s.position.copy(o).setY(0.03), K.add(s));
+      let r = { chick: "🍗 ฟรี!", santa: "🎁 ของขวัญ!", pumpkin: "🥧 ฟรี!" }[n],
+        a = new zi(new vi({ map: ei(r, 16765503, 9067051, 256, 96), transparent: !0, depthWrite: !1 }));
+      (a.scale.set(0.9, 0.34, 1), (a.position.y = 0.85), s.add(a), (ccsFreeGift = { k: n, g: s, p: o, tag: a }));
+    } else !n && ccsFreeGift && (K.remove(ccsFreeGift.g), (ccsFreeGift = null));
+    ccsFreeGift && (ccsFreeGift.tag.position.y = 0.85 + Math.sin(performance.now() * 0.003) * 0.04);
+    // ไฟฉายหมวกนักขุด (สร้างครั้งเดียว ปรับความสว่างแทนการเพิ่ม/ลบไฟ)
+    if (!ccsLamp && Le[0]) {
+      ((ccsLamp = new En(16774604, 0, 11, 1.3)), K.add(ccsLamp));
+    }
+    if (ccsLamp && Le[0]) {
+      let s = j.time % 1,
+        o = t === "miner" && !Se && (s > 0.78 || s < 0.24),
+        r = Le[0];
+      ((ccsLamp.intensity += ((o ? 9 : 0) - ccsLamp.intensity) * Math.min(1, i * 4)), ccsLamp.position.set(r.pos.x + Math.sin(r.dir ?? 0) * 1.6, 1.3 + j.jy, r.pos.z + Math.cos(r.dir ?? 0) * 1.6));
+    }
+  }
+  function ccsGiftTake(e) {
+    let i = ccsFreeGift;
+    if (!i) return;
+    (z.hatGift ??= {})[i.k] = z.day;
+    i.k === "chick"
+      ? (mi(55, 0), (z.energy = Math.min(100, (z.energy ?? 0) + 15)), rt("🍗 อร่อย! +55🍖 +15⚡", e, "big"))
+      : i.k === "pumpkin"
+        ? (mi(40, 0), (z.energy = Math.min(100, (z.energy ?? 0) + 20)), rt("🥧 หวานหอม! +40🍖 +20⚡", e, "big"))
+        : ((i = 30 + Math.floor(Math.random() * 61)), (z.money += i), Ei(), rt(`🎁 ได้ ${i}💰 จากซานต้า!`, e, "big"));
+    (ke("heart"), ccsSparkle(e, 10), _t(z));
   }
   // ===== v121: ปลาวาฬในทะเล (วาฬสเปิร์ม · วาฬนำร่องฝูง 3 · ออร์กาฝูง 4) + ให้อาหารที่ท่าเรือ + เล่นกับออร์กา =====
   var ccsWhM = {},
@@ -47730,6 +47831,28 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let m = ccsWhM[k];
     if (!m) return null;
     let a = _3(m, null, size, k === "orca" ? 1 : 0.8);
+    if (k === "orca") {
+      // อ้าปากได้: หมุนขากรรไกรล่างรอบบานพับใต้ตา (ทำใน vertex shader ก่อน skinning)
+      a.jaw = { value: 0 };
+      a.root.traverse((t) => {
+        if (!t.isMesh) return;
+        let n = t.material.clone();
+        ((n.onBeforeCompile = (c) => {
+          ((c.uniforms.uJaw = a.jaw),
+            (c.vertexShader = `uniform float uJaw;
+varying float vJw;
+varying float vJz;
+` + c.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n float jw = step(transformed.y, -1.05);\n vJw = jw; vJz = transformed.z;\n float ja = uJaw * jw * smoothstep(3.3, 3.85, transformed.z);\n if (ja > 0.0) { vec2 r = vec2(transformed.y + 1.05, transformed.z - 3.3); float cs = cos(ja), sn = sin(ja); transformed.y = -1.05 + r.x * cs - r.y * sn; transformed.z = 3.3 + r.x * sn + r.y * cs; }")),
+            // หน้าที่ถูกยืดระหว่างขากรรไกรบน-ล่าง = ด้านในปาก: ทาสีแดงเข้ม + ฟันขาวตามขอบ
+            (c.fragmentShader = `uniform float uJaw;
+varying float vJw;
+varying float vJz;
+` + c.fragmentShader.replace("#include <opaque_fragment>", "#include <opaque_fragment>\n if (uJaw > 0.03 && vJw > 0.06 && vJw < 0.94 && vJz > 3.5) { float ed = min(vJw, 1.0 - vJw); vec3 mc = mix(vec3(0.32, 0.04, 0.06), vec3(0.75, 0.25, 0.3), smoothstep(0.2, 0.5, ed)); if (ed < 0.2 && fract(vJz * 16.0) < 0.55 && vJz > 3.7) mc = vec3(0.95, 0.93, 0.88); gl_FragColor.rgb = mc * (0.55 + 0.45 * clamp(dot(normal, vec3(0.0, 0.0, 1.0)) * 0.5 + 0.5, 0.0, 1.0)); }")));
+        }),
+          (n.customProgramCacheKey = () => "orcajaw"),
+          (t.material = n));
+      });
+    }
     if (k === "sperm")
       a.root.traverse((t) => {
         if (!t.isMesh) return;
@@ -47816,7 +47939,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     return new H(0, 0, Rt + 24.5);
   }
   function ccsWhaleTick(dt) {
-    if ((ccsWhaleInit(), !ccsWh)) return;
+    if ((ccsWhaleInit(), !ccsWh || window.__whPause)) return;
     let i = !Se;
     for (let w of ccsWh.all) w.a.root.visible = i && w.vis > 0;
     for (let e = ccsSpouts.length - 1; e >= 0; e--) {
@@ -47833,7 +47956,20 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       // ---- พฤติกรรมฝูง ----
       if (t.mode === "come") {
         let o = ccsWhStep(n, dt, t.tgt.x, t.tgt.z, s.spd * 2.4);
-        o < 2.5 && !n.act && (ccsWhAct(n, "eat", 1.8), (t.mode = "linger"), (t.lt = t.k === "orca" ? 40 : 22), (t.ang = Math.atan2(n.pos.x - t.tgt.x, n.pos.z - t.tgt.z)));
+        o < 2.5 && !n.act && (ccsWhAct(n, "eat", 1.8), (t.mode = t.k === "orca" ? "beg" : "linger"), (t.lt = t.k === "orca" ? 30 : 22), (t.ang = Math.atan2(n.pos.x - t.tgt.x, n.pos.z - t.tgt.z)));
+      } else if (t.mode === "beg") {
+        // ออร์กาว่ายมาชิดปลายท่าเรือ ยกหัวพ้นน้ำ อ้าปากรอรับปลาจากน้อง
+        t.lt -= dt;
+        let o = ccsBegPt(n),
+          r = Math.hypot(o.x - n.pos.x, o.z - n.pos.z);
+        if (n.act) n.beg = Math.max(0, (n.beg ?? 0) - dt * 2);
+        else if (r > 1.3 && !(n.beg > 0.5)) (ccsWhStep(n, dt, o.x, o.z, s.spd * 1.1), (n.beg = 0));
+        else {
+          ((n.pos.x += (o.x - n.pos.x) * Math.min(1, dt * 2)), (n.pos.z += (o.z - n.pos.z) * Math.min(1, dt * 2)));
+          let a = Math.atan2(Math.sin(Math.PI - n.yaw), Math.cos(Math.PI - n.yaw));
+          ((n.yaw += a * Math.min(1, dt * 2.5)), (n.spd *= Math.pow(0.2, dt)), (n.beg = Math.min(1, (n.beg ?? 0) + dt * 0.7)));
+        }
+        t.lt < 0 && ((t.mode = "linger"), (t.lt = 14), (n.beg = 0), (n.jawT = 0), (t.ang = 0));
       } else if (t.mode === "linger") {
         ((t.lt -= dt), (t.ang += dt * (t.k === "sperm" ? 0.08 : 0.22)));
         let o = t.k === "sperm" ? 9 : 5.5,
@@ -47841,7 +47977,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (ccsWhStep(n, dt, r.x + Math.sin(t.ang) * o, r.z + 2 + Math.cos(t.ang) * o * 0.6, s.spd * 0.8), t.lt < 0 && ((t.mode = "roam"), ccsWhRand(t)));
       } else if (t.mode === "hunt") {
         // ออร์กาล่าเหยื่อ: พุ่งไปหาฝูงปลา แล้วว่ายวนล้อม ต้อนปลาให้กระโดด
-        if (((t.ht += dt), t.ht < 0)) ccsWhStep(n, dt, t.c.x, t.c.z, s.spd * 2.2) < 6 && (t.ht = 0);
+        if (((t.ht += dt), t.ht < 0)) (ccsWhStep(n, dt, t.c.x, t.c.z, s.spd * 2.2) < 6 && (t.ht = 0), t.m.forEach((o) => !o.act && Math.random() < dt * 0.35 && ccsWhAct(o, "porp", 1.1)));
         else {
           let o = t.ht * 0.9;
           (ccsWhStep(n, dt, t.c.x + Math.sin(o) * 5, t.c.z + Math.cos(o) * 5, s.spd * 1.9),
@@ -47861,6 +47997,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         if (t.mode === "hunt" && t.ht >= 0) {
           let l = t.ht * 0.9 + (o * Math.PI * 2) / t.m.length;
           ((a = t.c.x + Math.sin(l) * (5 + o)), (c = t.c.z + Math.cos(l) * (5 + o)));
+        } else if (t.mode === "beg") {
+          // ลูกฝูงว่ายวนรอบ ๆ ด้านหลังจ่าฝูง
+          let l = ccsWhT * 0.25 + (o * Math.PI * 2) / t.m.length;
+          ((a = Math.sin(l) * 6.5), (c = Rt + 28 + Math.cos(l) * 3.5));
         } else {
           let l = Math.cos(n.yaw),
             h = Math.sin(n.yaw);
@@ -47888,13 +48028,24 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           d.t += dt;
           let u = d.t / d.dur;
           if (d.k === "breach") {
-            // กระโดดพ้นน้ำตีลังกาข้าง
-            let p = 1.2 + o.size * 0.35;
-            ((o.y = s.y[1] + (p - s.y[1]) * 4 * u * (1 - u)), (l = (1 - 2 * u) * 1.1), (h = Math.sin(u * Math.PI) * 1.3), d.sp === 0 && o.y > Ph && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1.2)), d.sp === 1 && u > 0.8 && ((d.sp = 2), tl.burst(o.pos.clone(), Ph, o.size / 2.2), ke("splash")));
+            // breach แบบธรรมชาติ: พุ่งขึ้นเกือบตั้งฉาก ลำตัวพ้นน้ำ 2/3 บิดตัวตะแคง แล้วล้มหงายตูมลงน้ำ
+            let p = 0.35 + o.size * 0.24,
+              c = s.y[1] - 0.4;
+            ((o.y = u < 0.5 ? c + (p - c) * Math.sin((u / 0.5) * Math.PI * 0.5) : p - (p - c) * Math.pow((u - 0.5) / 0.5, 2)),
+              (l = u < 0.45 ? 1.3 - u * 0.5 : 1.08 - ((u - 0.45) / 0.55) * 1.75),
+              (h = Math.min(1, Math.max(0, (u - 0.25) / 0.45)) * 1.8),
+              d.sp === 0 && u > 0.12 && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1.3), ke("splash")),
+              d.sp === 1 && u > 0.78 && ((d.sp = 2), tl.burst(o.pos.clone(), Ph, o.size / 2), tl.burst(ccsWhPos(o, 0.3), Ph, o.size / 2.6), ke("splash")),
+              (f = 0.7));
+          } else if (d.k === "porp") {
+            // ว่ายเร็วกระโดดโค้งต่ำ ๆ (porpoising)
+            let p = Math.sin(u * Math.PI);
+            ((o.y = s.y[0] + p * (0.6 + o.size * 0.05)), (l = (1 - 2 * u) * 0.55), d.sp === 0 && u > 0.2 && ((d.sp = 1), tl.burst(ccsWhPos(o, 0.3), Ph, 0.6)), d.sp === 1 && u > 0.8 && ((d.sp = 2), tl.burst(o.pos.clone(), Ph, 0.8)));
           } else if (d.k === "spy") {
             // ยืดตัวตั้งโผล่หัวมองน้อง
-            let p = Math.sin(Math.min(1, u * 1.4) * Math.PI * 0.5) * (u > 0.8 ? (1 - u) / 0.2 : 1);
-            ((l = 1.35 * p), (o.y = s.y[0] + p * o.size * 0.28), (f = 1));
+            let p = Math.sin(Math.min(1, u * 1.4) * Math.PI * 0.5) * (u > 0.8 ? (1 - u) / 0.2 : 1),
+              c = 1.1 - o.size * 0.47 * Math.sin(1.4);
+            ((l = 1.4 * p), (o.y = s.y[0] + (c - s.y[0]) * p), (f = 1), (o.jawT = 0));
           } else if (d.k === "slap") {
             // ตบหางเสียงดังตูม
             let p = Math.sin(u * Math.PI);
@@ -47902,14 +48053,21 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           } else if (d.k === "eat") {
             // โผล่งับปลา
             let p = Math.sin(u * Math.PI);
-            ((l = 0.7 * p), (o.y = s.y[0] + p * 0.5), d.sp === 0 && u > 0.35 && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1), ke("splash"), ccsSparkle(o.pos.clone().setY(1.2), 6), rt("❤️ งั่ม!", o.pos.clone().setY(1.6), "big")), (f = 0.6));
+            ((l = 0.7 * p), (o.y = s.y[0] + p * 0.5), (o.jawT = u < 0.45 ? 0.55 : 0), d.sp === 0 && u > 0.35 && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1), ke("splash"), ccsSparkle(o.pos.clone().setY(1.2), 6), rt("❤️ งั่ม!", o.pos.clone().setY(1.6), "big")), (f = 0.6));
           }
           u >= 1 && (o.act = null);
+        } else if (o.beg > 0) {
+          // ท่าขอปลา: ยกหัวพ้นน้ำ อ้าปาก ส่ายหัวเบา ๆ
+          let p = o.beg,
+            c = 1.15 - o.size * 0.47 * Math.sin(0.95) + Math.sin(ccsWhT * 1.7) * 0.06;
+          ((o.y += (s.y[0] + (c - s.y[0]) * p - o.y) * Math.min(1, dt * 3)), (l = 0.95 * p), (h = Math.sin(ccsWhT * 1.3) * 0.08), (f = 0.85), (o.jawT = (o.chomp ?? 0) > 0 ? 0 : p > 0.75 ? 0.5 + Math.sin(ccsWhT * 2.6) * 0.07 : 0));
         } else o.y += (o.ty - o.y) * Math.min(1, dt * (o.ty > o.y ? 0.9 : 0.6));
+        o.chomp > 0 && (o.chomp -= dt);
         let d = (o.y - r) / Math.max(1e-4, dt);
-        (o.act || (l = Math.max(-0.5, Math.min(0.5, Math.atan2(d, Math.max(0.5, o.spd)) * 0.8)) + Math.sin(ccsWhT * 1.3 + o.size) * 0.04), (o.pitch += (l - o.pitch) * Math.min(1, dt * 4)), (o.roll *= Math.pow(0.5, dt)));
+        (o.act || o.beg > 0 || (l = Math.max(-0.5, Math.min(0.5, Math.atan2(d, Math.max(0.5, o.spd)) * 0.8)) + Math.sin(ccsWhT * 1.3 + o.size) * 0.04), (o.pitch += (l - o.pitch) * Math.min(1, dt * 4)), (o.roll *= Math.pow(0.5, dt)));
         let u = o.a.root;
         (u.position.set(o.pos.x, o.y, o.pos.z), u.rotation.set(0, o.yaw, 0), u.rotateX(-o.pitch), u.rotateZ(o.roll + h), o.a.mixer?.update(dt * (0.5 + Math.min(1.5, o.spd / s.spd) * 0.6) * (1 - f * 0.7)));
+        o.a.jaw && ((o.jaw = (o.jaw ?? 0) + ((o.jawT ?? 0) - (o.jaw ?? 0)) * Math.min(1, dt * (o.jawT > (o.jaw ?? 0) ? 6 : 14))), (o.a.jaw.value = o.jaw));
       }
     }
   }
@@ -47918,6 +48076,60 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function ccsPierEnd(i) {
     return i && !Se && !ho && i.z > Rt + 14.5 && Math.abs(i.x) < 1.8;
   }
+  function ccsBegPt(n) {
+    let i = Le[0]?.pos;
+    return new H(Math.max(-0.9, Math.min(0.9, i ? i.x : 0)), 0, Rt + 20.4 + n.size * 0.47 * Math.cos(0.95));
+  }
+  function ccsWhHead(o) {
+    return (o.a.root.updateMatrixWorld(!0), o.a.root.localToWorld(new H(0, -0.05 * o.size, 0.44 * o.size)));
+  }
+  function ccsOrcaBeg() {
+    let i = ccsWh?.pods.find((e) => e.k === "orca");
+    return i && i.mode === "beg" && i.m[0].beg > 0.75 && !i.m[0].act ? i : null;
+  }
+  // เหยื่อแบบเหมือนจริง: แซลมอนใช้โมเดลปลาจริง · หมึก/หมึกยักษ์ปั้นตัว+หนวด
+  function ccsBaitMesh(k) {
+    if (k === "salmon") {
+      // แซลมอนทั้งตัว: ท้องเงิน หลังเทาอมเขียว ข้างลำตัวชมพู ครีบหาง/หลัง
+      let i = new J(),
+        e = new R(new we(0.1, 16, 12), Ae(13942950, 0.35, { metalness: 0.3 }));
+      (e.scale.set(0.9, 1.15, 4.2), i.add(e));
+      let t = new R(new we(0.1, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.42), Ae(4610660, 0.4, { metalness: 0.25 }));
+      ((t.scale.set(0.93, 1.18, 4.25), (t.position.y = 0.004)), i.add(t));
+      let n = new R(new ee(0.012, 0.05, 0.62), Ae(15238784, 0.5));
+      ((n.position.set(0, -0.01, 0), (n.scale.x = 8.5)), i.add(n));
+      let s = new qe();
+      (s.setAttribute("position", new Fe([0, 0, -0.36, 0, 0.13, -0.56, 0, -0.13, -0.56], 3)), s.computeVertexNormals());
+      let o = new R(s, Ae(4610660, 0.5, { side: Ke }));
+      i.add(o);
+      let r = new qe();
+      (r.setAttribute("position", new Fe([0, 0.1, 0.05, 0, 0.19, -0.03, 0, 0.1, -0.12], 3)), r.computeVertexNormals());
+      i.add(new R(r, Ae(4610660, 0.5, { side: Ke })));
+      for (let a of [-1, 1]) {
+        let c = new R(new we(0.014, 8, 6), Ae(1118481, 0.2));
+        (c.position.set(a * 0.07, 0.03, 0.33), i.add(c));
+      }
+      return i;
+    }
+    let i = new J(),
+      e = k === "giant" ? 1.9 : 1,
+      t = Ae(k === "giant" ? 12729402 : 15762611, 0.45),
+      n = new R(new we(0.09, 14, 10), t);
+    (n.scale.set(1, 1, 2.6), (n.position.z = 0.17), i.add(n));
+    let s = new R(new yt(0.11, 0.14, 4), t);
+    ((s.rotation.x = Math.PI / 2), (s.position.z = 0.42), (s.scale.y = 0.25), i.add(s));
+    for (let o of [-1, 1]) {
+      let r = new R(new we(0.022, 8, 6), Ae(1118481, 0.2));
+      (r.position.set(o * 0.075, 0.03, -0.03), i.add(r));
+    }
+    for (let o = 0; o < 10; o++) {
+      let r = o / 10 * Math.PI * 2,
+        a = o >= 8 ? 0.42 : 0.24,
+        c = new R(new re(0.016, 0.006, a, 5), t);
+      ((c.rotation.x = Math.PI / 2 + Math.sin(r) * 0.25), (c.rotation.y = Math.cos(r) * 0.25), c.position.set(Math.cos(r) * 0.04, Math.sin(r) * 0.04, -0.08 - a / 2), i.add(c));
+    }
+    return (i.scale.setScalar(e), i);
+  }
   function ccsWhaleThrow(k) {
     let i = Le[0],
       e = ccsBaitDef[k];
@@ -47925,16 +48137,30 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let t = (z.bait ??= {});
     if (!(t[k] > 0)) return void De(`ไม่มี${e.n} ซื้อได้ที่แผงปลาลุงทะเลริมหาด 🐟`, 2400);
     ((t[k] -= 1), qs());
-    let n = new J(),
-      s = new R(new we(0.16, 10, 8), Ae(e.col, 0.5));
-    (s.scale.set(k === "giant" ? 1.8 : 1, 0.6, k === "salmon" ? 2.2 : 1.4), n.add(s), K.add(n));
-    let o = ccsWhFeedPt();
-    ((o.x = i.pos.x + (Math.random() - 0.5) * 2), (ccsBaitFly = { g: n, t: 0, from: i.pos.clone().setY(1.2), to: o, k }), ke("pop"), rt(`${e.icon} โยน!`, i.pos.clone().setY(1.5)), _t(z));
+    let n = ccsBaitMesh(k);
+    K.add(n);
+    let o = ccsWhFeedPt(),
+      r = k === "salmon" && ccsOrcaBeg();
+    ((o.x = i.pos.x + (Math.random() - 0.5) * 2), (ccsBaitFly = { g: n, t: 0, from: i.pos.clone().setY(1.2), to: o, k, mouth: r ? r.m[0] : null }), ke("pop"), rt(r ? "🐟 ป้อนเข้าปาก!" : `${e.icon} โยน!`, i.pos.clone().setY(1.5)), _t(z));
   }
   function ccsBaitTick(dt) {
     let i = ccsBaitFly;
     if (!i) return;
     i.t += dt;
+    if (i.mouth) {
+      // ลอยโค้งเข้าปากออร์กาที่อ้ารออยู่
+      let a = i.mouth,
+        c = ccsWhHead(a),
+        l = Math.min(1, i.t / 0.75);
+      if ((i.g.position.lerpVectors(i.from, c, l), (i.g.position.y += 1.4 * l * (1 - l)), i.g.lookAt(c), l < 1)) return;
+      (K.remove(i.g), (ccsBaitFly = null), (a.chomp = 0.45), ke("pop"), ke("heart"), ccsSparkle(c.clone(), 8), rt("❤️ งั่ม! อร่อย", c.clone().setY(c.y + 0.8), "big"), tl.burst(c.clone(), Ph, 0.4));
+      let h = ccsWh.pods.find((u) => u.k === "orca");
+      h.lt = Math.max(h.lt, 18);
+      let f = (z.whale ??= {}),
+        d = f.orca ?? 0;
+      ((f.orca = d + (ccsHG("shark") ? 2 : 1)), Math.floor(f.orca / 5) > Math.floor(d / 5) && setTimeout(() => ccsWhGift("orca"), 1500), _t(z));
+      return;
+    }
     let e = Math.min(1, i.t / 0.9);
     if ((i.g.position.lerpVectors(i.from, i.to, e), (i.g.position.y = i.from.y + (Ph - i.from.y) * e + 3 * e * (1 - e)), (i.g.rotation.x += dt * 9), e < 1)) return;
     (K.remove(i.g), tl.burst(i.to.clone(), Ph, 0.5), ke("splash"), (ccsBaitFly = null));
@@ -47950,11 +48176,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     t === "sperm" && (s.br = 0);
     ((n.mode = "come"), n.tgt.copy(i.to), (n.feeder = 1));
     let o = (z.whale ??= {});
-    o[t] = (o[t] ?? 0) + 1;
+    let o0 = o[t] ?? 0;
+    o[t] = o0 + (ccsHG("shark") ? 2 : 1);
     let r = ccsWhInfo[t].n;
     (De(`${r}ได้กลิ่น${ccsBaitDef[i.k].n} กำลังว่ายมา! 🌊`, 2200),
       setTimeout(() => {
-        o[t] % 5 === 0 && ccsWhGift(t);
+        Math.floor(o[t] / 5) > Math.floor(o0 / 5) && ccsWhGift(t);
       }, 7000),
       _t(z));
   }
@@ -47967,7 +48194,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function ccsWhaleMenu() {
     let i = z.bait ?? {},
       e = ccsWh?.pods.find((n) => n.k === "orca"),
-      t = e && e.mode === "linger";
+      t = e && (e.mode === "linger" || e.mode === "beg");
     (Gi(
       "🐳 ให้อาหารปลาวาฬ · ท่าเรือ",
       `<p class="note">โยนเหยื่อจากปลายท่าเรือ วาฬแต่ละชนิดชอบไม่เหมือนกัน · ให้บ่อย ๆ จะผูกพันและมีของขวัญ</p>${Object.entries(ccsBaitDef)
@@ -47980,7 +48207,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   var ccsOrcaCd = 0;
   function ccsOrcaPlay() {
     let i = ccsWh?.pods.find((s) => s.k === "orca");
-    if (!i || i.mode !== "linger" || performance.now() < ccsOrcaCd) return;
+    if (!i || (i.mode !== "linger" && i.mode !== "beg") || performance.now() < ccsOrcaCd) return;
     ccsOrcaCd = performance.now() + 2500;
     i.lt = Math.max(i.lt, 25);
     let e = Math.floor(Math.random() * 3),
@@ -48030,7 +48257,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   function ccsCoursePrice(i, l = z.trLv ?? 0) {
     let [e, t] = ccsCourse[i];
-    return Math.round((t * ccsTRLvDef[l].mul * (1 + Math.floor(ccsSt(e) / 20) * 0.2)) / 5) * 5;
+    return Math.round((t * ccsTRLvDef[l].mul * (1 + Math.floor(ccsSt(e) / 20) * 0.2) * (ccsHG("grad") ? 0.8 : 1)) / 5) * 5;
   }
   function ccsTRLeft(i) {
     let e = z.trDay ?? (z.trDay = { d: z.day, c: {} });
@@ -48121,7 +48348,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         a = y0.indexOf(s) + ":" + z.day;
       if (r[a]) return void Ln(s.rig.root.position, "น่ารักจัง! 😊");
       r[a] = 1;
-      let c = Math.round((5 + ccsSt("obey") / 8 + e[2] / 4) * (ccsFresh() ? 2 : 1));
+      let c = Math.round((5 + ccsSt("obey") / 8 + e[2] / 4) * (ccsFresh() ? 2 : 1) * (ccsHG("clown") ? 2 : ccsHG("police") ? 1.5 : 1));
       ((z.money += c), Ei(), rt(`❤️ +${c}💰`, s.rig.root.position.clone(), "big"), ke("coin"), Ln(s.rig.root.position, ccsFresh() ? `หอมจัง! ${e[1].split(" ")[1]}เก่งด้วย ให้ทิปเพิ่มเลย ✨` : `ว้าว ${e[1].split(" ")[1]}เก่งมาก! ให้ขนมนะ ❤️`), _t(z));
     }
   }
@@ -48142,8 +48369,27 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         happy: !1,
         lines: ["มาฝึกกันไหม! คุยกับพี่เพื่อเลือกคอร์สได้เลย 🏅", "ฝึกกระโดดเยอะ ๆ จะกระโดดได้สูงมากนะ", "ฝึกเชื่อฟังแล้วสั่งนั่ง สั่งหมอบได้ ชาวเมืองชอบมาก", "ได้ 3 ดาวพลังขึ้นเยอะที่สุด!"],
       });
-      let t = ro("🏅 ครูฝึก · ลงทะเบียน", 3, 1.6, 0.36);
-      (t.position.set(-15.4, 2.35, 16.9), K.add(t));
+      // v122: โต๊ะลงทะเบียนหันออกทางเข้า · ป้ายติดหน้าโต๊ะ (เดิมลอยกลางอากาศ)
+      let D = new J(),
+        W = Ae(10181420, 0.7),
+        Wd = Ae(7032119, 0.75);
+      {
+        let q = new R(new ee(1.7, 0.08, 0.66), W);
+        (q.position.y = 0.92), D.add(q);
+        let f = new R(new ee(1.62, 0.84, 0.06), Wd);
+        (f.position.set(0, 0.46, -0.27), D.add(f));
+        for (let x of [-0.79, 0.79]) {
+          let g = new R(new ee(0.06, 0.88, 0.58), Wd);
+          (g.position.set(x, 0.44, 0), D.add(g));
+        }
+        let pp = new R(new ee(0.5, 0.04, 0.34), Ae(16777215, 0.6));
+        (pp.position.set(0.35, 0.97, 0.05), (pp.rotation.y = 0.2), D.add(pp));
+        let cup = new R(new re(0.06, 0.05, 0.14, 12), Ae(15158332, 0.5));
+        (cup.position.set(-0.5, 1.03, 0.08), D.add(cup));
+      }
+      let t = ro("🏅 ครูฝึก · ลงทะเบียน", 3, 1.5, 0.34);
+      (t.rotation.y = Math.PI), t.position.set(0, 0.55, -0.31), D.add(t);
+      (D.position.set(-15.4, 0, 15.72), D.traverse((q) => q.isMesh && ((q.castShadow = !0), (q.receiveShadow = !0))), K.add(D), pt.push({ x: -15.4, z: 15.72, hw: 0.87, hd: 0.35 }));
       ccsTRNpc = { rig: i, pos: e };
     } catch (i) {
       console.warn("trainer", i);
@@ -48361,7 +48607,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       gain = 0;
     if (((ho_paid_tmp = null), G)) {
       let x = ccsSt(G);
-      ((gain = Math.round([0, 1.5, 3, 5][l] * Math.max(0.3, 1 - x / 120) * ccsTRLvDef[lvX].gain * 10) / 10), (z.stats[G] = Math.min(100, x + gain)));
+      ((gain = Math.round([0, 1.5, 3, 5][l] * Math.max(0.3, 1 - x / 120) * ccsTRLvDef[lvX].gain * (ccsHG("grad") ? 1.3 : 1) * 10) / 10), (z.stats[G] = Math.min(100, x + gain)));
     }
     ((window.__trLast = [l, a ? a.ev.map((d) => d.res) : [], gain]), f && (h[sk] = l),
       (j.score += n),
@@ -49016,8 +49262,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     ho || (ccsTRCamA = null);
     if (ccsBath) {
+      // กล้องอาบน้ำ: ใช้ตำแหน่งของตัวเอง (ไม่แย่งกับกล้องปกติ = ภาพไม่สั่น) และตรึงตัวน้องในอ่างหลังทุกระบบขยับเสร็จ
       let b = ccsBath.at;
-      (Lt.position.lerp(Xt.set(b.x + 1.1, 1.85, b.z - 2.1), Math.min(1, e * 6)), Lt.lookAt(b.x, 0.75, b.z));
+      (ccsBath.cam ??= Lt.position.clone()).lerp(Xt.set(b.x + 1.1, 1.85, b.z - 2.1), Math.min(1, e * 3));
+      (Lt.position.copy(ccsBath.cam), Lt.lookAt(b.x, 0.75, b.z));
+      let d = Le[0];
+      d && (d.pos.set(b.x, 0, b.z), d.rig.root.position.set(b.x, j.gy + 0.4, b.z));
     }
     ccsShake > 0.001 && (Lt.position.x += (Math.random() - 0.5) * ccsShake, (Lt.position.y += (Math.random() - 0.5) * ccsShake), (ccsShake *= Math.pow(0.2, e)));
   }
@@ -52257,6 +52507,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         i.ph === "power"
           ? (() => {
               let [o, r] = ccsPKZone[ccsPKDir[i.aim][1]];
+              ccsHG("viking") && ((o -= 0.04), (r += 0.04));
               return `<p class="note">เล็ง: <b>${{ L: "↙ เรียดซ้าย", C: "⬇ เรียดกลาง", R: "↘ เรียดขวา", HL: "↖ โด่งซ้าย", HC: "⬆ โด่งกลาง", HR: "↗ โด่งขวา" }[i.aim]}</b> · ช่องเขียว = แม่น · เกิน = หลุดกรอบ · เบา = โดนเซฟง่าย</p><div class="pkbar"><b style="left:${o * 100}%;width:${(r - o) * 100}%"></b><em style="left:86%"></em><i id="pkPow"></i></div><button class="bigbtn" data-pk="K">⚽ ยิง!</button>`;
             })()
           : `<div class="pkgrid">${t("HL", e ? "↖ พุ่งสูงซ้าย" : "↖ โด่งซ้าย")}${t("HC", e ? "⬆ กระโดดกลาง" : "⬆ โด่งกลาง")}${t("HR", e ? "↗ พุ่งสูงขวา" : "↗ โด่งขวา")}${t("L", e ? "↙ พุ่งต่ำซ้าย" : "↙ เรียดซ้าย")}${t("C", e ? "⬇ ยืนกลาง" : "⬇ เรียดกลาง")}${t("R", e ? "↘ พุ่งต่ำขวา" : "↘ เรียดขวา")}</div>`;
@@ -52354,7 +52605,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           // น้องยิง: แรงในช่องเขียว = แม่น, เกิน 0.88 = หลุดกรอบ (โด่งข้ามคาน / เรียดชนเสาออก), ต่ำกว่า 0.25 = ลูกเบา
           let [E, g] = ccsPKZone[d],
             y = t.pow;
-          ((E -= ccsSt("bal") * 0.0008 + (d ? ccsSt("jump") * 0.0008 : 0)), (g += ccsSt("bal") * 0.0008 + (d ? ccsSt("jump") * 0.0008 : 0)));
+          ((E -= ccsSt("bal") * 0.0008 + (d ? ccsSt("jump") * 0.0008 : 0)), (g += ccsSt("bal") * 0.0008 + (d ? ccsSt("jump") * 0.0008 : 0)), ccsHG("viking") && ((E -= 0.04), (g += 0.04)));
           // นอกช่องเขียว: แรงเกิน = เสี่ยงหลุดกรอบมากขึ้นเรื่อย ๆ, เบาไป = เสี่ยงเฉียงออก/โดนเซฟง่าย
           ((p = y > 0.86 || (y > g && Math.random() < (y - g) * (f !== 0 || d ? 7 : 4)) || (y < E && y >= 0.25 && f !== 0 && Math.random() < (E - y) * 1.6)), (m = y < 0.3 ? "weak" : y >= E && y <= g ? "clean" : "ok"));
           let x = Math.random() < t.foe.read;
@@ -52372,28 +52623,68 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         m === "weak" && !E && f !== 0 && u[0] === 0 && (y = 0.3);
         ((t.res = p ? "miss" : Math.random() < y ? "save" : "goal"), (t.kd = u), (t.miss = p));
       }
-      let u = { goal: 1, save: 0.55, miss: 1 }[t.res];
+      // v122: วิถีลูกตามจริง — เข้าประตูต้องข้ามเส้น, เซฟต้องปัดออกก่อนเส้น, พลาด = ข้ามคาน/ออกข้างเสา/ชนเสา
+      if (!t.tg) {
+        let G = tb.find((_) => _.side === 1),
+          hw = (G?.w ?? 3.6) / 2,
+          bh = G?.h ?? 2.2,
+          R = o.r ?? 0.45,
+          tz = f * hw * 0.72,
+          ty = d ? Math.max(R + 0.6, bh * 0.72) : R + 0.04,
+          k = t.res;
+        if (t.res === "miss") {
+          let sd = f || (Math.random() < 0.5 ? -1 : 1);
+          d || f === 0
+            ? ((ty = bh + R + 0.35 + Math.random() * 0.5), (tz = f * hw * 0.5), (k = "over"))
+            : Math.random() < 0.35
+              ? ((tz = sd * (hw - R * 0.6)), (ty = R + 0.4), (k = "post"))
+              : ((tz = sd * (hw + R + 0.45 + Math.random() * 0.5)), (k = "wide"));
+        }
+        t.tg = { z: tz, y: ty, k, R, dep: G?.depth ?? 1.2, hit: 0 };
+      }
+      let g0 = t.tg,
+        T1 = h && t.pow < 0.25 ? 0.85 : 0.55;
       if (t.t < 0.45) {
         let p = t.t / 0.45;
         h ? (e.pos.copy(c).lerp(s.spot.clone().add(new H(-0.35, 0, 0)), p), (e.spd = 4)) : n && n.pos.copy(l).lerp(s.spot.clone().add(new H(-0.4, 0, 0)), p);
       } else {
-        let p = Math.min(1, (t.t - 0.45) / (h && t.pow < 0.25 ? 0.85 : 0.55)),
-          m = t.miss ? (d ? 0 : 1) : 0,
-          E = f * (t.miss && !d ? 2.45 : f ? 1.55 : 0),
-          g = t.miss && d ? 2.95 : d ? 1.75 : 0.32,
-          y = p * u;
-        (o.pos.set(s.spot.x + (s.gx + 0.6 - s.spot.x) * y, 0, s.spot.z + E * y), (o.y = g * Math.sin(Math.min(1, y) * Math.PI * 0.5) * (d ? 1 : 1)), o.m.position.set(o.pos.x, (o.r ?? 0.45) + 0.03 + o.y, o.pos.z));
-        // ผู้รักษาประตูพุ่งไปทิศที่เลือก (ตำแหน่งจริงในโลก)
-        let x = Math.min(1, p * 1.7),
-          b = t.kd[0] * 1.35 * x,
-          w = t.kd[1] ? 0.85 : 0.15;
-        if (h && n) ((n.pos.z = s.keep.z + b), (n.pos.x = s.keep.x), (a.root.rotation.order = "YXZ"), (a.root.rotation.z = -t.kd[0] * x * (t.kd[1] ? 0.9 : 1.35)), (a.root.position.y = Math.sin(x * Math.PI) * w));
-        else if (!h) {
-          (e.pos.set(s.keep.x, 0, s.keep.z + b), (t.kd[0] !== 0 || t.kd[1]) && x > 0.05 && !t.jumped && ((t.jumped = !0), (j.vy = t.kd[1] ? 6.8 : 3.6), (j.jt = 0)));
+        let q = (t.t - 0.45) / T1,
+          X0 = s.spot.x,
+          XL = s.gx,
+          qc = (s.keep.x + 0.15 - X0) / (XL - X0),
+          R = g0.R,
+          bx,
+          bz,
+          by,
+          p = 0;
+        if (t.res === "save" && q >= qc) {
+          // ผู้รักษาประตูปัดลูกออก (ไม่ข้ามเส้น)
+          let τ = (q - qc) * T1,
+            sz = Math.sign(g0.z) || (Math.random() < 0.5 ? -1 : 1);
+          ((bx = s.keep.x + 0.15 - 4.2 * τ), (bz = g0.z + sz * 3 * τ), (by = Math.max(R, g0.y + (g0.y > 1 ? 2.4 : 1.6) * τ - 4.9 * τ * τ)), g0.hit || ((g0.hit = 1), ke("pop")), (p = τ > 0.75 ? 1 : 0));
+        } else if (q <= 1) {
+          let A = g0.k === "over" ? 0.45 : d ? 0.35 : 0.08;
+          ((bx = X0 + (XL - X0) * q), (bz = g0.z * q), (by = R + (g0.y - R) * q + A * Math.sin(q * Math.PI)));
+        } else {
+          let τ = (q - 1) * T1;
+          if (g0.k === "goal") ((bx = XL + Math.min(g0.dep * 0.75, 9 * τ)), (bz = g0.z), (by = Math.max(R, g0.y - 4.9 * τ * τ)), (p = τ > 0.55 ? 1 : 0));
+          else if (g0.k === "post") {
+            let sz = Math.sign(g0.z);
+            (g0.hit || ((g0.hit = 1), ke("pop")), (bx = XL - 4.5 * τ), (bz = g0.z + sz * 2.6 * τ), (by = Math.max(R, g0.y + 1.8 * τ - 4.9 * τ * τ)), (p = τ > 0.65 ? 1 : 0));
+          } else ((bx = XL + 10 * τ), (bz = g0.z * (1 + τ * 0.6)), (by = Math.max(R, g0.y + (g0.k === "over" ? 1 : 0.2) * τ - 4.9 * τ * τ)), (p = τ > 0.5 ? 1 : 0));
         }
+        (o.pos.set(bx, 0, s.spot.z + bz), (o.y = by - R), o.m.position.set(o.pos.x, R + 0.03 + o.y, o.pos.z));
+        // ผู้รักษาประตูพุ่ง: ถ้าเซฟ = ไปถึงจุดลูกพอดี, ถ้าพุ่งถูกฝั่งแต่โดนยิงเข้า = เอื้อมไม่ถึง
+        let x = Math.min(1, ((t.t - 0.45) / T1) * 1.7),
+          kz = t.res === "save" ? g0.z : t.kd[0] === f && t.res === "goal" && f !== 0 ? g0.z * 0.6 : t.kd[0] * 1.35,
+          ky = t.res === "save" ? Math.max(0, g0.y - 1) : t.kd[1] ? 0.85 : 0.15,
+          b = kz * x;
+        if (h && n) ((n.pos.z = s.keep.z + b), (n.pos.x = s.keep.x), (a.root.rotation.order = "YXZ"), (a.root.rotation.z = -Math.sign(kz) * Math.min(1.35, Math.abs(kz) * 0.9) * x), (a.root.position.y = Math.sin(x * Math.PI * 0.5) * ky));
+        else if (!h) (e.pos.set(s.keep.x, 0, s.keep.z + b), (kz !== 0 || ky > 0.5) && x > 0.05 && !t.jumped && ((t.jumped = !0), (j.vy = ky > 0.5 ? 6.8 : 3.6), (j.jt = 0)));
         if (p >= 1) {
           ((t.ph = "result"), (t.t = 0), (t.jumped = !1), (h ? t.me : t.cpu).push(t.res === "goal"), ccsPKBoard());
-          let v = t.res === "goal" ? (h ? "⚽ โกล!!" : `⚽ ${t.foe.n} ยิงเข้า`) : t.res === "save" ? (h ? `🧤 ${t.foe.n} เซฟได้!` : "🧤 เซฟสวย!!") : h ? (d ? "😵 โด่งข้ามคาน!" : "😵 ชนเสาออก!") : `😆 ${t.foe.n} ยิงพลาด!`;
+          let mk = { over: "โด่งข้ามคาน", wide: "ยิงออกข้างเสา", post: "ชนเสาออก" }[t.tg?.k] ?? "ยิงพลาด",
+            v = t.res === "goal" ? (h ? "⚽ โกล!!" : `⚽ ${t.foe.n} ยิงเข้า`) : t.res === "save" ? (h ? `🧤 ${t.foe.n} เซฟได้!` : "🧤 เซฟสวย!!") : h ? `😵 ${mk}!` : `😆 ${t.foe.n} ${mk}!`;
           (rt(v, o.pos.clone().setY(2), (t.res === "goal") === h ? "big" : "bad"), t.res === "goal" ? (ke(h ? "heart" : "nope"), ccsWhistle?.("goal")) : ke(h ? "nope" : "heart"), h && t.res === "goal" && Ai("goal"));
           if (t.res === "goal") for (let _ of tb) _.side === 1 && ((_.t = 0), _.hit.copy(o.pos).setY(o.y + 0.5), _.dir.set(1, 0, 0), (_.amp = 0.5));
         }
@@ -52404,7 +52695,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       a && ((a.root.rotation.z *= 0.88), (a.root.position.y *= 0.8));
       if (t.t < 1.6) return;
       a && ((a.root.rotation.z = 0), (a.root.position.y = 0));
-      ((t.res = void 0), (t.aim = null), (t.dive = null), (t.pow = 0));
+      ((t.res = void 0), (t.tg = void 0), (t.aim = null), (t.dive = null), (t.pow = 0));
       let h = t.me.filter(Boolean).length,
         f = t.cpu.filter(Boolean).length,
         d = t.me.length,
@@ -55393,12 +55684,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         (j.tired > 0 ? 2 : 6.2 * (1 + Math.min(10, c - 1) * 0.03)) *
         (l ? 0.7 : 1) *
         (h ? 0.7 : 1) *
-        (j.wade > 0.15 ? 0.6 : 1) *
+        (j.wade > 0.15 ? (ccsHG("swim") ? 1.15 : 0.6) : 1) *
         (j.running ? 1.7 : 1) *
         (1 + ccsSt("speed") * 0.0025) *
         a *
         aT();
-      j.running && j.started && (z.energy = Math.max(0, (z.energy ?? 100) - e * 0.35 * F6() * (1 - ccsSt("stam") / 200)));
+      j.running && j.started && (z.energy = Math.max(0, (z.energy ?? 100) - e * 0.35 * F6() * (1 - ccsSt("stam") / 200) * (ccsHG("helmet") ? 0.5 : 1)));
       let u = j.started && a > 0.08 && !ho,
         p = j.jy > 0.42;
       (u ? O3.copy(S6).multiplyScalar(s).addScaledVector(_6, -o).normalize().multiplyScalar(d) : O3.set(0, 0, 0),
@@ -55452,9 +55743,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       if (((n.spd = m > 0.06 ? m : 0), ccsRide)) ccsRideStep(n, e);
       else if (ho) ccsTRTick(n, e);
       else
-        (Ed && j.jy <= 0.001 && j.started && !Se && ((j.vy = 7.4 * (1 + ccsSt("jump") * 0.003)), (j.jt = 0), ke("pop")),
+        (Ed && j.jy <= 0.001 && j.started && !Se && ((j.vy = 7.4 * (1 + ccsSt("jump") * 0.003) * (ccsHG("prop") ? 1.25 : 1)), (j.jt = 0), ke("pop")),
           (j.jy > 0 || j.vy > 0) &&
-            ((j.vy -= 24 * e), (j.jy = Math.max(0, j.jy + j.vy * e)), (j.jt += e), j.jy === 0 && (j.vy = 0)));
+            ((j.vy -= (ccsHG("prop") && j.vy < 0 ? 13 : 24) * e), (j.jy = Math.max(0, j.jy + j.vy * e)), (j.jt += e), j.jy === 0 && (j.vy = 0)));
       Ed = !1;
       let E = Se ? (Rn && Se === Rn && (j.sleeping || $H(n.pos)) ? Rn.bedY + ccsBedLift(n) : 0) : x4(n.pos, n.rig.yaw, b4);
       E >= j.gy ? (j.gy = E) : (j.gy = Math.max(E, j.gy - e * 5));
@@ -55511,13 +55802,13 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         let b = n.spd > 0.3 ? 1.5 : 1,
           w = j.sleeping ? 0.3 : 1;
         if (
-          ((z.hunger = Math.max(0, (z.hunger ?? 100) - e * 0.09 * b * w)),
-          (z.thirst = Math.max(0, (z.thirst ?? 100) - e * 0.13 * b * w)),
+          ((z.hunger = Math.max(0, (z.hunger ?? 100) - e * 0.09 * b * w * (ccsHG("koala") ? 0.7 : 1))),
+          (z.thirst = Math.max(0, (z.thirst ?? 100) - e * 0.13 * b * w * (ccsHG("drink") ? 0.5 : 1))),
           j.sleeping || (z.energy = Math.max(0, (z.energy ?? 100) - e * 0.085 * b * F6() * (1 - ccsSt("stam") / 200))),
-          (z.potty = Math.min(100, (z.potty ?? 0) + e * 0.03)),
+          (z.potty = Math.min(100, (z.potty ?? 0) + e * 0.03 * (ccsHG("plunger") ? 0.5 : 1))),
           (z.clean = Math.max(
             0,
-            (z.clean ?? 100) - e * 0.035 * b * (co.cur.r > 0.3 && !Se ? 2.2 : 1) * (j.sleeping ? 0.2 : 1) * (ccsFresh() ? 0.15 : 1),
+            (z.clean ?? 100) - e * 0.035 * b * (co.cur.r > 0.3 && !Se ? (ccsHG("rain") ? 0.5 : 2.2) : ccsHG("rain") ? 0.5 : 1) * (j.sleeping ? 0.2 : 1) * (ccsFresh() ? 0.15 : 1),
           )),
           (j.needT -= e),
           j.needT < 0 && !j.sleeping)
@@ -57059,11 +57350,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       "dw:kick_santa": { heat: 3 },
       "dw:kick_viking": { speed: 3 },
     },
-    oT = (i) => wC[i] ?? (i.startsWith("cc:") ? { charm: 1 } : {}),
+    oT = (i) => wC[i] ?? (i.startsWith("cc:") ? ccsHatStat[i.slice(3)] ?? { charm: 1 } : {}),
     A0 = (i) =>
       Object.entries(oT(i))
         .map(([e, t]) => `${rl[e].ic}+${t}`)
-        .join(" "),
+        .join(" ") + (i.startsWith("cc:") && ccsHatGim[i.slice(3)] ? ` · ${ccsHatGim[i.slice(3)][1]}` : ""),
     xn = z;
   function cb() {
     let i = {};
@@ -60314,14 +60605,13 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       return nt("🎡 ขึ้นชิงช้าสวรรค์ชมวิว 50💰", ccsRideStart);
     if (ccsPierEnd(e) && ccsWh) {
       let h = ccsWh.pods.find((f) => f.k === "orca");
-      return h && h.mode === "linger" && Object.values(z.bait ?? {}).every((f) => !(f > 0))
+      if (ccsOrcaBeg() && (z.bait?.salmon ?? 0) > 0 && !ccsBaitFly) return nt(`🐟 ป้อนแซลมอนเข้าปากออร์กา (มี ${z.bait.salmon})`, () => ccsWhaleThrow("salmon"));
+      return h && (h.mode === "linger" || h.mode === "beg") && Object.values(z.bait ?? {}).every((f) => !(f > 0))
         ? nt("🐳 เล่นกับออร์กา", ccsOrcaPlay)
-        : nt(`🐳 ให้อาหารปลาวาฬ · ${Object.entries(z.bait ?? {}).filter(([, f]) => f > 0).map(([f, d]) => ccsBaitDef[f].icon + d).join(" ") || "ยังไม่มีเหยื่อ"}${h && h.mode === "linger" ? " · เล่นกับออร์กา" : ""}`, ccsWhaleMenu);
+        : nt(`🐳 ให้อาหารปลาวาฬ · ${Object.entries(z.bait ?? {}).filter(([, f]) => f > 0).map(([f, d]) => ccsBaitDef[f].icon + d).join(" ") || "ยังไม่มีเหยื่อ"}${h && (h.mode === "linger" || h.mode === "beg") ? " · เล่นกับออร์กา" : ""}`, ccsWhaleMenu);
     }
-    if (ccsFreeChick && e.distanceTo(ccsFreeChick.p) < 1.3)
-      return nt("🍗 กินไก่ย่างฟรี (ของขวัญหมวกลูกไก่)", () => {
-        ((z.freeChick = z.day), mi(55, 0), (z.energy = Math.min(100, (z.energy ?? 0) + 15)), ke("heart"), rt("🍗 อร่อย! +55🍖 +15⚡", e, "big"), _t(z));
-      });
+    if (ccsFreeGift && e.distanceTo(ccsFreeGift.p) < 1.3)
+      return nt({ chick: "🍗 กินไก่ย่างฟรี (หมวกลูกไก่)", santa: "🎁 เปิดกล่องของขวัญ (หมวกซานต้า)", pumpkin: "🥧 กินพายฟักทองฟรี (หมวกฟักทอง)" }[ccsFreeGift.k], () => ccsGiftTake(e));
     if ((ccsTRMakeNpc(), ccsTRNpc && !Se && !ho && e.distanceTo(ccsTRNpc.pos) < 2))
       return nt(ccsTROpen() ? "🏅 คุยกับครูฝึกพี่ต้น · เลือกคอร์สฝึก" : "🔒 สนามฝึกปิดแล้ว (เปิด 08:00-19:00)", ccsTROpen() ? ccsTRMenu : null, !ccsTROpen());
     if (ccsPK) return nt(`⚽ ดวลจุดโทษ ${ccsPK.me.filter(Boolean).length}:${ccsPK.cpu.filter(Boolean).length}`, null, !0);
@@ -62991,7 +63281,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let s = e
         .map(
           (r, a) =>
-            `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${(e === DE && G3() < 1) || (e === Xk && ccsWear("cc:Hat_48")) ? `<s>${r.price}</s> ${Math.round(r.price * (e === DE ? G3() : 0.6))}${e === Xk ? " 🐥-40%" : ""}` : r.price} 💰 \xB7 ${r.bait ? `เหยื่อ ×${r.n} (มี ${z.bait?.[r.bait] ?? 0})` : `+${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""}`} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
+            `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${ccsPriceF(e, r) < 1 ? `<s>${r.price}</s> ${Math.round(r.price * ccsPriceF(e, r))}` : r.price} 💰 \xB7 ${r.bait ? `เหยื่อ ×${r.n} (มี ${z.bait?.[r.bait] ?? 0})` : `+${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""}`} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
         )
         .join(""),
       o = n === "sell" ? _T(i) : n === "trade" ? Kk() : "";
@@ -63000,7 +63290,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       document.querySelectorAll("[data-food]").forEach((r) =>
         r.addEventListener("click", () => {
           let a = e[+r.dataset.food],
-            c = Math.round(a.price * (e === DE ? G3() : e === Xk && ccsWear("cc:Hat_48") ? 0.6 : 1));
+            c = Math.round(a.price * ccsPriceF(e, a));
           if (z.money < c) {
             ke("nope");
             return;
@@ -63965,7 +64255,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bathSt: () => ccsBath && { t: ccsBath.t, at: ccsBath.at, dog: Le[0].pos.clone(), jy: j.jy },
         fresh: () => ccsFresh(),
         trOpen: () => ccsTROpen(),
-        freeChick: () => ccsFreeChick && { p: ccsFreeChick.p, day: z.freeChick },
+        freeChick: () => ccsFreeGift && { p: ccsFreeGift.p, k: ccsFreeGift.k },
+        hg: (k) => ccsHG(k),
+        hatShop: () => OE(),
         wear: (k) => ccsWear(k),
         setLv: (l) => (z.trLv = l),
         trBuy: (k) => ccsTRBuy(k),
