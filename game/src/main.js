@@ -44717,6 +44717,12 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
           [300, 0.05, "sine"],
           [900, 0.1, "sine"],
         ],
+        sparkle: [
+          [1568, 0.06, "sine"],
+          [2093, 0.06, "sine"],
+          [2637, 0.08, "sine"],
+          [3136, 0.22, "triangle"],
+        ],
         // v106: เสียงแตรสำเร็จภารกิจ (ต่างจากเสียงอื่นชัดเจน)
         quest: [
           [523, 0.11, "square"],
@@ -47317,7 +47323,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           : [
               {
                 key: "bath",
-                label: "อาบน้ำหอม ๆ 🛁 (+60⚡)",
+                label: "อาบน้ำหอม ๆ ในอ่าง 🛁 (+60⚡ หอมฟุ้ง 1 วัน)",
                 price: 60,
                 make: () => Os(6080757),
                 thumb: () => null,
@@ -47549,6 +47555,152 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     GH = new H(),
     Ma = () => z.train ?? (z.train = { xp: 0, lvl: 1, runs: 0 }),
     rd = (i) => Math.round(80 * Math.pow(i, 1.5) + 20);
+  // ===== v120: เวลาเปิดสนามฝึก, ไฟสนาม, ระดับการฝึก, อาบน้ำในอ่าง, หมวกพิเศษ =====
+  var ccsTRSign = null,
+    ccsTRLvDef = [
+      { n: "เบื้องต้น", e: 1.25, p: 0.65, spd: 1, bal: 1, stay: 3, sit: 1.6, mul: 1, gain: 1 },
+      { n: "ปานกลาง", e: 0.95, p: 0.45, spd: 1.25, bal: 1.35, stay: 4, sit: 1.2, mul: 1.5, gain: 1.4 },
+      { n: "ระดับสูง", e: 0.75, p: 0.3, spd: 1.5, bal: 1.7, stay: 5, sit: 0.9, mul: 2, gain: 1.8 },
+    ];
+  var ccsTRCamA = null;
+  function ccsTROpen() {
+    let i = j.time % 1;
+    return i >= 8 / 24 && i < 19 / 24;
+  }
+  function ccsTRL() {
+    return ccsTRLvDef[ho?.lv ?? 0];
+  }
+  function ccsTRW() {
+    let i = ccsTRL(),
+      e = ccsSt("bal");
+    return { e: i.e + e * 0.005, p: i.p + e * 0.004 };
+  }
+  function ccsStarKey(i, e) {
+    return e ? `${i}:${e}` : i;
+  }
+  function ccsTRUnlocked(i, e) {
+    return !e || (z.trainStars?.[ccsStarKey(i, e - 1)] ?? 0) >= 2;
+  }
+  function ccsTRFieldInit() {
+    if (ccsTRSign) return;
+    // ป้าย OPEN / CLOSED ที่ซุ้มทางเข้า
+    let i = document.createElement("canvas");
+    ((i.width = 256), (i.height = 112));
+    let e = new ut(i);
+    e.colorSpace = "srgb";
+    let t = new R(new Te(1.5, 0.66), new be({ map: e, side: Ke, toneMapped: !1 }));
+    (t.position.set(-14.1, 1.55, 16.25), (t.rotation.y = Math.PI), K.add(t));
+    let n = new R(new re(0.04, 0.04, 1.3, 6), Ae(5592405, 0.5));
+    (n.position.set(-14.1, 0.65, 16.27), K.add(n));
+    ccsTRSign = { cv: i, tex: e, open: null };
+    // ไฟส่องสว่างสนามฝึก 6 ต้น
+    let s = Ae(4473924, 0.5, { metalness: 0.4 }),
+      o = new be({ color: 16774368, toneMapped: !1 });
+    for (let [r, a] of [
+      [-30.6, 15.6],
+      [-5.4, 15.6],
+      [-30.6, 34],
+      [-5.4, 34],
+      [-18, 34.2],
+      [-30.8, 25],
+    ]) {
+      let c = new R(new re(0.07, 0.09, 4.6, 8), s);
+      (c.position.set(r, 2.3, a), K.add(c), pt.push({ x: r, z: a, hw: 0.15, hd: 0.15 }));
+      let l = new R(new ee(0.7, 0.16, 0.36), s);
+      (l.position.set(r + (r < -18 ? 0.3 : -0.3), 4.6, a + (a < 25 ? 0.2 : -0.2)), K.add(l));
+      let h = new R(new ee(0.6, 0.04, 0.28), o);
+      (h.position.copy(l.position).setY(4.51), K.add(h));
+      let f = new En(16774368, 0, 20, 1.2);
+      (f.position.copy(l.position).setY(4.3), K.add(f), H0.push({ l: f, on: 16 }));
+    }
+  }
+  function ccsTRSignTick() {
+    if (!ccsTRSign) return;
+    let i = ccsTROpen();
+    if (ccsTRSign.open === i) return;
+    ccsTRSign.open = i;
+    let e = ccsTRSign.cv.getContext("2d");
+    ((e.fillStyle = i ? "#1e9e4a" : "#c0392b"), e.fillRect(0, 0, 256, 112), (e.strokeStyle = "#fff"), (e.lineWidth = 6), e.strokeRect(5, 5, 246, 102), (e.fillStyle = "#fff"), (e.textAlign = "center"), (e.font = "900 50px Mitr, sans-serif"), e.fillText(i ? "OPEN" : "CLOSED", 128, 60), (e.font = "700 22px Mitr, sans-serif"), e.fillText("เปิด 08:00 - 19:00", 128, 95), (ccsTRSign.tex.needsUpdate = !0));
+    ccsTRNpc && (ccsTRNpc.rig.root.visible = i);
+  }
+  // ---- อาบน้ำในอ่างที่ร้านอาบน้ำตัดขน ----
+  var ccsBath = null,
+    ccsSparkTex = null;
+  function ccsSparkle(i, e = 14) {
+    ccsSparkTex ??= ss(64, 64, (t) => {
+      ((t.fillStyle = "#fff"), t.beginPath());
+      for (let n = 0; n < 8; n++) {
+        let s = (n / 8) * Math.PI * 2,
+          o = n % 2 ? 9 : 30;
+        t.lineTo(32 + Math.cos(s) * o, 32 + Math.sin(s) * o);
+      }
+      t.fill();
+    });
+    for (let t = 0; t < e; t++) {
+      let n = new zi(new vi({ map: ccsSparkTex, color: [16774144, 16777215, 10741759, 16759039][t % 4], transparent: !0, depthWrite: !1, blending: $i, toneMapped: !1 }));
+      (n.position.copy(i).add(new H((Math.random() - 0.5) * 1.1, 0.3 + Math.random() * 0.9, (Math.random() - 0.5) * 1.1)), n.scale.setScalar(0.01), K.add(n), Yp.push({ o: n, t: 1.1 + Math.random() * 0.5, sp: !0, a: Math.random() * 6 }));
+    }
+  }
+  function ccsBathStart() {
+    if (!uE || !Se || Se.id !== "groom") return !1;
+    let i = new H();
+    uE.getWorldPosition(i);
+    let e = [];
+    for (let t = 0; t < 26; t++) {
+      let n = new R(new we(0.09 + Math.random() * 0.09, 10, 8), new X({ color: 16777215, roughness: 0.25, transparent: !0, opacity: 0.92 }));
+      (n.scale.setScalar(0.01), K.add(n), e.push({ m: n, a: Math.random() * 6, r: 0.18 + Math.random() * 0.3, y: 0.15 + Math.random() * 0.55, d: Math.random() * 1.2 }));
+    }
+    return (Le[0].rig.root.traverse((t) => t.userData.isXray && (t.visible = !1)), (ccsBath = { t: 0, dur: 4.2, at: i, back: Le[0].pos.clone(), fo: e }), qs(), ke("splash"), !0);
+  }
+  function ccsBathTick(i) {
+    let e = ccsBath;
+    if (!e) return;
+    let t = Le[0];
+    ((e.t += i), c0.set(0, 0, 0), (Ed = !1));
+    let n = e.t < e.dur;
+    if (n) {
+      (t.pos.set(e.at.x, 0, e.at.z), (j.jy = 0.4), (t.dir = 2.66), (t.spd = 0));
+      let s = Math.min(1, e.t / 1.2) * (e.t > e.dur - 0.5 ? (e.dur - e.t) / 0.5 : 1);
+      for (let o of e.fo) {
+        let r = Math.min(1, Math.max(0, (e.t - o.d) / 0.6)) * s;
+        (o.m.scale.setScalar(Math.max(0.01, r)), o.m.position.set(e.at.x + Math.cos(o.a + e.t * 0.6) * o.r, 0.45 + o.y + Math.sin(e.t * 3 + o.a) * 0.03, e.at.z + Math.sin(o.a + e.t * 0.6) * o.r * 0.7));
+      }
+      e.t % 0.9 < i && ke("splash");
+    } else {
+      for (let s of e.fo) (K.remove(s.m), s.m.geometry.dispose());
+      (t.rig.root.traverse((o) => o.userData.isXray && (o.visible = !0)), (ccsBath = null), (j.jy = 0), t.pos.copy(e.back));
+      // อาบน้ำร้าน: สะอาด + หอมฟุ้ง 1 วัน + ขนเงาวิ้ง
+      ((z.clean = 100), (z.fresh = j.time + 1), (z.energy = Math.min(100, (z.energy ?? 0) + 60)), ccsSparkle(t.pos, 18), ke("sparkle"), rt("✨ วิ้ง! หอมฟุ้ง", t.pos, "big"), De("🛁 อาบน้ำเสร็จแล้ว! ✨ หอมฟุ้ง 1 วัน: ตัวไม่เลอะง่าย · ทิปจากคำสั่ง ×2 · ชาวเมืองทักชม", 3600), _t(z));
+    }
+  }
+  function ccsFresh() {
+    return (z.fresh ?? 0) > j.time;
+  }
+  // ---- หมวกพิเศษ ----
+  function ccsWear(i) {
+    return Object.values(Ar()).includes(i);
+  }
+  var ccsFreeChick = null;
+  function ccsHatTick(i) {
+    // หมวกลูกไก่: ในบ้านมีไก่ย่างฟรีวันละจาน
+    let e = ccsWear("cc:Hat_48") && Rn && Se === Rn && z.freeChick !== z.day;
+    if (e && !ccsFreeChick) {
+      let t = new J(),
+        n = new R(new re(0.32, 0.26, 0.05, 24), Ae(16777215, 0.4));
+      t.add(n);
+      let s = new R(new we(0.17, 12, 10), Ae(12088115, 0.6));
+      (s.scale.set(1.3, 0.75, 1), (s.position.y = 0.11), t.add(s));
+      for (let a of [-1, 1]) {
+        let c = new R(new re(0.035, 0.05, 0.22, 8), Ae(12088115, 0.6));
+        ((c.rotation.z = (a * Math.PI) / 2.6), c.position.set(a * 0.2, 0.14, 0.05), t.add(c));
+      }
+      let o = Rn.bowls.clone().add(new H(0.9, 0, 0));
+      (t.position.copy(o).setY(0.03), K.add(t), (ccsFreeChick = { g: t, p: o }));
+      let r = new zi(new vi({ map: ei("🍗 ฟรี!", 16765503, 9067051, 256, 96), transparent: !0, depthWrite: !1 }));
+      (r.scale.set(0.9, 0.34, 1), (r.position.y = 0.75), t.add(r));
+    } else !e && ccsFreeChick && (K.remove(ccsFreeChick.g), (ccsFreeChick = null));
+    ccsFreeChick && (ccsFreeChick.g.rotation.y += i * 0.6);
+  }
   // ===== v119: ครูฝึก + คอร์สฝึก + พลัง 5 ด้าน (มีผลในเกมจริง) + คำสั่ง =====
   var ccsTRNpc = null,
     ccsStatDef = [
@@ -47582,9 +47734,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function ccsSt(i) {
     return Math.max(0, Math.min(100, (z.stats ?? (z.stats = {}))[i] ?? 0));
   }
-  function ccsCoursePrice(i) {
+  function ccsCoursePrice(i, l = z.trLv ?? 0) {
     let [e, t] = ccsCourse[i];
-    return Math.round((t * (1 + Math.floor(ccsSt(e) / 20) * 0.2)) / 5) * 5;
+    return Math.round((t * ccsTRLvDef[l].mul * (1 + Math.floor(ccsSt(e) / 20) * 0.2)) / 5) * 5;
   }
   function ccsTRLeft(i) {
     let e = z.trDay ?? (z.trDay = { d: z.day, c: {} });
@@ -47600,7 +47752,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   }
   function ccsTRMenu() {
     if (!Cr) return;
-    let i = Ma(),
+    if (!ccsTROpen()) return void De("🔒 สนามฝึกปิดแล้ว เปิด 08:00-19:00 นะ", 2200);
+    let L = z.trLv ?? 0,
+      i = Ma(),
       e = ccsStatDef
         .map(([n, s, o]) => {
           let r = Cr.stations
@@ -47608,8 +47762,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             .map((a) => {
               let c = ccsCoursePrice(a.id),
                 l = ccsTRLeft(a.id),
-                h = z.trainStars?.[a.id] ?? 0;
-              return `<div class="row"><div class="ic">${a.icon}</div><div class="nm"><b>${a.name}</b><small>${"⭐".repeat(h)}${"☆".repeat(3 - h)} · วันนี้เหลือ ${l}/3 · ใช้แรง ${Math.round(a.stamina * (1 - ccsSt("stam") / 200))}</small></div><button class="buy" data-crs="${a.id}" ${l <= 0 || z.money < c ? "disabled" : ""}>ฝึก ${c}💰</button></div>`;
+                h = z.trainStars?.[ccsStarKey(a.id, L)] ?? 0,
+                u = ccsTRUnlocked(a.id, L);
+              return `<div class="row${u ? "" : " off"}"><div class="ic">${a.icon}</div><div class="nm"><b>${a.name}</b><small>${u ? `${"⭐".repeat(h)}${"☆".repeat(3 - h)} · วันนี้เหลือ ${l}/3 · ใช้แรง ${Math.round(a.stamina * (1 - ccsSt("stam") / 200))}` : `🔒 ต้องได้ ⭐⭐ ระดับ${ccsTRLvDef[L - 1].n}ก่อน`}</small></div><button class="buy" data-crs="${a.id}" ${!u || l <= 0 || z.money < c ? "disabled" : ""}>ฝึก ${c}💰</button></div>`;
             })
             .join("");
           return `<h4 class="qh">${s} ${o} · ${ccsSt(n).toFixed(1)}/100</h4>${r}`;
@@ -47617,14 +47772,21 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         .join("");
     (Gi(
       "🏅 ครูฝึกพี่ต้น · เลือกคอร์สฝึก",
-      `<p class="note">ฝึกได้คอร์สละ 3 ครั้ง/วัน · ได้ดาวมาก = พลังขึ้นมาก (⭐ +1.5 · ⭐⭐ +3 · ⭐⭐⭐ +5 ยิ่งสูงยิ่งขึ้นช้า) · เลเวลฝึก ${i.lvl}</p><div class="stbars">${ccsStatBars()}</div><button class="buy wide" data-cmdmenu>🐾 สั่งน้อง (คำสั่งที่ปลดล็อกแล้ว)</button>${e}`,
+      `<p class="note">ฝึกได้คอร์สละ 3 ครั้ง/วัน · ได้ดาวมาก = พลังขึ้นมาก (⭐ +1.5 · ⭐⭐ +3 · ⭐⭐⭐ +5 ยิ่งสูงยิ่งขึ้นช้า) · เลเวลฝึก ${i.lvl}</p><div class="stbars">${ccsStatBars()}</div><div class="trlv">${ccsTRLvDef.map((d, u) => `<button data-trlv="${u}" class="${u === L ? "on" : ""}">Lv.${u + 1} ${d.n}<small>ค่าฝึก ×${d.mul} · พลัง ×${d.gain}</small></button>`).join("")}</div><button class="buy wide" data-cmdmenu>🐾 สั่งน้อง (คำสั่งที่ปลดล็อกแล้ว)</button>${e}`,
     ),
       document.querySelectorAll("[data-crs]").forEach((n) => n.addEventListener("click", () => ccsTRBuy(n.dataset.crs))),
-      document.querySelector("[data-cmdmenu]")?.addEventListener("click", ccsCmdMenu));
+      document.querySelector("[data-cmdmenu]")?.addEventListener("click", ccsCmdMenu),
+      document.querySelectorAll("[data-trlv]").forEach((n) =>
+        n.addEventListener("click", () => {
+          ((z.trLv = +n.dataset.trlv), ke("pop"), ccsTRMenu());
+        }),
+      ));
   }
   function ccsTRBuy(i) {
     let e = Cr.stations.find((o) => o.id === i),
       t = ccsCoursePrice(i);
+    if (!ccsTROpen()) return void De("🔒 สนามฝึกปิดแล้ว เปิด 08:00-19:00", 2200);
+    if (!ccsTRUnlocked(i, z.trLv ?? 0)) return void De("🔒 ต้องได้ ⭐⭐ ในระดับก่อนหน้าก่อน", 2200);
     if (!e || ccsTRLeft(i) <= 0) return void De("คอร์สนี้ฝึกครบ 3 ครั้งแล้ววันนี้ พรุ่งนี้มาใหม่นะ", 2200);
     if (z.money < t) return (De(`เงินไม่พอ ค่าฝึก ${t}💰`, 1800), ke("nope"));
     qs();
@@ -47632,7 +47794,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       s = n.pos.clone();
     (n.pos.copy(e.start), UH(e));
     if (!ho) return void n.pos.copy(s);
-    ((z.money -= t), Ei(), (z.trDay.c[i] = (z.trDay.c[i] ?? 0) + 1), (ho.paid = ccsCourse[i][0]), Ln(ccsTRNpc?.pos ?? n.pos, `${e.icon} ${e.name} พร้อมนะ! ดูแถบแล้วกดตอนเข้าช่องเขียว`), _t(z));
+    ((z.money -= t), Ei(), (z.trDay.c[i] = (z.trDay.c[i] ?? 0) + 1), (ho.paid = ccsCourse[i][0]), (ho.lv = z.trLv ?? 0), Ln(ccsTRNpc?.pos ?? n.pos, `${e.icon} ${e.name} พร้อมนะ! ดูแถบแล้วกดตอนเข้าช่องเขียว`), _t(z));
   }
   function ccsCmdMenu() {
     let i = ccsSt("obey");
@@ -47665,8 +47827,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         a = y0.indexOf(s) + ":" + z.day;
       if (r[a]) return void Ln(s.rig.root.position, "น่ารักจัง! 😊");
       r[a] = 1;
-      let c = Math.round(5 + ccsSt("obey") / 8 + e[2] / 4);
-      ((z.money += c), Ei(), rt(`❤️ +${c}💰`, s.rig.root.position.clone(), "big"), ke("coin"), Ln(s.rig.root.position, `ว้าว ${e[1].split(" ")[1]}เก่งมาก! ให้ขนมนะ ❤️`), _t(z));
+      let c = Math.round((5 + ccsSt("obey") / 8 + e[2] / 4) * (ccsFresh() ? 2 : 1));
+      ((z.money += c), Ei(), rt(`❤️ +${c}💰`, s.rig.root.position.clone(), "big"), ke("coin"), Ln(s.rig.root.position, ccsFresh() ? `หอมจัง! ${e[1].split(" ")[1]}เก่งด้วย ให้ทิปเพิ่มเลย ✨` : `ว้าว ${e[1].split(" ")[1]}เก่งมาก! ให้ขนมนะ ❤️`), _t(z));
     }
   }
   function ccsTRMakeNpc() {
@@ -47782,7 +47944,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     }
     let n = t.d - ho.d;
     if (n > 1.7) return;
-    n > 1.25 + ccsSt("bal") * 0.005 ? ccsTRRes(t, !1, "⏩ เร็วไป!") : t.k !== i ? ccsTRRes(t, !1, t.k === "A" ? "❌ ผิดปุ่ม" : "❌ ผิดทาง!") : ccsTRRes(t, !0, n <= 0.65 + ccsSt("bal") * 0.004 ? t.ok : "👍 ดี", n <= 0.65 + ccsSt("bal") * 0.004 ? 1 : 0.75);
+    n > ccsTRW().e ? ccsTRRes(t, !1, "⏩ เร็วไป!") : t.k !== i ? ccsTRRes(t, !1, t.k === "A" ? "❌ ผิดปุ่ม" : "❌ ผิดทาง!") : ccsTRRes(t, !0, n <= ccsTRW().p ? t.ok : "👍 ดี", n <= ccsTRW().p ? 1 : 0.75);
   }
   function ccsTRRes(i, e, t, n = 1) {
     ((i.res = e ? n : 0), rt(t, Le[0].pos, e ? "big" : "bad"), ke(e ? (n >= 1 ? "heart" : "pop") : "nope"), e && i.hold && (ho.tr.hold = i.hold));
@@ -47809,7 +47971,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let l = n.d - ho.d;
       if (n.k === "bal" && ho.d >= n.d) {
         // ทรงตัวบนสะพาน: เอียงไปเองเรื่อย ๆ ต้องกดแก้
-        ((s = 2.3), (t.bv += ((Math.random() - 0.5) * 7 + t.bal * 2.4) * e * (1 - ccsSt("bal") / 200)), (t.bv *= Math.pow(0.35, e)), (t.bal += t.bv * e));
+        ((s = 2.3), (t.bv += ((Math.random() - 0.5) * 7 + t.bal * 2.4) * e * (1 - ccsSt("bal") / 200) * ccsTRL().bal), (t.bv *= Math.pow(0.35, e)), (t.bal += t.bv * e));
         if (Math.abs(t.bal) > 1) {
           ((n.res = 0), (t.fell = !0), rt("💦 ตกสะพาน!", i.pos, "bad"), ke("nope"));
           return void ((ho.d = t.len), VH(i));
@@ -47817,13 +47979,13 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         ho.d >= n.d1 && ((n.res = Math.abs(t.bal) < 0.45 ? 1 : 0.75), rt(n.res >= 1 ? "⚖️ ทรงตัวเยี่ยม!" : "👍 ผ่านสะพาน", i.pos, "big"), ke("heart"));
       } else if (n.k === "stay" && ho.d >= n.d) {
         ((s = 0), (t.st = (t.st ?? 0) + e), (t.stay = t.stay ?? "sit"));
-        if (t.stay === "sit" && t.st > 1.6 + ccsSt("obey") * 0.01) ccsTRRes(n, !1, "😜 ไม่ยอมนั่ง");
+        if (t.stay === "sit" && t.st > ccsTRL().sit + ccsSt("obey") * 0.01) ccsTRRes(n, !1, "😜 ไม่ยอมนั่ง");
         else if (t.stay === "wait") {
-          t.st > 3 - ccsSt("obey") * 0.01 && ccsTRRes(n, !0, "🏅 นั่งคอยเก่งมาก!");
+          t.st > ccsTRL().stay - ccsSt("obey") * 0.01 && ccsTRRes(n, !0, "🏅 นั่งคอยเก่งมาก!");
         }
       } else {
         // ใกล้จุด: ช้าลงให้เกจวิ่งจาก 0 ถึงจุดอย่างน้อย ~1.4 วิ
-        l < 3 && (s = Math.min(2.8, Math.max(1.2, (n.S + 0.25) / 1.4)));
+        l < 3 && (s = Math.min(2.8, Math.max(1.2, (n.S + 0.25) / 1.4)) * ccsTRL().spd);
         l < -0.25 && ccsTRRes(n, !1, n.k === "A" ? (ho.st.id === "hurdle" ? "💥 ชนไม้!" : "💥 ช้าไป!") : "😵 ข้ามเสา!");
       }
     }
@@ -47843,8 +48005,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         d = t.ev.filter((p) => p.res !== null),
         u = n && n.res === null ? n : null;
       if (u && u.k === "bal" && ho.d >= u.d) ((l.textContent = u.lab), (h.style.left = `${50 + t.bal * 50}%`), (f.style.cssText = "left:28%;width:44%"), (g.style.cssText = "left:39%;width:22%"), ccsTRHud.classList.add("bal"));
-      else if (u && u.k === "stay" && ho.d >= u.d) ((l.textContent = t.stay === "wait" ? `🦋 คอย… ห้ามกด! ${Math.max(0, 3 - t.st).toFixed(1)}` : "🪑 สั่งนั่ง! กด ⤴"), (h.style.left = `${t.stay === "wait" ? Math.min(100, (t.st / 3) * 100) : Math.min(100, ((t.st ?? 0) / 1.6) * 100)}%`), (f.style.cssText = "display:none"), (g.style.cssText = t.stay === "wait" ? "left:0;width:100%" : "display:none"), ccsTRHud.classList.remove("bal"));
-      else if (t.cd > 0) ((l.textContent = `${ho.st.icon} ${ho.st.name} · เริ่มใน ${Math.ceil(t.cd / 0.8)}…`), (h.style.left = "0%"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
+      else if (u && u.k === "stay" && ho.d >= u.d) ((l.textContent = t.stay === "wait" ? `🦋 คอย… ห้ามกด! ${Math.max(0, ccsTRL().stay - t.st).toFixed(1)}` : "🪑 สั่งนั่ง! กด ⤴"), (h.style.left = `${t.stay === "wait" ? Math.min(100, (t.st / ccsTRL().stay) * 100) : Math.min(100, ((t.st ?? 0) / ccsTRL().sit) * 100)}%`), (f.style.cssText = "display:none"), (g.style.cssText = t.stay === "wait" ? "left:0;width:100%" : "display:none"), ccsTRHud.classList.remove("bal"));
+      else if (t.cd > 0) ((l.textContent = `${ho.st.icon} ${ho.st.name} · Lv.${(ho.lv ?? 0) + 1} ${ccsTRL().n} · เริ่มใน ${Math.ceil(t.cd / 0.8)}…`), (h.style.left = "0%"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
       else if (u) {
         let p = u.d - ho.d,
           m = u.S + 0.25,
@@ -47852,10 +48014,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           y = d.length + 1;
         ((l.textContent = `${y}/${t.ev.length} · ${u.lab} ${u.k === "A" ? "(⤴ / Space / Ⓐ)" : u.k === "L" ? "(⬅ / A / ◀)" : "(➡ / D / ▶)"}`),
           (h.style.left = `${E(p)}%`),
-          (f.style.cssText = `left:${E(1.25 + ccsSt("bal") * 0.005)}%;width:${E(0.65 + ccsSt("bal") * 0.004) - E(1.25 + ccsSt("bal") * 0.005)}%`),
-          (g.style.cssText = `left:${E(0.65 + ccsSt("bal") * 0.004)}%;width:${100 - E(0.65 + ccsSt("bal") * 0.004)}%`),
+          (f.style.cssText = `left:${E(ccsTRW().e)}%;width:${E(ccsTRW().p) - E(ccsTRW().e)}%`),
+          (g.style.cssText = `left:${E(ccsTRW().p)}%;width:${100 - E(ccsTRW().p)}%`),
           ccsTRHud.classList.remove("bal"),
-          ccsTRHud.classList.toggle("hot", p < 1.25 && p > -0.25));
+          ccsTRHud.classList.toggle("hot", p < ccsTRW().e && p > -0.25));
       } else ((l.textContent = "🏁 เข้าเส้นชัย!"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
       // ปุ่มที่ต้องกดเรืองแสง
       let v = t.cd > 0 ? "" : u ? (u.k === "bal" ? "LR" : u.k === "stay" ? (t.stay === "wait" ? "" : "A") : u.k) : "";
@@ -47890,6 +48052,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let e = ho.st,
       a = ho.tr;
     ho_paid_tmp = ho.paid ?? null;
+    var lvX = ho.lv ?? 0;
     ((ho = null), (j.jy = 0), ccsTRHudSet(!1), i.rig.root && (i.rig.root.rotation.z = 0));
     let t = Ma();
     t.runs += 1;
@@ -47898,14 +48061,15 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       l = a?.fell ? 0 : c >= 0.95 ? 3 : c >= 0.6 ? 2 : c > 0 ? 1 : 0,
       n = Math.round(e.xp * [0.25, 0.7, 1, 1.5][l] * (1 + Math.random() * 0.2)),
       h = z.trainStars ?? (z.trainStars = {}),
-      f = l > (h[e.id] ?? 0);
+      sk = ccsStarKey(e.id, lvX),
+      f = l > (h[sk] ?? 0);
     let G = ho_paid_tmp,
       gain = 0;
     if (((ho_paid_tmp = null), G)) {
       let x = ccsSt(G);
-      ((gain = Math.round([0, 1.5, 3, 5][l] * Math.max(0.3, 1 - x / 120) * 10) / 10), (z.stats[G] = Math.min(100, x + gain)));
+      ((gain = Math.round([0, 1.5, 3, 5][l] * Math.max(0.3, 1 - x / 120) * ccsTRLvDef[lvX].gain * 10) / 10), (z.stats[G] = Math.min(100, x + gain)));
     }
-    ((window.__trLast = [l, a ? a.ev.map((d) => d.res) : [], gain]), f && (h[e.id] = l),
+    ((window.__trLast = [l, a ? a.ev.map((d) => d.res) : [], gain]), f && (h[sk] = l),
       (j.score += n),
       (fa.money.textContent = String(z.money)),
       rt(`${"⭐".repeat(l) || "💤"} ${e.icon} +${n} XP`, i.pos.clone().setY(1.6), l ? "big" : "bad"),
@@ -48066,7 +48230,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
   function ZH(i, e) {
     for (let t = Yp.length - 1; t >= 0; t--) {
       let n = Yp[t];
-      ((n.t -= i), n.t < 0 && (K.remove(n.o), Yp.splice(t, 1)));
+      (n.sp && (n.o.scale.setScalar(Math.max(0.01, Math.sin(Math.min(1, n.t / 1.4) * Math.PI) * 0.32)), (n.o.position.y += i * 0.35), (n.o.material.rotation += i * 2)), (n.t -= i), n.t < 0 && (K.remove(n.o), Yp.splice(t, 1)));
     }
     (z.potty ?? 0) >= 100 &&
       !Se &&
@@ -48555,6 +48719,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let t = Math.min(j.dist, 4.2),
         n = Math.max(-0.2, j.pitch);
       (Lt.position.set(ccsRV.x + Math.sin(j.yaw) * Math.cos(n) * t, ccsRV.y + 0.7 + Math.sin(n) * t, ccsRV.z + Math.cos(j.yaw) * Math.cos(n) * t), Lt.lookAt(ccsRV.x, ccsRV.y + 0.6, ccsRV.z));
+    }
+    ho || (ccsTRCamA = null);
+    if (ccsBath) {
+      let b = ccsBath.at;
+      (Lt.position.lerp(Xt.set(b.x + 1.1, 1.85, b.z - 2.1), Math.min(1, e * 6)), Lt.lookAt(b.x, 0.75, b.z));
     }
     ccsShake > 0.001 && (Lt.position.x += (Math.random() - 0.5) * ccsShake, (Lt.position.y += (Math.random() - 0.5) * ccsShake), (ccsShake *= Math.pow(0.2, e)));
   }
@@ -51721,8 +51890,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     // เป้าหมาย 6 ทิศ (มุมมองคนยิง): c = คอลัมน์ -1 ซ้าย / 0 กลาง / 1 ขวา, h = 0 เรียด / 1 โด่ง
     ccsPKDir = { L: [-1, 0], C: [0, 0], R: [1, 0], HL: [-1, 1], HC: [0, 1], HR: [1, 1] },
     ccsPKZone = [
-      [0.36, 0.72],
-      [0.55, 0.84],
+      [0.44, 0.66],
+      [0.6, 0.79],
     ];
   function ccsPKFoe() {
     return ccsPKFoes[(z.day ?? 1) % 3];
@@ -51755,6 +51924,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       }
     };
     (t(i.me, 110), t(i.cpu, 402), (e.fillStyle = "#ffe100"), (e.font = "700 40px Mitr, sans-serif"), e.fillText(`${i.me.filter(Boolean).length}:${i.cpu.filter(Boolean).length}`, 256, 112), (fo.boardTex.needsUpdate = !0));
+    // v120: สกอร์บอร์ดกลางจอด้านบน
+    let n = document.getElementById("pkHud");
+    n || ((n = document.createElement("div")), (n.id = "pkHud"), document.body.appendChild(n));
+    let o = (r) => Array.from({ length: Math.max(5, r.length) }, (a, c) => `<i class="${r[c] === void 0 ? "" : r[c] ? "g" : "x"}">${r[c] === void 0 ? "" : r[c] ? "✓" : "✕"}</i>`).join(""),
+      s = i.me.length;
+    ((n.innerHTML = `<div class="pkt"><b>${pl[0]?.name ?? "น้อง"}</b><span>${o(i.me)}</span></div><div class="pks">${i.me.filter(Boolean).length} : ${i.cpu.filter(Boolean).length}</div><div class="pkt"><b>${i.foe.n}</b><span>${o(i.cpu)}</span></div><div class="pkm">น้องยิงแล้ว ${s} ลูก · เข้า ${i.me.filter(Boolean).length} · พลาด ${s - i.me.filter(Boolean).length}${s >= 5 || i.cpu.length >= 5 ? " · ดวลต่อ!" : ""}</div>`), n.classList.add("on"));
   }
   function ccsPKStart() {
     if (ccsPK || !fo) return;
@@ -51765,6 +51940,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let e = ccsPK;
     if (!e) return;
     window.__pkLast = { why: i ?? "done", me: e.me.slice(), cpu: e.cpu.slice() };
+    setTimeout(() => document.getElementById("pkHud")?.classList.remove("on"), i === "quit" ? 0 : 2500);
     ccsPK = null;
     (js.classList.contains("on") && qs(), js.classList.remove("dress"), ccsPKNpc && ((ccsPKNpc.rig.root.rotation.z = 0), (ccsPKNpc.rig.root.position.y = 0), ccsPKNpc.pos.copy(ccsPKGeo().idle)), fo && ((fo.cool = 0), fo.ball.pos.copy(xt), fo.ball.vel.set(0, 0, 0), (fo.ball.y = 0)), P4());
     if (i === "quit") return void De("🏳️ ยกเลิกการดวลจุดโทษ", 1800);
@@ -51787,7 +51963,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         i.ph === "power"
           ? (() => {
               let [o, r] = ccsPKZone[ccsPKDir[i.aim][1]];
-              return `<p class="note">เล็ง: <b>${{ L: "↙ เรียดซ้าย", C: "⬇ เรียดกลาง", R: "↘ เรียดขวา", HL: "↖ โด่งซ้าย", HC: "⬆ โด่งกลาง", HR: "↗ โด่งขวา" }[i.aim]}</b> · ช่องเขียว = แม่น · เกิน = หลุดกรอบ · เบา = โดนเซฟง่าย</p><div class="pkbar"><b style="left:${o * 100}%;width:${(r - o) * 100}%"></b><em style="left:88%"></em><i id="pkPow"></i></div><button class="bigbtn" data-pk="K">⚽ ยิง!</button>`;
+              return `<p class="note">เล็ง: <b>${{ L: "↙ เรียดซ้าย", C: "⬇ เรียดกลาง", R: "↘ เรียดขวา", HL: "↖ โด่งซ้าย", HC: "⬆ โด่งกลาง", HR: "↗ โด่งขวา" }[i.aim]}</b> · ช่องเขียว = แม่น · เกิน = หลุดกรอบ · เบา = โดนเซฟง่าย</p><div class="pkbar"><b style="left:${o * 100}%;width:${(r - o) * 100}%"></b><em style="left:86%"></em><i id="pkPow"></i></div><button class="bigbtn" data-pk="K">⚽ ยิง!</button>`;
             })()
           : `<div class="pkgrid">${t("HL", e ? "↖ พุ่งสูงซ้าย" : "↖ โด่งซ้าย")}${t("HC", e ? "⬆ กระโดดกลาง" : "⬆ โด่งกลาง")}${t("HR", e ? "↗ พุ่งสูงขวา" : "↗ โด่งขวา")}${t("L", e ? "↙ พุ่งต่ำซ้าย" : "↙ เรียดซ้าย")}${t("C", e ? "⬇ ยืนกลาง" : "⬇ เรียดกลาง")}${t("R", e ? "↘ พุ่งต่ำขวา" : "↘ เรียดขวา")}</div>`;
     (Gi(
@@ -51828,8 +52004,22 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (!t) {
       if (n) {
         n.rig.root.position.copy(n.pos);
-        let o = e.pos.distanceTo(n.pos) < 6 ? Math.atan2(e.pos.x - n.pos.x, e.pos.z - n.pos.z) : -Math.PI / 2;
-        Qi(n.rig, i, 0, o);
+        let o = e.pos.distanceTo(n.pos),
+          r = o < 6 ? Math.atan2(e.pos.x - n.pos.x, e.pos.z - n.pos.z) : -Math.PI / 2;
+        Qi(n.rig, i, 0, r);
+        // v120: ชวนมาแข่งเมื่อน้องเดินมาใกล้
+        if (((n.say = (n.say ?? 2) - i), o < 7 && n.say <= 0 && !Se)) {
+          n.say = 9;
+          let a = ccsPKFoe(),
+            c = [
+              `เฮ้! ${pl[0]?.name ?? "น้อง"} มาดวลจุดโทษกับ${a.n}ไหม ⚽ ชนะได้ ${a.pay}💰 เลยนะ`,
+              "ยิงคนละ 5 ลูก ใครเข้าเยอะกว่าชนะ กล้าไหมล่ะ? 😏",
+              `วันนี้${a.n}มือขึ้น เซฟได้หมดแน่ ลองมาพิสูจน์สิ!`,
+              "ขาแรงแบบนี้ ลองยิงลูกโด่งเสียบมุมดูไหม 🎯",
+              "แพ้ไม่ว่ากันนะ มาซ้อมยิงจุดโทษด้วยกันเถอะ! 🧤",
+            ];
+          Ln(n.pos, c[Math.floor(Math.random() * c.length)]);
+        }
       }
       return;
     }
@@ -51846,7 +52036,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if ((t.ph === "aim" || t.ph === "power" || (t.ph === "dive" && t.t < 1.7)) && !js.classList.contains("on")) return ccsPKEnd("quit");
     if (t.ph === "power") {
       let a = document.getElementById("pkPow");
-      ((t.pow = 0.5 - 0.5 * Math.cos(t.t * 3.2)), a && (a.style.width = `${Math.round(t.pow * 100)}%`));
+      ((t.pow = 0.5 - 0.5 * Math.cos(t.t * 4.3)), a && (a.style.width = `${Math.round(t.pow * 100)}%`));
     }
     let a = n?.rig,
       c = r ? s.keep : s.spot.clone().add(new H(-0.9, 0, 0)),
@@ -51871,7 +52061,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           let [E, g] = ccsPKZone[d],
             y = t.pow;
           ((E -= ccsSt("bal") * 0.0008 + (d ? ccsSt("jump") * 0.0008 : 0)), (g += ccsSt("bal") * 0.0008 + (d ? ccsSt("jump") * 0.0008 : 0)));
-          ((p = y > 0.88 || (y > g && f !== 0 && Math.random() < (y - g) * 3)), (m = y < 0.25 ? "weak" : y >= E && y <= g ? "clean" : "ok"));
+          // นอกช่องเขียว: แรงเกิน = เสี่ยงหลุดกรอบมากขึ้นเรื่อย ๆ, เบาไป = เสี่ยงเฉียงออก/โดนเซฟง่าย
+          ((p = y > 0.86 || (y > g && Math.random() < (y - g) * (f !== 0 || d ? 7 : 4)) || (y < E && y >= 0.25 && f !== 0 && Math.random() < (E - y) * 1.6)), (m = y < 0.3 ? "weak" : y >= E && y <= g ? "clean" : "ok"));
           let x = Math.random() < t.foe.read;
           u = x ? [f, d] : [[-1, 0, 1][Math.floor(Math.random() * 3)], Math.random() < 0.45 ? 1 : 0];
           Math.random() < 0.2 && !x && (u = [0, 0]);
@@ -55032,7 +55223,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           (z.potty = Math.min(100, (z.potty ?? 0) + e * 0.03)),
           (z.clean = Math.max(
             0,
-            (z.clean ?? 100) - e * 0.035 * b * (co.cur.r > 0.3 && !Se ? 2.2 : 1) * (j.sleeping ? 0.2 : 1),
+            (z.clean ?? 100) - e * 0.035 * b * (co.cur.r > 0.3 && !Se ? 2.2 : 1) * (j.sleeping ? 0.2 : 1) * (ccsFresh() ? 0.15 : 1),
           )),
           (j.needT -= e),
           j.needT < 0 && !j.sleeping)
@@ -55146,6 +55337,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               : null,
         );
       }
+      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick());
       if ((T4(e, n), Oo)) {
         let b = Oo.k.pos,
           CA = Math.max(-1.25, Math.min(1.25, j.yaw - (Oo.yaw0 ?? j.yaw)));
@@ -55154,6 +55346,16 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           Lt.lookAt(b.x - 0.05, 1.55, b.z),
           r4(),
           a4(n));
+      } else if (ho && !Se) {
+        // v120: มุมกล้องตอนฝึก: อยู่หลังเฉียงข้างน้อง มองไปข้างหน้าตามทางวิ่ง
+        let b0 = yM(ho.st.path, Math.max(0, ho.d) + 0.5, new H()).dir ?? n.dir ?? 0;
+        ccsTRCamA === null && (ccsTRCamA = b0);
+        let dA = Math.atan2(Math.sin(b0 - ccsTRCamA), Math.cos(b0 - ccsTRCamA));
+        ccsTRCamA += dA * Math.min(1, e * 2.5);
+        let b = ccsTRCamA,
+          w = Math.sin(b),
+          v = Math.cos(b);
+        (Lt.position.lerp(Xt.set(n.pos.x - w * 4.6 + v * 1.8, 3.4 + j.jy * 0.5, n.pos.z - v * 4.6 - w * 1.8), Math.min(1, e * 4)), Lt.lookAt(n.pos.x - w * 0.4, -0.25 + j.jy * 0.5, n.pos.z - v * 0.4), r4(), a4(n));
       } else if (ccsPK && fo) {
         // v116: ดวลจุดโทษ ใช้มุมกล้องเดียวกันทั้งตอนยิงและตอนรับ (หลังจุดโทษ มองเข้าประตู)
         let b = ccsPKGeo();
@@ -59816,8 +60018,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (ccsRide) return nt(ccsRide.k >= 0 ? "🎡 กำลังชมวิว… ลากจอ/จอยขวา หมุนมุมมอง" : "🎡 กำลังขึ้นกระเช้า…", null, !0);
     if (ccsFW && !Se && e.distanceTo(ccsFW.gate) < 2.2)
       return nt("🎡 ขึ้นชิงช้าสวรรค์ชมวิว 50💰", ccsRideStart);
+    if (ccsFreeChick && e.distanceTo(ccsFreeChick.p) < 1.3)
+      return nt("🍗 กินไก่ย่างฟรี (ของขวัญหมวกลูกไก่)", () => {
+        ((z.freeChick = z.day), mi(55, 0), (z.energy = Math.min(100, (z.energy ?? 0) + 15)), ke("heart"), rt("🍗 อร่อย! +55🍖 +15⚡", e, "big"), _t(z));
+      });
     if ((ccsTRMakeNpc(), ccsTRNpc && !Se && !ho && e.distanceTo(ccsTRNpc.pos) < 2))
-      return nt("🏅 คุยกับครูฝึกพี่ต้น · เลือกคอร์สฝึก", ccsTRMenu);
+      return nt(ccsTROpen() ? "🏅 คุยกับครูฝึกพี่ต้น · เลือกคอร์สฝึก" : "🔒 สนามฝึกปิดแล้ว (เปิด 08:00-19:00)", ccsTROpen() ? ccsTRMenu : null, !ccsTROpen());
     if (ccsPK) return nt(`⚽ ดวลจุดโทษ ${ccsPK.me.filter(Boolean).length}:${ccsPK.cpu.filter(Boolean).length}`, null, !0);
     if (ccsPKNpc && !Se && e.distanceTo(ccsPKNpc.pos) < 1.9) {
       let h = ccsPKFoe();
@@ -62482,7 +62688,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let s = e
         .map(
           (r, a) =>
-            `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${e === DE && G3() < 1 ? `<s>${r.price}</s> ${Math.round(r.price * G3())}` : r.price} 💰 \xB7 +${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
+            `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${(e === DE && G3() < 1) || (e === Xk && ccsWear("cc:Hat_48")) ? `<s>${r.price}</s> ${Math.round(r.price * (e === DE ? G3() : 0.6))}${e === Xk ? " 🐥-40%" : ""}` : r.price} 💰 \xB7 +${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
         )
         .join(""),
       o = n === "sell" ? _T(i) : n === "trade" ? Kk() : "";
@@ -62491,7 +62697,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       document.querySelectorAll("[data-food]").forEach((r) =>
         r.addEventListener("click", () => {
           let a = e[+r.dataset.food],
-            c = Math.round(a.price * (e === DE ? G3() : 1));
+            c = Math.round(a.price * (e === DE ? G3() : e === Xk && ccsWear("cc:Hat_48") ? 0.6 : 1));
           if (z.money < c) {
             ke("nope");
             return;
@@ -62984,7 +63190,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
                               ? (z.energy = Math.min(100, z.energy + 30))
                               : e === "checkup"
                                 ? (z.energy = 100)
-                                : e === "bath"
+                                : e === "bath" && ccsBathStart()
+                                  ? 0
+                                  : e === "bath"
                                   ? ((z.energy = Math.min(100, z.energy + 60)),
                                     (z.clean = 100),
                                     rt(
@@ -63437,6 +63645,16 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         tr: () => ho,
         trTick: (d) => ho && ccsTRTick(Le[0], d),
         trMenu: () => ccsTRMenu(),
+        bathStart: () => ccsBathStart(),
+        bathTick: (d) => ccsBathTick(d),
+        hatTick: (d) => ccsHatTick(d),
+        signTick: () => (ccsTRFieldInit(), ccsTRSignTick()),
+        bathSt: () => ccsBath && { t: ccsBath.t, at: ccsBath.at, dog: Le[0].pos.clone(), jy: j.jy },
+        fresh: () => ccsFresh(),
+        trOpen: () => ccsTROpen(),
+        freeChick: () => ccsFreeChick && { p: ccsFreeChick.p, day: z.freeChick },
+        wear: (k) => ccsWear(k),
+        setLv: (l) => (z.trLv = l),
         trBuy: (k) => ccsTRBuy(k),
         cmd: (k) => ccsDoCmd(k),
         cmdMenu: () => ccsCmdMenu(),

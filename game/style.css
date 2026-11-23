@@ -271,3 +271,11 @@ body.training #act{display:none!important}
 .stb em{font-style:normal;font-size:12px;text-align:right}.stb small{grid-column:1/-1;font-size:11px;opacity:.7;margin-top:-3px}
 .buy.wide{width:100%;margin:4px 0 8px}
 .row div.ic{flex:0 0 40px;text-align:center}.row div.nm{text-align:left}
+
+/* v120 */
+#pkHud{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:rgba(20,20,30,.86);color:#fff;padding:6px 14px 4px;border-radius:16px;border:3px solid #ffe100;z-index:45;font-family:Mitr,sans-serif;width:min(400px,92vw);box-sizing:border-box}
+#pkHud.on{display:grid}#pkHud .pkt{display:flex;flex-direction:column;align-items:center;gap:2px}#pkHud .pkt b{font-size:14px}
+#pkHud .pkt span{display:flex;gap:3px}#pkHud .pkt i{width:16px;height:16px;border-radius:50%;background:#555;font:700 11px/16px sans-serif;text-align:center;font-style:normal}#pkHud .pkt i.g{background:#2ecc71}#pkHud .pkt i.x{background:#e74c3c}
+#pkHud .pks{font:900 30px Mitr,sans-serif;color:#ffe100}#pkHud .pkm{grid-column:1/-1;text-align:center;font-size:12px;opacity:.9}
+.pkbar,#trHud .trbar{background-image:repeating-linear-gradient(90deg,transparent 0 calc(5% - 1px),rgba(0,0,0,.22) calc(5% - 1px) 5%)}
+.trlv{display:flex;gap:6px;margin:4px 0 8px}.trlv button{flex:1;font:700 13px Mitr,sans-serif;padding:6px 4px;border-radius:12px;border:2.5px solid #3b2a1a;background:#fff;cursor:pointer}.trlv button.on{background:#FFD23F}.trlv small{display:block;font-size:10.5px;font-weight:400;opacity:.75}
