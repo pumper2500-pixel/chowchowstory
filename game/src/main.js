@@ -47802,6 +47802,204 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         : ((i = 30 + Math.floor(Math.random() * 61)), (z.money += i), Ei(), rt(`🎁 ได้ ${i}💰 จากซานต้า!`, e, "big"));
     (ke("heart"), ccsSparkle(e, 10), _t(z));
   }
+  // ===== v123: เอฟเฟกต์น้ำตามหลักฟิสิกส์ (ละอองวิถีโค้ง+แรงต้านอากาศ, ฟองคลื่นท้ายตัว, ฟองแผ่ออก) · ชนสิ่งกีดขวาง · ทะเลกว้างขึ้น =====
+  var ccsFx = null,
+    ccsSoftTexC = null;
+  function ccsSoft() {
+    return ccsSoftTexC ?? (ccsSoftTexC = ccsSoftTex());
+  }
+  function ccsFxInit() {
+    if (ccsFx) return ccsFx;
+    let i = 520,
+      e = new Float32Array(i * 3).fill(-999),
+      t = new Float32Array(i),
+      n = new Float32Array(i),
+      w = new Float32Array(i),
+      s = new qe();
+    (s.setAttribute("position", new Je(e, 3)), s.setAttribute("aSize", new Je(t, 1)), s.setAttribute("aAlpha", new Je(n, 1)), s.setAttribute("aSoft", new Je(w, 1)));
+    let o = new Qt({
+        transparent: !0,
+        depthWrite: !1,
+        uniforms: { map: { value: ccsSoft() }, uScale: { value: 500 } },
+        vertexShader: "attribute float aSize; attribute float aAlpha; attribute float aSoft; varying float vA; varying float vS; uniform float uScale; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(1.5, aSize * uScale / max(0.1, -mv.z)); vA = aAlpha; vS = aSoft; gl_Position = projectionMatrix * mv; }",
+        // หยดน้ำ = จุดกลมคม มีไฮไลต์ · ละอองฝอย = นุ่มฟุ้ง
+        fragmentShader: "uniform sampler2D map; varying float vA; varying float vS; void main(){ vec2 q = gl_PointCoord - 0.5; float d = length(q); float hard = smoothstep(0.5, 0.36, d); float a = mix(hard, texture2D(map, gl_PointCoord).a, vS) * vA; if (a < 0.01) discard; vec3 c = mix(vec3(0.78, 0.9, 0.97), vec3(1.0), smoothstep(0.3, 0.0, length(q + vec2(0.15, 0.15))) * (1.0 - vS) + vS * 0.7); gl_FragColor = vec4(c, a); }",
+      }),
+      r = new bs(s, o);
+    r.userData.soft = w;
+    ((r.frustumCulled = !1), (r.renderOrder = 4), K.add(r));
+    // ฟองบนผิวน้ำ: แผ่นแบนวางบนน้ำ (instanced) ผสมแบบบวกแสง จางด้วยสี
+    let a = ss(128, 128, (h) => {
+        h.clearRect(0, 0, 128, 128);
+        for (let f = 0; f < 70; f++) {
+          let d = 64 + (Math.random() - 0.5) * 92,
+            u = 64 + (Math.random() - 0.5) * 92,
+            p = 4 + Math.random() * 13,
+            m = Math.max(0, 1 - Math.hypot(d - 64, u - 64) / 62),
+            E = h.createRadialGradient(d, u, 0, d, u, p);
+          (E.addColorStop(0, `rgba(255,255,255,${0.75 * m})`), E.addColorStop(1, "rgba(255,255,255,0)"), (h.fillStyle = E), h.fillRect(d - p, u - p, p * 2, p * 2));
+        }
+      }),
+      c = new Te(1, 1);
+    c.rotateX(-Math.PI / 2);
+    let l = new di(c, new be({ map: a, transparent: !0, depthWrite: !1, blending: $i, color: 16777215 }), 300);
+    ((l.frustumCulled = !1), (l.renderOrder = 3), K.add(l));
+    let f = new Oe();
+    f.makeScale(0, 0, 0);
+    for (let h = 0; h < 300; h++) (l.setMatrixAt(h, f), l.setColorAt(h, new ae(0, 0, 0)));
+    return (ccsFx = { P: { pos: e, size: t, alpha: n, soft: w, geo: s, mat: o, v: new Float32Array(i * 3), life: new Float32Array(i), max: new Float32Array(i), drag: new Float32Array(i), s0: new Float32Array(i), n: i, k: 0 }, F: { m: l, d: [], k: 0, n: 300 } });
+  }
+  function ccsDrop(x, y, z, vx, vy, vz, size, life, drag = 0.35) {
+    let i = ccsFxInit().P,
+      e = i.k++ % i.n;
+    (i.pos.set([x, y, z], e * 3), i.v.set([vx, vy, vz], e * 3), (i.size[e] = size), (i.s0[e] = size), (i.alpha[e] = 0.9), (i.life[e] = life), (i.max[e] = life), (i.drag[e] = drag), (i.soft[e] = drag > 1 ? 1 : 0), (i.geo.attributes.aSoft.needsUpdate = !0));
+  }
+  function ccsFoam(x, z, sc, life, vx = 0, vz = 0, a = 0.85, grow = 1.6) {
+    let i = ccsFxInit().F,
+      e = i.k++ % i.n;
+    i.d[e] = { x, z, s: sc, g: grow, t: 0, life, vx, vz, a, r: Math.random() * 6.28 };
+  }
+  // สาดน้ำแบบ crown splash: ความเร็วละอองตามความเร็วตกกระทบ v = √(2gh)
+  function ccsBigSplash(p, e = 1) {
+    let i = Math.sqrt(2 * 9.81 * Math.max(0.2, 0.55 * e)),
+      t = Math.round(40 + 110 * Math.min(2.2, e));
+    for (let n = 0; n < t; n++) {
+      let s = Math.random() * Math.PI * 2,
+        o = (35 + Math.random() * 45) * (Math.PI / 180),
+        r = i * (0.45 + Math.random() * 0.75),
+        a = 0.35 * e * Math.random();
+      ccsDrop(p.x + Math.cos(s) * a, Ph + 0.05, p.z + Math.sin(s) * a, Math.cos(s) * Math.cos(o) * r, Math.sin(o) * r, Math.sin(s) * Math.cos(o) * r, 0.05 + Math.random() * 0.13 * Math.min(1.6, 0.5 + e), 2.2);
+    }
+    // เสาน้ำกลาง (Worthington jet) เมื่อกระแทกแรง
+    if (e > 0.7)
+      for (let n = 0; n < 30 * e; n++) ccsDrop(p.x + (Math.random() - 0.5) * 0.6, Ph + 0.1, p.z + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 1.2, i * (0.9 + Math.random() * 0.5), (Math.random() - 0.5) * 1.2, 0.08 + Math.random() * 0.14, 2.2);
+    // ละอองฝอยลอยค้าง
+    for (let n = 0; n < 3 + 4 * e; n++) {
+      let s = Math.random() * Math.PI * 2;
+      ccsDrop(p.x + Math.cos(s) * e * 0.8, Ph + 0.3 + Math.random() * e, p.z + Math.sin(s) * e * 0.8, Math.cos(s) * 1.2, 1 + Math.random() * 2 * e, Math.sin(s) * 1.2, 0.8 + Math.random() * 0.9 * Math.min(1.5, e), 2.2, 2.2);
+    }
+    // ฟองขาวแผ่ออกเป็นวง
+    for (let n = 0; n < 5 + 6 * e; n++) {
+      let s = Math.random() * Math.PI * 2,
+        o = Math.random() * e * 1.6;
+      ccsFoam(p.x + Math.cos(s) * o, p.z + Math.sin(s) * o, 1 + Math.random() * 1.6 * Math.min(1.6, e), 4 + Math.random() * 3, Math.cos(s) * 0.6 * e, Math.sin(s) * 0.6 * e, 0.38);
+    }
+  }
+  function ccsSplashW(p, y, e) {
+    (tl.burst(p, Ph, Math.min(1.6, e)), e >= 0.5 && ccsBigSplash(p, e * 0.7));
+  }
+  var ccsFxM = new Oe(),
+    ccsFxQ = new At(),
+    ccsFxC = new ae();
+  function ccsFxTick(dt) {
+    if (!ccsFx) return;
+    let i = ccsFx.P;
+    for (let e = 0; e < i.n; e++) {
+      if (i.life[e] <= 0) continue;
+      let t = e * 3;
+      i.life[e] -= dt;
+      let n = Math.max(0, 1 - i.drag[e] * dt);
+      ((i.v[t] *= n), (i.v[t + 2] *= n), (i.v[t + 1] = i.v[t + 1] * n - 9.81 * dt * (i.drag[e] > 1 ? 0.15 : 1)), (i.pos[t] += i.v[t] * dt), (i.pos[t + 1] += i.v[t + 1] * dt), (i.pos[t + 2] += i.v[t + 2] * dt));
+      let s = 1 - i.life[e] / i.max[e];
+      ((i.size[e] = i.s0[e] * (1 + s * (i.drag[e] > 1 ? 1.2 : 0.4))), (i.alpha[e] = 0.9 * (1 - s) * (i.drag[e] > 1 ? 0.22 : 1)));
+      // หยดกลับลงน้ำ: ดับ และทิ้งฟองเล็ก ๆ
+      (i.pos[t + 1] < Ph && i.v[t + 1] < 0 || i.life[e] <= 0) && (i.drag[e] < 1 && i.life[e] > 0 && Math.random() < 0.25 && ccsFoam(i.pos[t], i.pos[t + 2], 0.35 + Math.random() * 0.4, 1.6), (i.life[e] = 0), (i.alpha[e] = 0), (i.pos[t + 1] = -999));
+    }
+    ((i.geo.attributes.position.needsUpdate = !0), (i.geo.attributes.aSize.needsUpdate = !0), (i.geo.attributes.aAlpha.needsUpdate = !0), (i.mat.uniforms.uScale.value = innerHeight * 0.9));
+    let e = ccsFx.F;
+    for (let t = 0; t < e.n; t++) {
+      let n = e.d[t];
+      if (!n) continue;
+      ((n.t += dt), (n.x += n.vx * dt), (n.z += n.vz * dt), (n.vx *= Math.pow(0.75, dt)), (n.vz *= Math.pow(0.75, dt)));
+      let s = n.t / n.life;
+      if (s >= 1) {
+        (ccsFxM.makeScale(0, 0, 0), e.m.setMatrixAt(t, ccsFxM), (e.d[t] = null));
+        continue;
+      }
+      let o = n.s * (1 + s * n.g),
+        r = n.a * Math.min(1, n.t * 6) * (1 - s) * (1 - s);
+      (ccsFxQ.setFromAxisAngle(ccsFxV.set(0, 1, 0), n.r + n.t * 0.1), ccsFxM.compose(ccsFxV2.set(n.x, Ph + 0.02, n.z), ccsFxQ, ccsFxV3.set(o, 1, o)), e.m.setMatrixAt(t, ccsFxM), e.m.setColorAt(t, ccsFxC.setScalar(r)));
+    }
+    ((e.m.instanceMatrix.needsUpdate = !0), e.m.instanceColor && (e.m.instanceColor.needsUpdate = !0));
+  }
+  var ccsFxV = new H(),
+    ccsFxV2 = new H(),
+    ccsFxV3 = new H();
+  // คลื่นฟองท้ายตัว (Kelvin wake ~19.5°) + ฝอยน้ำที่ครีบหลังตอนว่ายเร็วเลียดผิวน้ำ
+  function ccsWake(o, dt) {
+    let i = o.y + o.size * 0.13;
+    if (!o.vis || i < Ph - 0.25 || o.spd < 0.4) return;
+    o.wk = (o.wk ?? 0) + o.spd * dt;
+    let e = Math.sin(o.yaw),
+      t = Math.cos(o.yaw),
+      n = o.size * 0.36,
+      s = o.pos.x + e * n,
+      r = o.pos.z + t * n;
+    if (o.wk > 0.55) {
+      o.wk = 0;
+      let a = Math.min(1, (i - (Ph - 0.25)) / 0.4);
+      for (let c of [-1, 1]) {
+        let l = 0.34 * o.spd;
+        ccsFoam(s + t * c * o.size * 0.09, r - e * c * o.size * 0.09, 0.35 * o.size * 0.2 + 0.2, 3.6, (t * c - e * 0.15) * l, (-e * c - t * 0.15) * l, 0.32 * a, 2.6);
+      }
+      ccsFoam(o.pos.x - e * o.size * 0.42, o.pos.z - t * o.size * 0.42, o.size * 0.16, 2.6, 0, 0, 0.28 * a, 1.6);
+    }
+    // ฝอยหน้าหัว/ครีบเมื่อเร็ว
+    if (o.spd > 2.2 && Math.random() < dt * 14) {
+      let a = Math.random() < 0.5 ? -1 : 1;
+      ccsDrop(s, Ph + 0.15, r, t * a * 1.2 + e * o.spd * 0.4, 1.2 + Math.random() * 1.5, -e * a * 1.2 + t * o.spd * 0.4, 0.05 + Math.random() * 0.06, 1.4);
+    }
+  }
+  // ---- สิ่งกีดขวาง: สะพานไม้ เกาะประภาคาร เกาะภูเขา ----
+  var ccsObs = null;
+  function ccsObsList() {
+    return (ccsObs ??= [
+      { b: 1, x0: -1.75, x1: 1.75, z0: Rt - 3, z1: Rt + 19.6 },
+      { x: 41, z: Rt + 94, r: 11 },
+      { x: -60, z: Rt + 305, r: 78 },
+    ]);
+  }
+  function ccsObsPush(x, z, r) {
+    for (let i of ccsObsList()) {
+      if (i.b) {
+        if (x > i.x0 - r && x < i.x1 + r && z > i.z0 - r && z < i.z1 + r) {
+          let e = [
+            [i.x0 - r - x, 0],
+            [i.x1 + r - x, 0],
+            [0, i.z1 + r - z],
+          ].sort((t, n) => Math.hypot(...t) - Math.hypot(...n))[0];
+          return e;
+        }
+      } else {
+        let e = x - i.x,
+          t = z - i.z,
+          n = Math.hypot(e, t);
+        if (n < i.r + r) return [(e / (n || 1)) * (i.r + r - n), (t / (n || 1)) * (i.r + r - n)];
+      }
+    }
+    return null;
+  }
+  function ccsWhCollide(w) {
+    let i = Math.sin(w.yaw),
+      e = Math.cos(w.yaw);
+    for (let [t, n] of [
+      [0.42, 0.12],
+      [0, 0.17],
+      [-0.42, 0.1],
+    ]) {
+      let s = w.size * t * Math.cos(w.pitch ?? 0),
+        o = w.y + w.size * t * Math.sin(w.pitch ?? 0);
+      if (o > 0.7) continue;
+      let r = ccsObsPush(w.pos.x + i * s, w.pos.z + e * s, w.size * n);
+      r && ((w.pos.x += r[0]), (w.pos.z += r[1]));
+    }
+  }
+  // ความลึกขั้นต่ำที่ตัวนี้ว่ายเข้าไปได้ (น้ำตื้นได้ แต่ไม่เกยตื้น)
+  function ccsZMin(w) {
+    let i = w.k === "sperm" ? 2.6 : 0.24 * w.size,
+      e = (-0.085 + Math.sqrt(0.085 * 0.085 + 0.016 * i)) / 0.008;
+    return Rt - 1.35 + e;
+  }
   // ===== v121: ปลาวาฬในทะเล (วาฬสเปิร์ม · วาฬนำร่องฝูง 3 · ออร์กาฝูง 4) + ให้อาหารที่ท่าเรือ + เล่นกับออร์กา =====
   var ccsWhM = {},
     ccsWh = null,
@@ -47868,7 +48066,15 @@ varying float vJz;
     return (K.add(a.root), a);
   }
   function ccsWhRand(w) {
-    w.tgt.set(-110 + Math.random() * 220, 0, Rt + 34 + Math.random() * 46);
+    // สุ่มจุดหมาย: บางครั้งเข้าน้ำตื้นใกล้ฝั่ง บางครั้งออกทะเลลึกไกล ๆ
+    let i = w.k === "sperm" ? Rt + 26 : Rt + 13;
+    for (let e = 0; e < 12; e++) {
+      let t = Math.random(),
+        n = t < (w.k === "sperm" ? 0.15 : 0.35) ? i + Math.random() * 22 : Rt + 40 + Math.random() * 230,
+        s = -200 + Math.random() * 400;
+      if (!ccsObsPush(s, n, 14)) return void w.tgt.set(s, 0, n);
+    }
+    w.tgt.set(0, 0, Rt + 60);
   }
   function ccsWhaleInit() {
     if (ccsWh || !ccsWhM.orca) return;
@@ -47908,7 +48114,7 @@ varying float vJz;
     (r(t, 40, Rt + 50), r(n, -60, Rt + 62), r(s, 5, Rt + 74), (ccsWh = { all: i, pods: [t, n, s] }));
   }
   function ccsSpout(i, e = 1) {
-    let t = ccsSoftTex();
+    let t = ccsSoft();
     for (let n = 0; n < 7; n++) {
       let s = new zi(new vi({ map: t, transparent: !0, depthWrite: !1, opacity: 0.75, color: 15661823 }));
       (s.position.copy(i), s.scale.setScalar(0.3 * e), K.add(s), ccsSpouts.push({ s, t: 0, d: 1.5 + Math.random() * 0.5, v: (2.6 + n * 0.45) * e, dx: (Math.random() - 0.5) * 0.4 * e, dz: (Math.random() - 0.5) * 0.4 * e, e }));
@@ -47922,17 +48128,52 @@ varying float vJz;
     let t = w.size * 0.5 * back;
     return new H(w.pos.x + Math.sin(w.yaw) * t, Ph, w.pos.z + Math.cos(w.yaw) * t);
   }
+  // หาทางอ้อม: ถ้าเส้นตรงไปเป้าผ่านสะพาน/เกาะ ให้ไปจุดอ้อมก่อน (ปลายสะพานฝั่งทะเล / ข้างเกาะ)
+  function ccsWhRoute(w, tx, tz) {
+    let i = w.size * 0.25;
+    for (let e of ccsObsList()) {
+      let t = !1;
+      for (let n = 1; n <= 16 && !t; n++) {
+        let s = n / 16,
+          o = w.pos.x + (tx - w.pos.x) * s,
+          r = w.pos.z + (tz - w.pos.z) * s;
+        e.b ? (t = o > e.x0 - i && o < e.x1 + i && r > e.z0 - i && r < e.z1 + i) : (t = Math.hypot(o - e.x, r - e.z) < e.r + i);
+      }
+      if (!t) continue;
+      if (e.b) return [w.pos.x < 0 ? e.x0 - i - 3 : e.x1 + i + 3, e.z1 + i + w.size * 0.6 + 3];
+      let n = w.pos.x - e.x,
+        s = w.pos.z - e.z,
+        o = Math.hypot(n, s) || 1,
+        r = tx - e.x,
+        a = tz - e.z,
+        c = Math.sign(n * a - s * r) || 1,
+        l = e.r + i + 8;
+      return [e.x + (n / o) * l * 0.4 + (-s / o) * c * l, e.z + (s / o) * l * 0.4 + (n / o) * c * l];
+    }
+    return null;
+  }
   function ccsWhStep(w, dt, tx, tz, spd) {
+    let rw = ccsWhRoute(w, tx, tz);
+    rw && ((tx = rw[0]), (tz = rw[1]));
     let e = tx - w.pos.x,
       t = tz - w.pos.z,
       n = Math.hypot(e, t);
     if (n > 0.3) {
       let s = Math.atan2(e, t),
         o = Math.atan2(Math.sin(s - w.yaw), Math.cos(s - w.yaw)),
-        r = (w.k === "sperm" ? 0.25 : 0.7) * dt;
+        r = (w.k === "sperm" ? 0.25 : 0.7) * dt,
+        L = w.size * 0.5 + 3 + w.spd * 1.2,
+        q = ccsObsPush(w.pos.x + Math.sin(w.yaw) * L, w.pos.z + Math.cos(w.yaw) * L, w.size * 0.25);
+      // มองล่วงหน้า: ถ้าทางข้างหน้าชนสะพาน/เกาะ ให้เลี้ยวหลบไปทางที่ถูกดันออก
+      if (q) {
+        let a = Math.atan2(q[0], q[1]),
+          c = Math.atan2(Math.sin(a - w.yaw), Math.cos(a - w.yaw));
+        o = c > 0 ? 1.4 : -1.4;
+        n > L * 1.5 || (o *= 0.6);
+      }
       ((w.yaw += Math.max(-r, Math.min(r, o))), (w.roll += (-o * 0.6 - w.roll) * Math.min(1, dt * 2)));
     }
-    ((w.spd += (spd - w.spd) * Math.min(1, dt * 0.8)), (w.pos.x += Math.sin(w.yaw) * w.spd * dt), (w.pos.z += Math.cos(w.yaw) * w.spd * dt), (w.pos.z = Math.max(Rt + 21, Math.min(Rt + 95, w.pos.z))), (w.pos.x = Math.max(-150, Math.min(150, w.pos.x))));
+    ((w.spd += (spd - w.spd) * Math.min(1, dt * 0.8)), (w.pos.x += Math.sin(w.yaw) * w.spd * dt), (w.pos.z += Math.cos(w.yaw) * w.spd * dt), (w.pos.z = Math.max(ccsZMin(w), Math.min(Rt + 280, w.pos.z))), (w.pos.x = Math.max(-230, Math.min(230, w.pos.x))), ccsWhCollide(w));
     return n;
   }
   function ccsWhFeedPt() {
@@ -47981,13 +48222,13 @@ varying float vJz;
         else {
           let o = t.ht * 0.9;
           (ccsWhStep(n, dt, t.c.x + Math.sin(o) * 5, t.c.z + Math.cos(o) * 5, s.spd * 1.9),
-            (t.fj -= dt) < 0 && ((t.fj = 0.25 + Math.random() * 0.4), tl.burst(new H(t.c.x + (Math.random() - 0.5) * 5, 0, t.c.z + (Math.random() - 0.5) * 5), Ph, 0.35 + Math.random() * 0.3)),
+            (t.fj -= dt) < 0 && ((t.fj = 0.25 + Math.random() * 0.4), ccsSplashW(new H(t.c.x + (Math.random() - 0.5) * 5, 0, t.c.z + (Math.random() - 0.5) * 5), Ph, 0.35 + Math.random() * 0.3)),
             t.ht > 6 && !t.br && ((t.br = 1), ccsWhAct(t.m[1] ?? n, "breach", 2.2)),
             t.ht > 4 && t.ht < 4.1 && ccsWhAct(n, "slap", 1.6),
             t.ht > 11 && ((t.mode = "roam"), (t.hunt = 50 + Math.random() * 50), ccsWhRand(t)));
         }
       } else {
-        (ccsWhStep(n, dt, t.tgt.x, t.tgt.z, s.spd) < 6 && ccsWhRand(t), t.k === "orca" && (t.hunt -= dt) < 0 && ((t.mode = "hunt"), (t.ht = -30), (t.fj = 0), (t.br = 0), (t.c = n.pos.clone().add(new H(Math.sin(n.yaw) * 16, 0, Math.cos(n.yaw) * 16))), (t.c.z = Math.max(Rt + 32, Math.min(Rt + 85, t.c.z)))));
+        (ccsWhStep(n, dt, t.tgt.x, t.tgt.z, s.spd) < 6 && ccsWhRand(t), t.k === "orca" && (t.hunt -= dt) < 0 && ((t.mode = "hunt"), (t.ht = -30), (t.fj = 0), (t.br = 0), (t.c = n.pos.clone().add(new H(Math.sin(n.yaw) * 16, 0, Math.cos(n.yaw) * 16))), (t.c.z = Math.max(Rt + 22, Math.min(Rt + 260, t.c.z)))));
       }
       // ลูกฝูงตามจ่าฝูงเป็นรูปขบวน (ตอนล่าว่ายวนรอบเป้าคนละมุม)
       for (let o = 1; o < t.m.length; o++) {
@@ -48034,13 +48275,13 @@ varying float vJz;
             ((o.y = u < 0.5 ? c + (p - c) * Math.sin((u / 0.5) * Math.PI * 0.5) : p - (p - c) * Math.pow((u - 0.5) / 0.5, 2)),
               (l = u < 0.45 ? 1.3 - u * 0.5 : 1.08 - ((u - 0.45) / 0.55) * 1.75),
               (h = Math.min(1, Math.max(0, (u - 0.25) / 0.45)) * 1.8),
-              d.sp === 0 && u > 0.12 && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1.3), ke("splash")),
-              d.sp === 1 && u > 0.78 && ((d.sp = 2), tl.burst(o.pos.clone(), Ph, o.size / 2), tl.burst(ccsWhPos(o, 0.3), Ph, o.size / 2.6), ke("splash")),
+              d.sp === 0 && u > 0.12 && ((d.sp = 1), ccsSplashW(o.pos.clone(), Ph, 1.3), ke("splash")),
+              d.sp === 1 && u > 0.78 && ((d.sp = 2), ccsSplashW(o.pos.clone(), Ph, o.size / 2), ccsSplashW(ccsWhPos(o, 0.3), Ph, o.size / 2.6), ke("splash")),
               (f = 0.7));
           } else if (d.k === "porp") {
             // ว่ายเร็วกระโดดโค้งต่ำ ๆ (porpoising)
             let p = Math.sin(u * Math.PI);
-            ((o.y = s.y[0] + p * (0.6 + o.size * 0.05)), (l = (1 - 2 * u) * 0.55), d.sp === 0 && u > 0.2 && ((d.sp = 1), tl.burst(ccsWhPos(o, 0.3), Ph, 0.6)), d.sp === 1 && u > 0.8 && ((d.sp = 2), tl.burst(o.pos.clone(), Ph, 0.8)));
+            ((o.y = s.y[0] + p * (0.6 + o.size * 0.05)), (l = (1 - 2 * u) * 0.55), d.sp === 0 && u > 0.2 && ((d.sp = 1), ccsSplashW(ccsWhPos(o, 0.3), Ph, 0.6)), d.sp === 1 && u > 0.8 && ((d.sp = 2), ccsSplashW(o.pos.clone(), Ph, 0.8)));
           } else if (d.k === "spy") {
             // ยืดตัวตั้งโผล่หัวมองน้อง
             let p = Math.sin(Math.min(1, u * 1.4) * Math.PI * 0.5) * (u > 0.8 ? (1 - u) / 0.2 : 1),
@@ -48049,11 +48290,11 @@ varying float vJz;
           } else if (d.k === "slap") {
             // ตบหางเสียงดังตูม
             let p = Math.sin(u * Math.PI);
-            ((l = -0.75 * p), (o.y = s.y[0] + 0.1), u > 0.55 && d.sp === 0 && ((d.sp = 1), tl.burst(ccsWhPos(o, -0.48), Ph, 1.3), ke("splash"), d.wet && e && e.z > Rt + 14 && (tl.burst(new H(e.x, 0, e.z + 1), Ph, 1.6), rt("💦 เปียกปอน! ออร์กาแกล้ง 😆", e.clone().setY(1.5), "big"))));
+            ((l = -0.75 * p), (o.y = s.y[0] + 0.1), u > 0.55 && d.sp === 0 && ((d.sp = 1), ccsSplashW(ccsWhPos(o, -0.48), Ph, 1.3), ke("splash"), d.wet && e && e.z > Rt + 14 && (ccsSplashW(new H(e.x, 0, e.z + 1), Ph, 1.6), rt("💦 เปียกปอน! ออร์กาแกล้ง 😆", e.clone().setY(1.5), "big"))));
           } else if (d.k === "eat") {
             // โผล่งับปลา
             let p = Math.sin(u * Math.PI);
-            ((l = 0.7 * p), (o.y = s.y[0] + p * 0.5), (o.jawT = u < 0.45 ? 0.55 : 0), d.sp === 0 && u > 0.35 && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1), ke("splash"), ccsSparkle(o.pos.clone().setY(1.2), 6), rt("❤️ งั่ม!", o.pos.clone().setY(1.6), "big")), (f = 0.6));
+            ((l = 0.7 * p), (o.y = s.y[0] + p * 0.5), (o.jawT = u < 0.45 ? 0.55 : 0), d.sp === 0 && u > 0.35 && ((d.sp = 1), ccsSplashW(o.pos.clone(), Ph, 1), ke("splash"), ccsSparkle(o.pos.clone().setY(1.2), 6), rt("❤️ งั่ม!", o.pos.clone().setY(1.6), "big")), (f = 0.6));
           }
           u >= 1 && (o.act = null);
         } else if (o.beg > 0) {
@@ -48063,6 +48304,9 @@ varying float vJz;
           ((o.y += (s.y[0] + (c - s.y[0]) * p - o.y) * Math.min(1, dt * 3)), (l = 0.95 * p), (h = Math.sin(ccsWhT * 1.3) * 0.08), (f = 0.85), (o.jawT = (o.chomp ?? 0) > 0 ? 0 : p > 0.75 ? 0.5 + Math.sin(ccsWhT * 2.6) * 0.07 : 0));
         } else o.y += (o.ty - o.y) * Math.min(1, dt * (o.ty > o.y ? 0.9 : 0.6));
         o.chomp > 0 && (o.chomp -= dt);
+        // ไม่จมลงต่ำกว่าพื้นทะเล (น้ำตื้นจะว่ายเลียดผิวน้ำเห็นครีบหลัง)
+        o.y = Math.max(o.y, Lc(o.pos.z) + o.size * 0.15);
+        ccsWake(o, dt);
         let d = (o.y - r) / Math.max(1e-4, dt);
         (o.act || o.beg > 0 || (l = Math.max(-0.5, Math.min(0.5, Math.atan2(d, Math.max(0.5, o.spd)) * 0.8)) + Math.sin(ccsWhT * 1.3 + o.size) * 0.04), (o.pitch += (l - o.pitch) * Math.min(1, dt * 4)), (o.roll *= Math.pow(0.5, dt)));
         let u = o.a.root;
@@ -48153,7 +48397,7 @@ varying float vJz;
         c = ccsWhHead(a),
         l = Math.min(1, i.t / 0.75);
       if ((i.g.position.lerpVectors(i.from, c, l), (i.g.position.y += 1.4 * l * (1 - l)), i.g.lookAt(c), l < 1)) return;
-      (K.remove(i.g), (ccsBaitFly = null), (a.chomp = 0.45), ke("pop"), ke("heart"), ccsSparkle(c.clone(), 8), rt("❤️ งั่ม! อร่อย", c.clone().setY(c.y + 0.8), "big"), tl.burst(c.clone(), Ph, 0.4));
+      (K.remove(i.g), (ccsBaitFly = null), (a.chomp = 0.45), ke("pop"), ke("heart"), ccsSparkle(c.clone(), 8), rt("❤️ งั่ม! อร่อย", c.clone().setY(c.y + 0.8), "big"), ccsSplashW(c.clone(), Ph, 0.4));
       let h = ccsWh.pods.find((u) => u.k === "orca");
       h.lt = Math.max(h.lt, 18);
       let f = (z.whale ??= {}),
@@ -48163,7 +48407,7 @@ varying float vJz;
     }
     let e = Math.min(1, i.t / 0.9);
     if ((i.g.position.lerpVectors(i.from, i.to, e), (i.g.position.y = i.from.y + (Ph - i.from.y) * e + 3 * e * (1 - e)), (i.g.rotation.x += dt * 9), e < 1)) return;
-    (K.remove(i.g), tl.burst(i.to.clone(), Ph, 0.5), ke("splash"), (ccsBaitFly = null));
+    (K.remove(i.g), ccsSplashW(i.to.clone(), Ph, 0.5), ke("splash"), (ccsBaitFly = null));
     let t = ccsBaitDef[i.k].who,
       n = ccsWh.pods.find((a) => a.k === t);
     if (!n) return;
@@ -55922,7 +56166,7 @@ varying float vJz;
               : null,
         );
       }
-      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick(), ccsWhaleTick(Math.min(0.1, e)), ccsBaitTick(Math.min(0.1, e)));
+      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick(), ccsWhaleTick(Math.min(0.1, e)), ccsBaitTick(Math.min(0.1, e)), ccsFxTick(Math.min(0.05, e)));
       if ((T4(e, n), Oo)) {
         let b = Oo.k.pos,
           CA = Math.max(-1.25, Math.min(1.25, j.yaw - (Oo.yaw0 ?? j.yaw)));
@@ -64247,7 +64491,8 @@ varying float vJz;
         bathStart: () => ccsBathStart(),
         whales: () => ccsWh,
         wthrow: (k) => ccsWhaleThrow(k),
-        wtick: (d) => (ccsWhaleTick(d), ccsBaitTick(d)),
+        wtick: (d) => (ccsWhaleTick(d), ccsBaitTick(d), ccsFxTick(d)),
+        bigSplash: (x, z, e) => ccsBigSplash(new H(x, 0, z), e),
         wplay: () => ccsOrcaPlay(),
         bathTick: (d) => ccsBathTick(d),
         hatTick: (d) => ccsHatTick(d),
