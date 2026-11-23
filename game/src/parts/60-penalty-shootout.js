@@ -84,6 +84,7 @@
               let [o, r] = ccsPKZone[ccsPKDir[i.aim][1]];
               ccsHG("viking") && ((o -= 0.04), (r += 0.04));
               ccsSetOn("viking") && ((o -= 0.03), (r += 0.03));
+              ccsBuffOn("pk") && ((o -= 0.03), (r += 0.03));
               return `<p class="note">เล็ง: <b>${{ L: "↙ เรียดซ้าย", C: "⬇ เรียดกลาง", R: "↘ เรียดขวา", HL: "↖ โด่งซ้าย", HC: "⬆ โด่งกลาง", HR: "↗ โด่งขวา" }[i.aim]}</b> · ช่องเขียว = แม่น · เกิน = หลุดกรอบ · เบา = โดนเซฟง่าย</p><div class="pkbar"><b style="left:${o * 100}%;width:${(r - o) * 100}%"></b><em style="left:86%"></em><i id="pkPow"></i></div><button class="bigbtn" data-pk="K">⚽ ยิง!</button>`;
             })()
           : `<div class="pkgrid">${t("HL", e ? "↖ พุ่งสูงซ้าย" : "↖ โด่งซ้าย")}${t("HC", e ? "⬆ กระโดดกลาง" : "⬆ โด่งกลาง")}${t("HR", e ? "↗ พุ่งสูงขวา" : "↗ โด่งขวา")}${t("L", e ? "↙ พุ่งต่ำซ้าย" : "↙ เรียดซ้าย")}${t("C", e ? "⬇ ยืนกลาง" : "⬇ เรียดกลาง")}${t("R", e ? "↘ พุ่งต่ำขวา" : "↘ เรียดขวา")}</div>`;
@@ -260,6 +261,7 @@
         if (p >= 1) {
           ((t.ph = "result"), (t.t = 0), (t.jumped = !1), (h ? t.me : t.cpu).push(t.res === "goal"), ccsPKBoard());
           let mk = { over: "โด่งข้ามคาน", wide: "ยิงออกข้างเสา", post: "ชนเสาออก" }[t.tg?.k] ?? "ยิงพลาด",
+            _s = h ? ccsDogSay(t.res === "goal" ? "happy" : "whine") : ccsDogSay(t.res === "goal" ? "whine" : "happy"),
             v = t.res === "goal" ? (h ? "⚽ โกล!!" : `⚽ ${t.foe.n} ยิงเข้า`) : t.res === "save" ? (h ? `🧤 ${t.foe.n} เซฟได้!` : "🧤 เซฟสวย!!") : h ? `😵 ${mk}!` : `😆 ${t.foe.n} ${mk}!`;
           (rt(v, o.pos.clone().setY(2), (t.res === "goal") === h ? "big" : "bad"), t.res === "goal" ? (ke(h ? "heart" : "nope"), ccsWhistle?.("goal")) : ke(h ? "nope" : "heart"), h && t.res === "goal" && Ai("goal"));
           if (t.res === "goal") for (let _ of tb) _.side === 1 && ((_.t = 0), _.hit.copy(o.pos).setY(o.y + 0.5), _.dir.set(1, 0, 0), (_.amp = 0.5));

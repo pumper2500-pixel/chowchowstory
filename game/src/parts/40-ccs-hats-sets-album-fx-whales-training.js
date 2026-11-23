@@ -117,7 +117,7 @@
       for (let s of e.fo) (K.remove(s.m), s.m.geometry.dispose());
       (t.rig.root.traverse((o) => o.userData.isXray && (o.visible = !0)), (ccsBath = null), (j.jy = 0), t.pos.copy(e.back));
       // อาบน้ำร้าน: สะอาด + หอมฟุ้ง 1 วัน + ขนเงาวิ้ง
-      ((z.clean = 100), (z.fresh = j.time + 1), (z.energy = Math.min(100, (z.energy ?? 0) + 60)), ccsSparkle(t.pos, 18), ke("sparkle"), rt("✨ วิ้ง! หอมฟุ้ง", t.pos, "big"), De("🛁 อาบน้ำเสร็จแล้ว! ✨ หอมฟุ้ง 1 วัน: ตัวไม่เลอะง่าย · ทิปจากคำสั่ง ×2 · ชาวเมืองทักชม", 3600), Ai("bath"), ccsSnapSoon("🛁 อาบน้ำหอมฟุ้ง วิ้ง ✨", 0.05, "bath"), _t(z));
+      ((z.clean = 100), (z.fresh = j.time + 1), (z.energy = Math.min(100, (z.energy ?? 0) + 60)), ccsSparkle(t.pos, 18), ke("sparkle"), rt("✨ วิ้ง! หอมฟุ้ง", t.pos, "big"), De("🛁 อาบน้ำเสร็จแล้ว! ✨ หอมฟุ้ง 1 วัน: ตัวไม่เลอะง่าย · ทิปจากคำสั่ง ×2 · ชาวเมืองทักชม", 3600), Ai("bath"), ccsDogSay("happy"), ccsSnapSoon("🛁 อาบน้ำหอมฟุ้ง วิ้ง ✨", 0.05, "bath"), _t(z));
     }
   }
   function ccsFresh() {
@@ -337,7 +337,7 @@
         } catch {
           r.splice(-4);
         }
-      (ke("shutter"), ccsFlash(), De(`📷 บันทึกลงอัลบั้มแล้ว: ${i.cap}`, 2200));
+      (ke("shutter"), ccsFlash(), De(`📷 บันทึกลงอัลบั้มแล้ว: ${i.cap}`, 2200), ccsDexOnSnap());
     } catch (e) {
       console.warn("snap", e);
     }
@@ -990,7 +990,7 @@ varying float vJz;
     K.add(n);
     let o = ccsWhFeedPt(),
       r = k === "salmon" && ccsOrcaBeg();
-    ((o.x = i.pos.x + (Math.random() - 0.5) * 2), (ccsBaitFly = { g: n, t: 0, from: i.pos.clone().setY(1.2), to: o, k, mouth: r ? r.m[0] : null }), ke("pop"), rt(r ? "🐟 ป้อนเข้าปาก!" : `${e.icon} โยน!`, i.pos.clone().setY(1.5)), _t(z));
+    ((o.x = i.pos.x + (Math.random() - 0.5) * 2), (ccsBaitFly = { g: n, t: 0, from: i.pos.clone().setY(1.2), to: o, k, mouth: r ? r.m[0] : null }), ke("pop"), ccsDogSay("bark"), rt(r ? "🐟 ป้อนเข้าปาก!" : `${e.icon} โยน!`, i.pos.clone().setY(1.5)), _t(z));
   }
   function ccsBaitTick(dt) {
     let i = ccsBaitFly;
@@ -1007,7 +1007,7 @@ varying float vJz;
       h.lt = Math.max(h.lt, 18);
       let f = (z.whale ??= {}),
         d = f.orca ?? 0;
-      (Ai("whalefeed"), Ai("orcamouth"), ccsSnapSoon("🐳 ป้อนแซลมอนเข้าปากออร์กา", 0.05, "mouth"), (f.orca = d + (ccsHG("shark") ? 2 : 1) + (ccsSetOn("sailor") ? 1 : 0)), Math.floor(f.orca / 5) > Math.floor(d / 5) && setTimeout(() => ccsWhGift("orca"), 1500), _t(z));
+      (Ai("whalefeed"), Ai("orcamouth"), ccsSnapSoon("🐳 ป้อนแซลมอนเข้าปากออร์กา", 0.05, "mouth"), (f.orca = d + ((ccsHG("shark") ? 2 : 1) + (ccsSetOn("sailor") ? 1 : 0)) * (ccsBuffOn("whale") ? 2 : 1)), Math.floor(f.orca / 5) > Math.floor(d / 5) && setTimeout(() => ccsWhGift("orca"), 1500), _t(z));
       return;
     }
     let e = Math.min(1, i.t / 0.9);
@@ -1026,7 +1026,7 @@ varying float vJz;
     ((n.mode = "come"), n.tgt.copy(i.to), (n.feeder = 1));
     let o = (z.whale ??= {});
     let o0 = o[t] ?? 0;
-    (o[t] = o0 + (ccsHG("shark") ? 2 : 1) + (ccsSetOn("sailor") ? 1 : 0)), Ai("whalefeed");
+    (o[t] = o0 + ((ccsHG("shark") ? 2 : 1) + (ccsSetOn("sailor") ? 1 : 0)) * (ccsBuffOn("whale") ? 2 : 1)), Ai("whalefeed");
     let r = ccsWhInfo[t].n;
     (De(`${r}ได้กลิ่น${ccsBaitDef[i.k].n} กำลังว่ายมา! 🌊`, 2200),
       setTimeout(() => {
@@ -1038,7 +1038,7 @@ varying float vJz;
     let i = Le[0];
     if (!i) return;
     let e = t === "orca" ? [60, "ออร์กาคาบขวดข้อความลอยมาให้ 💌"] : t === "pilot" ? [35, "วาฬนำร่องดันเปลือกหอยสวยมาให้ 🐚"] : [150, "วาฬสเปิร์มทิ้งอำพันทะเลหายากไว้ให้ ✨"];
-    ((z.money += e[0]), Ei(), ke("quest"), ccsSparkle(i.pos, 14), De(`${e[1]} +${e[0]}💰 (ความผูกพัน ${(z.whale ?? {})[t] ?? 0})`, 3200), _t(z));
+    ((z.money += e[0]), Ei(), ke("quest"), ccsDogSay("happy"), ccsSparkle(i.pos, 14), De(`${e[1]} +${e[0]}💰 (ความผูกพัน ${(z.whale ?? {})[t] ?? 0})`, 3200), _t(z));
   }
   function ccsWhaleMenu() {
     let i = z.bait ?? {},
@@ -1197,7 +1197,7 @@ varying float vJz;
         a = y0.indexOf(s) + ":" + z.day;
       if (r[a]) return void Ln(s.rig.root.position, "น่ารักจัง! 😊");
       r[a] = 1;
-      let c = Math.round((5 + ccsSt("obey") / 8 + e[2] / 4) * (ccsFresh() ? 2 : 1) * (ccsSetOn("jester") ? 3 : ccsHG("clown") ? 2 : ccsHG("police") ? 1.5 : 1));
+      let c = Math.round((5 + ccsSt("obey") / 8 + e[2] / 4) * (ccsFresh() ? 2 : 1) * (ccsSetOn("jester") ? 3 : ccsHG("clown") ? 2 : ccsHG("police") ? 1.5 : 1) * (ccsBuffOn("whale") ? 1.5 : 1));
       ((z.money += c), Ei(), Ai("tip"), rt(`❤️ +${c}💰`, s.rig.root.position.clone(), "big"), ke("coin"), Ln(s.rig.root.position, ccsFresh() ? `หอมจัง! ${e[1].split(" ")[1]}เก่งด้วย ให้ทิปเพิ่มเลย ✨` : `ว้าว ${e[1].split(" ")[1]}เก่งมาก! ให้ขนมนะ ❤️`), _t(z));
     }
   }

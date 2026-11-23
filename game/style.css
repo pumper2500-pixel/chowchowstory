@@ -289,3 +289,23 @@ body.training #act{display:none!important}
 .phgrid small{display:block;margin-top:3px;line-height:1.25;max-height:2.6em;overflow:hidden}
 .phview img{width:100%;border-radius:12px;border:3px solid #3b2a1a}
 .phview p{margin:6px 0}
+
+/* v126: เข็มทิศขอบจอ (ซ่อนตอนเปิดแผง/ทำกิจกรรม) */
+#ccsComp{position:fixed;top:calc(10px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(340px,40vw);height:30px;pointer-events:none;z-index:40;display:none}
+#ccsComp.on{display:block}
+@media (max-width:820px){#ccsComp{top:calc(78px + env(safe-area-inset-top));left:10px;transform:none;width:min(300px,60vw)}}
+.ccs-comp-bar{position:relative;width:100%;height:100%;overflow:hidden;background:rgba(15,23,42,.58);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);border-radius:999px}
+.ccs-comp-mid{position:absolute;top:-2px;left:50%;transform:translateX(-50%);color:#fde047;font-size:10px;line-height:1}
+.ccs-comp-card{position:absolute;top:9px;transform:translateX(-50%);color:rgba(255,255,255,.65);font:700 11px/1 Mitr,system-ui}
+.ccs-comp-pin{position:absolute;top:5px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:2px;font:700 12px/1 Mitr,system-ui;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap}
+.ccs-comp-pin b{font-size:10px;opacity:.9}
+.ccs-comp-pin.edge{opacity:.7}
+.ccs-comp-pin.urg{animation:ccsPulse .9s infinite;color:#fb923c}
+@keyframes ccsPulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.22)}}
+/* v126: ม่านวาร์ป */
+#ccsFade{position:fixed;inset:0;background:#0f172a;opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:999}
+#ccsFade.on{opacity:1;pointer-events:auto}
+/* v126: ป้ายบัฟขนม */
+#ccsBuff{position:fixed;left:12px;top:calc(74px + env(safe-area-inset-top));display:none;background:rgba(255,248,230,.95);border:2.5px solid #3b2a1a;border-radius:12px;padding:3px 10px;font:700 12px Mitr,sans-serif;z-index:41;pointer-events:none}
+#ccsBuff.on{display:block}
+@media (max-width:820px){#ccsBuff{top:calc(114px + env(safe-area-inset-top))}}

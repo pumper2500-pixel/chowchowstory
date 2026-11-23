@@ -626,6 +626,9 @@
   it("noteBtn").addEventListener("click", () => yC());
   it("albumBtn")?.addEventListener("click", () => ccsAlbum());
   it("photoBtn")?.addEventListener("click", () => ccsPhotoAlbum());
+  it("dexBtn")?.addEventListener("click", () => ccsDexOpen());
+  it("warpBtn")?.addEventListener("click", () => ccsWarpMenu());
+  it("compBtn")?.addEventListener("click", () => ccsCompToggle());
   addEventListener("keydown", (i) => {
     (i.key === "p" || i.key === "P") && j.started && !C0() && ccsSnapSoon(`${pl[0]?.name ?? "น้อง"} เที่ยวเล่น`, 0.05);
   });
@@ -909,6 +912,9 @@
       ["pkwin", 1, "กัปตันแม็ก: ชนะดวลจุดโทษ 1 ครั้ง", 60],
       ["tip", 3, "ชาวเมือง: โชว์คำสั่งให้ชาวเมืองดูจนได้ทิป 3 ครั้ง", 40],
       ["bath", 1, "ร้านอาบน้ำ: อาบน้ำหอม ๆ ที่ร้าน 1 ครั้ง", 35],
+      ["dex", 1, "ลุงทะเล: ถ่ายรูปสัตว์ทะเลลงสมุดภาพ 1 แบบใหม่", 90],
+      ["loot", 3, "เด็ก ๆ ริมหาด: เก็บของเกยตื้นริมหาด 3 ชิ้น", 40],
+      ["treat", 1, "แม่บ้าน: ทำขนมบัฟที่ชามผสมในบ้าน 1 ชิ้น", 40],
     ];
   function lb() {
     let i = I0();

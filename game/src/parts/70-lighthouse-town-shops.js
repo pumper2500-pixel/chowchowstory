@@ -2733,13 +2733,13 @@
         (j.tired > 0 ? 2 : 6.2 * (1 + Math.min(10, c - 1) * 0.03)) *
         (l ? 0.7 : 1) *
         (h ? 0.7 : 1) *
-        (j.wade > 0.15 ? (ccsHG("swim") ? 1.15 : 0.6) : 1) *
+        (j.wade > 0.15 ? (ccsHG("swim") ? 1.15 : 0.6) * (ccsBuffOn("swim") ? 1.25 : 1) : 1) *
         (co.cur.r > 0.3 && !Se && ccsSetOn("rain") ? 1.1 : 1) *
         (j.running ? 1.7 : 1) *
         (1 + ccsSt("speed") * 0.0025) *
         a *
         aT();
-      j.running && j.started && (z.energy = Math.max(0, (z.energy ?? 100) - e * 0.35 * F6() * (1 - ccsSt("stam") / 200) * (ccsHG("helmet") ? 0.5 : 1)));
+      j.running && j.started && (z.energy = Math.max(0, (z.energy ?? 100) - e * 0.35 * F6() * (1 - ccsSt("stam") / 200) * (ccsHG("helmet") ? 0.5 : 1) * (ccsBuffOn("stam") ? 0.65 : 1)));
       let u = j.started && a > 0.08 && !ho,
         p = j.jy > 0.42;
       (u ? O3.copy(S6).multiplyScalar(s).addScaledVector(_6, -o).normalize().multiplyScalar(d) : O3.set(0, 0, 0),
@@ -2972,7 +2972,7 @@
               : null,
         );
       }
-      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick(), ccsWhaleTick(Math.min(0.1, e)), ccsBaitTick(Math.min(0.1, e)), ccsFxTick(Math.min(0.05, e)));
+      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick(), ccsWhaleTick(Math.min(0.1, e)), ccsBaitTick(Math.min(0.1, e)), ccsFxTick(Math.min(0.05, e)), ccsV126Tick(Math.min(0.1, e)));
       if ((T4(e, n), Oo)) {
         let b = Oo.k.pos,
           CA = Math.max(-1.25, Math.min(1.25, j.yaw - (Oo.yaw0 ?? j.yaw)));
