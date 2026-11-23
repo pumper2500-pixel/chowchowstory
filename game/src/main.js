@@ -47701,6 +47701,300 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     } else !e && ccsFreeChick && (K.remove(ccsFreeChick.g), (ccsFreeChick = null));
     ccsFreeChick && (ccsFreeChick.g.rotation.y += i * 0.6);
   }
+  // ===== v121: ปลาวาฬในทะเล (วาฬสเปิร์ม · วาฬนำร่องฝูง 3 · ออร์กาฝูง 4) + ให้อาหารที่ท่าเรือ + เล่นกับออร์กา =====
+  var ccsWhM = {},
+    ccsWh = null,
+    ccsWhT = 0,
+    ccsWhUni = { value: 0 },
+    ccsSpouts = [];
+  async function ccsWhaleLoad(o, p, s) {
+    for (let [k, u] of [["orca", o], ["pilot", p], ["sperm", s]])
+      try {
+        let t = await Po(u);
+        ccsWhM[k] = { scene: t.scene, clip: t.animations[0] ?? null };
+      } catch (t) {
+        console.warn("whale", k, t);
+      }
+  }
+  var ccsWhInfo = {
+    orca: { n: "ออร์กา", bait: "salmon", y: [-0.32, -1.5], spd: 2.6 },
+    pilot: { n: "วาฬนำร่อง", bait: "squid", y: [-0.38, -1.4], spd: 1.7 },
+    sperm: { n: "วาฬสเปิร์ม", bait: "giant", y: [-0.75, -2.6], spd: 1.1 },
+  };
+  var ccsBaitDef = {
+    salmon: { icon: "🎣", n: "แซลมอนทั้งตัว", who: "orca", col: 16742991 },
+    squid: { icon: "🦑", n: "ปลาหมึกสด", who: "pilot", col: 16103368 },
+    giant: { icon: "🐙", n: "หมึกยักษ์", who: "sperm", col: 13649478 },
+  };
+  function ccsWhMake(k, size) {
+    let m = ccsWhM[k];
+    if (!m) return null;
+    let a = _3(m, null, size, k === "orca" ? 1 : 0.8);
+    if (k === "sperm")
+      a.root.traverse((t) => {
+        if (!t.isMesh) return;
+        let n = t.material.clone();
+        ((n.onBeforeCompile = (c) => {
+          ((c.uniforms.uWT = ccsWhUni),
+            (c.vertexShader = `uniform float uWT;
+` + c.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n float tw = clamp(-transformed.z / 9.7, 0.0, 1.0);\n transformed.y += 0.55 * sin(uWT * 1.25 + transformed.z * 0.26) * tw * tw;")));
+        }),
+          (n.customProgramCacheKey = () => "spermbend"),
+          (t.material = n));
+      });
+    return (K.add(a.root), a);
+  }
+  function ccsWhRand(w) {
+    w.tgt.set(-110 + Math.random() * 220, 0, Rt + 34 + Math.random() * 46);
+  }
+  function ccsWhaleInit() {
+    if (ccsWh || !ccsWhM.orca) return;
+    let i = [],
+      e = (k, size, pod, off) => {
+        let a = ccsWhMake(k, size);
+        if (!a) return null;
+        let w = { k, a, size, pod, off, pos: new H(), yaw: Math.random() * 6.28, y: ccsWhInfo[k].y[1], vy: 0, pitch: 0, roll: 0, spd: ccsWhInfo[k].spd, br: Math.random() * 8, act: null, tgt: new H(), vis: 1 };
+        return (i.push(w), w);
+      },
+      t = { k: "orca", mode: "roam", tgt: new H(), hunt: 30 + Math.random() * 30, m: [] },
+      n = { k: "pilot", mode: "roam", tgt: new H(), m: [] },
+      s = { k: "sperm", mode: "roam", tgt: new H(), m: [], dive: 0 };
+    // ออร์กา: ตัวผู้ครีบสูงตัวใหญ่ · ตัวเมีย · ลูก 2 ตัว (ว่ายแนบแม่)
+    for (let [o, r] of [
+      [5.6, [0, 0]],
+      [4.6, [-3.2, -3.5]],
+      [2.8, [-1.6, -5.2]],
+      [3, [2.8, -4.6]],
+    ]) {
+      let a = e("orca", o, t, new H(r[0], 0, r[1]));
+      a && t.m.push(a);
+    }
+    for (let [o, r] of [
+      [4.2, [0, 0]],
+      [3.8, [2.6, -3]],
+      [3.1, [-2.4, -3.8]],
+    ]) {
+      let a = e("pilot", o, n, new H(r[0], 0, r[1]));
+      a && n.m.push(a);
+    }
+    let o = e("sperm", 12, s, new H());
+    o && s.m.push(o);
+    let r = (a, c, l) => {
+      (a.tgt.set(c, 0, l), a.m.forEach((h, f) => (h.pos.set(c + h.off.x, h.y, l + h.off.z - f * 0.5), ccsWhRand(h))));
+    };
+    (r(t, 40, Rt + 50), r(n, -60, Rt + 62), r(s, 5, Rt + 74), (ccsWh = { all: i, pods: [t, n, s] }));
+  }
+  function ccsSpout(i, e = 1) {
+    let t = ccsSoftTex();
+    for (let n = 0; n < 7; n++) {
+      let s = new zi(new vi({ map: t, transparent: !0, depthWrite: !1, opacity: 0.75, color: 15661823 }));
+      (s.position.copy(i), s.scale.setScalar(0.3 * e), K.add(s), ccsSpouts.push({ s, t: 0, d: 1.5 + Math.random() * 0.5, v: (2.6 + n * 0.45) * e, dx: (Math.random() - 0.5) * 0.4 * e, dz: (Math.random() - 0.5) * 0.4 * e, e }));
+    }
+  }
+  function ccsWhAct(w, k, dur) {
+    w.act = { k, t: 0, dur, y0: w.y, sp: 0 };
+  }
+  function ccsWhPos(w, back) {
+    // ตำแหน่งหาง/หัว (สำหรับละอองน้ำ)
+    let t = w.size * 0.5 * back;
+    return new H(w.pos.x + Math.sin(w.yaw) * t, Ph, w.pos.z + Math.cos(w.yaw) * t);
+  }
+  function ccsWhStep(w, dt, tx, tz, spd) {
+    let e = tx - w.pos.x,
+      t = tz - w.pos.z,
+      n = Math.hypot(e, t);
+    if (n > 0.3) {
+      let s = Math.atan2(e, t),
+        o = Math.atan2(Math.sin(s - w.yaw), Math.cos(s - w.yaw)),
+        r = (w.k === "sperm" ? 0.25 : 0.7) * dt;
+      ((w.yaw += Math.max(-r, Math.min(r, o))), (w.roll += (-o * 0.6 - w.roll) * Math.min(1, dt * 2)));
+    }
+    ((w.spd += (spd - w.spd) * Math.min(1, dt * 0.8)), (w.pos.x += Math.sin(w.yaw) * w.spd * dt), (w.pos.z += Math.cos(w.yaw) * w.spd * dt), (w.pos.z = Math.max(Rt + 21, Math.min(Rt + 95, w.pos.z))), (w.pos.x = Math.max(-150, Math.min(150, w.pos.x))));
+    return n;
+  }
+  function ccsWhFeedPt() {
+    return new H(0, 0, Rt + 24.5);
+  }
+  function ccsWhaleTick(dt) {
+    if ((ccsWhaleInit(), !ccsWh)) return;
+    let i = !Se;
+    for (let w of ccsWh.all) w.a.root.visible = i && w.vis > 0;
+    for (let e = ccsSpouts.length - 1; e >= 0; e--) {
+      let t = ccsSpouts[e];
+      ((t.t += dt), t.s.position.set(t.s.position.x + t.dx * dt, t.s.position.y + t.v * dt, t.s.position.z + t.dz * dt), (t.v *= Math.pow(0.35, dt)), t.s.scale.setScalar((0.3 + t.t * 1.3) * t.e), (t.s.material.opacity = 0.75 * Math.max(0, 1 - t.t / t.d)), t.t > t.d && (K.remove(t.s), t.s.material.dispose(), ccsSpouts.splice(e, 1)));
+    }
+    if (!i) return;
+    ((ccsWhT += dt), (ccsWhUni.value = ccsWhT));
+    let e = Le[0]?.pos;
+    for (let t of ccsWh.pods) {
+      let n = t.m[0];
+      if (!n) continue;
+      let s = ccsWhInfo[t.k];
+      // ---- พฤติกรรมฝูง ----
+      if (t.mode === "come") {
+        let o = ccsWhStep(n, dt, t.tgt.x, t.tgt.z, s.spd * 2.4);
+        o < 2.5 && !n.act && (ccsWhAct(n, "eat", 1.8), (t.mode = "linger"), (t.lt = t.k === "orca" ? 40 : 22), (t.ang = Math.atan2(n.pos.x - t.tgt.x, n.pos.z - t.tgt.z)));
+      } else if (t.mode === "linger") {
+        ((t.lt -= dt), (t.ang += dt * (t.k === "sperm" ? 0.08 : 0.22)));
+        let o = t.k === "sperm" ? 9 : 5.5,
+          r = ccsWhFeedPt();
+        (ccsWhStep(n, dt, r.x + Math.sin(t.ang) * o, r.z + 2 + Math.cos(t.ang) * o * 0.6, s.spd * 0.8), t.lt < 0 && ((t.mode = "roam"), ccsWhRand(t)));
+      } else if (t.mode === "hunt") {
+        // ออร์กาล่าเหยื่อ: พุ่งไปหาฝูงปลา แล้วว่ายวนล้อม ต้อนปลาให้กระโดด
+        if (((t.ht += dt), t.ht < 0)) ccsWhStep(n, dt, t.c.x, t.c.z, s.spd * 2.2) < 6 && (t.ht = 0);
+        else {
+          let o = t.ht * 0.9;
+          (ccsWhStep(n, dt, t.c.x + Math.sin(o) * 5, t.c.z + Math.cos(o) * 5, s.spd * 1.9),
+            (t.fj -= dt) < 0 && ((t.fj = 0.25 + Math.random() * 0.4), tl.burst(new H(t.c.x + (Math.random() - 0.5) * 5, 0, t.c.z + (Math.random() - 0.5) * 5), Ph, 0.35 + Math.random() * 0.3)),
+            t.ht > 6 && !t.br && ((t.br = 1), ccsWhAct(t.m[1] ?? n, "breach", 2.2)),
+            t.ht > 4 && t.ht < 4.1 && ccsWhAct(n, "slap", 1.6),
+            t.ht > 11 && ((t.mode = "roam"), (t.hunt = 50 + Math.random() * 50), ccsWhRand(t)));
+        }
+      } else {
+        (ccsWhStep(n, dt, t.tgt.x, t.tgt.z, s.spd) < 6 && ccsWhRand(t), t.k === "orca" && (t.hunt -= dt) < 0 && ((t.mode = "hunt"), (t.ht = -30), (t.fj = 0), (t.br = 0), (t.c = n.pos.clone().add(new H(Math.sin(n.yaw) * 16, 0, Math.cos(n.yaw) * 16))), (t.c.z = Math.max(Rt + 32, Math.min(Rt + 85, t.c.z)))));
+      }
+      // ลูกฝูงตามจ่าฝูงเป็นรูปขบวน (ตอนล่าว่ายวนรอบเป้าคนละมุม)
+      for (let o = 1; o < t.m.length; o++) {
+        let r = t.m[o],
+          a,
+          c;
+        if (t.mode === "hunt" && t.ht >= 0) {
+          let l = t.ht * 0.9 + (o * Math.PI * 2) / t.m.length;
+          ((a = t.c.x + Math.sin(l) * (5 + o)), (c = t.c.z + Math.cos(l) * (5 + o)));
+        } else {
+          let l = Math.cos(n.yaw),
+            h = Math.sin(n.yaw);
+          ((a = n.pos.x + r.off.x * l + r.off.z * h), (c = n.pos.z - r.off.x * h + r.off.z * l));
+        }
+        let l = Math.hypot(a - r.pos.x, c - r.pos.z);
+        ccsWhStep(r, dt, a, c, Math.min(s.spd * 2.6, Math.max(n.spd * 0.6, n.spd + (l - 1) * 0.6)));
+      }
+      // ---- ท่าทางขึ้นลงน้ำ หายใจ / ท่าพิเศษ ----
+      for (let o of t.m) {
+        let r = o.y;
+        o.br += dt;
+        let a = t.k === "sperm" ? 26 : 7,
+          c = t.k === "sperm" ? 14 : 2.4;
+        if (t.k === "sperm" && t.mode === "roam") {
+          // วาฬสเปิร์ม: ลอยหายใจนาน ๆ แล้วยกหางดำลึก หายไปนานก่อนโผล่ที่ใหม่
+          let l = o.br % 70;
+          (l < 26 ? ((o.ty = s.y[0]), (o.vis = 1)) : l < 31 ? (o.ty = -3.4) : ((o.ty = -3.4), (o.vis = 0), l > 68 && (ccsWhRand(t), o.pos.copy(t.tgt).add(new H(8, 0, 8)))), l < 26 && o.br % 6 < dt && ccsSpout(ccsWhPos(o, 0.42).setY(Ph + 0.6), 2.2));
+        } else ((o.vis = 1), (o.ty = o.br % a < c || t.mode === "linger" ? s.y[0] : s.y[1]), o.br % a < dt && t.mode !== "hunt" && ccsSpout(ccsWhPos(o, 0.3).setY(Ph + 0.3), o.size / 4.5));
+        let l = 0,
+          h = 0,
+          f = 0;
+        if (o.act) {
+          let d = o.act;
+          d.t += dt;
+          let u = d.t / d.dur;
+          if (d.k === "breach") {
+            // กระโดดพ้นน้ำตีลังกาข้าง
+            let p = 1.2 + o.size * 0.35;
+            ((o.y = s.y[1] + (p - s.y[1]) * 4 * u * (1 - u)), (l = (1 - 2 * u) * 1.1), (h = Math.sin(u * Math.PI) * 1.3), d.sp === 0 && o.y > Ph && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1.2)), d.sp === 1 && u > 0.8 && ((d.sp = 2), tl.burst(o.pos.clone(), Ph, o.size / 2.2), ke("splash")));
+          } else if (d.k === "spy") {
+            // ยืดตัวตั้งโผล่หัวมองน้อง
+            let p = Math.sin(Math.min(1, u * 1.4) * Math.PI * 0.5) * (u > 0.8 ? (1 - u) / 0.2 : 1);
+            ((l = 1.35 * p), (o.y = s.y[0] + p * o.size * 0.28), (f = 1));
+          } else if (d.k === "slap") {
+            // ตบหางเสียงดังตูม
+            let p = Math.sin(u * Math.PI);
+            ((l = -0.75 * p), (o.y = s.y[0] + 0.1), u > 0.55 && d.sp === 0 && ((d.sp = 1), tl.burst(ccsWhPos(o, -0.48), Ph, 1.3), ke("splash"), d.wet && e && e.z > Rt + 14 && (tl.burst(new H(e.x, 0, e.z + 1), Ph, 1.6), rt("💦 เปียกปอน! ออร์กาแกล้ง 😆", e.clone().setY(1.5), "big"))));
+          } else if (d.k === "eat") {
+            // โผล่งับปลา
+            let p = Math.sin(u * Math.PI);
+            ((l = 0.7 * p), (o.y = s.y[0] + p * 0.5), d.sp === 0 && u > 0.35 && ((d.sp = 1), tl.burst(o.pos.clone(), Ph, 1), ke("splash"), ccsSparkle(o.pos.clone().setY(1.2), 6), rt("❤️ งั่ม!", o.pos.clone().setY(1.6), "big")), (f = 0.6));
+          }
+          u >= 1 && (o.act = null);
+        } else o.y += (o.ty - o.y) * Math.min(1, dt * (o.ty > o.y ? 0.9 : 0.6));
+        let d = (o.y - r) / Math.max(1e-4, dt);
+        (o.act || (l = Math.max(-0.5, Math.min(0.5, Math.atan2(d, Math.max(0.5, o.spd)) * 0.8)) + Math.sin(ccsWhT * 1.3 + o.size) * 0.04), (o.pitch += (l - o.pitch) * Math.min(1, dt * 4)), (o.roll *= Math.pow(0.5, dt)));
+        let u = o.a.root;
+        (u.position.set(o.pos.x, o.y, o.pos.z), u.rotation.set(0, o.yaw, 0), u.rotateX(-o.pitch), u.rotateZ(o.roll + h), o.a.mixer?.update(dt * (0.5 + Math.min(1.5, o.spd / s.spd) * 0.6) * (1 - f * 0.7)));
+      }
+    }
+  }
+  // โยนเหยื่อจากปลายท่าเรือ
+  var ccsBaitFly = null;
+  function ccsPierEnd(i) {
+    return i && !Se && !ho && i.z > Rt + 14.5 && Math.abs(i.x) < 1.8;
+  }
+  function ccsWhaleThrow(k) {
+    let i = Le[0],
+      e = ccsBaitDef[k];
+    if (!i || !e || !ccsWh) return;
+    let t = (z.bait ??= {});
+    if (!(t[k] > 0)) return void De(`ไม่มี${e.n} ซื้อได้ที่แผงปลาลุงทะเลริมหาด 🐟`, 2400);
+    ((t[k] -= 1), qs());
+    let n = new J(),
+      s = new R(new we(0.16, 10, 8), Ae(e.col, 0.5));
+    (s.scale.set(k === "giant" ? 1.8 : 1, 0.6, k === "salmon" ? 2.2 : 1.4), n.add(s), K.add(n));
+    let o = ccsWhFeedPt();
+    ((o.x = i.pos.x + (Math.random() - 0.5) * 2), (ccsBaitFly = { g: n, t: 0, from: i.pos.clone().setY(1.2), to: o, k }), ke("pop"), rt(`${e.icon} โยน!`, i.pos.clone().setY(1.5)), _t(z));
+  }
+  function ccsBaitTick(dt) {
+    let i = ccsBaitFly;
+    if (!i) return;
+    i.t += dt;
+    let e = Math.min(1, i.t / 0.9);
+    if ((i.g.position.lerpVectors(i.from, i.to, e), (i.g.position.y = i.from.y + (Ph - i.from.y) * e + 3 * e * (1 - e)), (i.g.rotation.x += dt * 9), e < 1)) return;
+    (K.remove(i.g), tl.burst(i.to.clone(), Ph, 0.5), ke("splash"), (ccsBaitFly = null));
+    let t = ccsBaitDef[i.k].who,
+      n = ccsWh.pods.find((a) => a.k === t);
+    if (!n) return;
+    let s = n.m[0];
+    // ถ้าอยู่ไกลมาก ให้ดำน้ำมาโผล่ใกล้ ๆ (ไม่ต้องรอนาน)
+    if (s.pos.distanceTo(i.to) > 45) {
+      let a = i.to.clone().add(new H((Math.random() < 0.5 ? -1 : 1) * 22, 0, 14));
+      n.m.forEach((c, l) => (c.pos.copy(a).add(new H(c.off.x, 0, c.off.z - l)), (c.y = ccsWhInfo[t].y[1]), (c.vis = 1)));
+    }
+    t === "sperm" && (s.br = 0);
+    ((n.mode = "come"), n.tgt.copy(i.to), (n.feeder = 1));
+    let o = (z.whale ??= {});
+    o[t] = (o[t] ?? 0) + 1;
+    let r = ccsWhInfo[t].n;
+    (De(`${r}ได้กลิ่น${ccsBaitDef[i.k].n} กำลังว่ายมา! 🌊`, 2200),
+      setTimeout(() => {
+        o[t] % 5 === 0 && ccsWhGift(t);
+      }, 7000),
+      _t(z));
+  }
+  function ccsWhGift(t) {
+    let i = Le[0];
+    if (!i) return;
+    let e = t === "orca" ? [60, "ออร์กาคาบขวดข้อความลอยมาให้ 💌"] : t === "pilot" ? [35, "วาฬนำร่องดันเปลือกหอยสวยมาให้ 🐚"] : [150, "วาฬสเปิร์มทิ้งอำพันทะเลหายากไว้ให้ ✨"];
+    ((z.money += e[0]), Ei(), ke("quest"), ccsSparkle(i.pos, 14), De(`${e[1]} +${e[0]}💰 (ความผูกพัน ${(z.whale ?? {})[t] ?? 0})`, 3200), _t(z));
+  }
+  function ccsWhaleMenu() {
+    let i = z.bait ?? {},
+      e = ccsWh?.pods.find((n) => n.k === "orca"),
+      t = e && e.mode === "linger";
+    (Gi(
+      "🐳 ให้อาหารปลาวาฬ · ท่าเรือ",
+      `<p class="note">โยนเหยื่อจากปลายท่าเรือ วาฬแต่ละชนิดชอบไม่เหมือนกัน · ให้บ่อย ๆ จะผูกพันและมีของขวัญ</p>${Object.entries(ccsBaitDef)
+        .map(([n, s]) => `<div class="row"><div class="ic">${s.icon}</div><div class="nm"><b>${s.n} → ${ccsWhInfo[s.who].n}</b><small>มี ${i[n] ?? 0} · ผูกพัน ${(z.whale ?? {})[s.who] ?? 0}</small></div><button class="buy" data-bait="${n}" ${(i[n] ?? 0) > 0 ? "" : "disabled"}>โยน</button></div>`)
+        .join("")}${t ? `<button class="buy wide" data-orcaplay>🐳 เล่นกับออร์กา</button>` : ""}<p class="note">ซื้อเหยื่อได้ที่แผงปลาลุงทะเลริมหาด</p>`,
+    ),
+      document.querySelectorAll("[data-bait]").forEach((n) => n.addEventListener("click", () => ccsWhaleThrow(n.dataset.bait))),
+      document.querySelector("[data-orcaplay]")?.addEventListener("click", () => (qs(), ccsOrcaPlay())));
+  }
+  var ccsOrcaCd = 0;
+  function ccsOrcaPlay() {
+    let i = ccsWh?.pods.find((s) => s.k === "orca");
+    if (!i || i.mode !== "linger" || performance.now() < ccsOrcaCd) return;
+    ccsOrcaCd = performance.now() + 2500;
+    i.lt = Math.max(i.lt, 25);
+    let e = Math.floor(Math.random() * 3),
+      t = i.m[Math.floor(Math.random() * i.m.length)];
+    if (e === 0) {
+      // กระโดดพร้อมกันทั้งฝูง
+      i.m.forEach((s, o) => setTimeout(() => ccsWhAct(s, "breach", 2 + o * 0.1), o * 280));
+      De("🐳 ออร์กากระโดดโชว์พร้อมกันทั้งฝูง!", 2000);
+    } else if (e === 1) {
+      (ccsWhAct(t, "slap", 1.6), (t.act.wet = 1), De("🐳 ตบหางสาดน้ำใส่น้อง!", 1800));
+    } else (ccsWhAct(t, "spy", 3.2), De("🐳 ออร์กาโผล่หัวมามองน้อง น่ารักจัง ❤️", 2000));
+    let n = (z.whale ??= {});
+    ((n.orca = (n.orca ?? 0) + 0.5), Number.isInteger(n.orca) && n.orca % 5 === 0 && setTimeout(() => ccsWhGift("orca"), 2500), _t(z));
+  }
   // ===== v119: ครูฝึก + คอร์สฝึก + พลัง 5 ด้าน (มีผลในเกมจริง) + คำสั่ง =====
   var ccsTRNpc = null,
     ccsStatDef = [
@@ -55337,7 +55631,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
               : null,
         );
       }
-      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick());
+      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick(), ccsWhaleTick(Math.min(0.1, e)), ccsBaitTick(Math.min(0.1, e)));
       if ((T4(e, n), Oo)) {
         let b = Oo.k.pos,
           CA = Math.max(-1.25, Math.min(1.25, j.yaw - (Oo.yaw0 ?? j.yaw)));
@@ -60018,6 +60312,12 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (ccsRide) return nt(ccsRide.k >= 0 ? "🎡 กำลังชมวิว… ลากจอ/จอยขวา หมุนมุมมอง" : "🎡 กำลังขึ้นกระเช้า…", null, !0);
     if (ccsFW && !Se && e.distanceTo(ccsFW.gate) < 2.2)
       return nt("🎡 ขึ้นชิงช้าสวรรค์ชมวิว 50💰", ccsRideStart);
+    if (ccsPierEnd(e) && ccsWh) {
+      let h = ccsWh.pods.find((f) => f.k === "orca");
+      return h && h.mode === "linger" && Object.values(z.bait ?? {}).every((f) => !(f > 0))
+        ? nt("🐳 เล่นกับออร์กา", ccsOrcaPlay)
+        : nt(`🐳 ให้อาหารปลาวาฬ · ${Object.entries(z.bait ?? {}).filter(([, f]) => f > 0).map(([f, d]) => ccsBaitDef[f].icon + d).join(" ") || "ยังไม่มีเหยื่อ"}${h && h.mode === "linger" ? " · เล่นกับออร์กา" : ""}`, ccsWhaleMenu);
+    }
     if (ccsFreeChick && e.distanceTo(ccsFreeChick.p) < 1.3)
       return nt("🍗 กินไก่ย่างฟรี (ของขวัญหมวกลูกไก่)", () => {
         ((z.freeChick = z.day), mi(55, 0), (z.energy = Math.min(100, (z.energy ?? 0) + 15)), ke("heart"), rt("🍗 อร่อย! +55🍖 +15⚡", e, "big"), _t(z));
@@ -62476,6 +62776,9 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       },
     ],
     Yk = [
+      { icon: "🎣", bait: "salmon", n: 3, name: "แซลมอนทั้งตัว (เหยื่อออร์กา)", price: 60, food: 0, note: "โยนที่ปลายท่าเรือ ฝูงออร์กาจะว่ายมากิน", lines: ["ออร์กาชอบแซลมอนที่สุด ยืนปลายท่าโยนไกล ๆ นะ", "ฝูงวาฬเพชรฆาตฉลาดมาก ให้บ่อย ๆ เดี๋ยวมาเล่นด้วย"] },
+      { icon: "🦑", bait: "squid", n: 4, name: "ปลาหมึกสด (เหยื่อวาฬนำร่อง)", price: 40, food: 0, note: "วาฬนำร่องชอบหมึก มากันทั้งฝูง", lines: ["วาฬนำร่องว่ายกันเป็นครอบครัวเลยนะ", "หมึกสดจากเรือเช้านี้ วาฬชอบ"] },
+      { icon: "🐙", bait: "giant", n: 2, name: "หมึกยักษ์ (เหยื่อวาฬสเปิร์ม)", price: 90, food: 0, note: "วาฬสเปิร์มดำลึกล่าหมึกยักษ์ ให้แล้วอาจได้ของหายาก", lines: ["วาฬสเปิร์มตัวใหญ่สุดในทะเลนี้ ชอบหมึกยักษ์", "ถ้ามันโผล่มาหายใจ จะเห็นน้ำพุ่งสูงเลย"] },
       {
         icon: "🍣",
         pic: "sashimi",
@@ -62688,7 +62991,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let s = e
         .map(
           (r, a) =>
-            `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${(e === DE && G3() < 1) || (e === Xk && ccsWear("cc:Hat_48")) ? `<s>${r.price}</s> ${Math.round(r.price * (e === DE ? G3() : 0.6))}${e === Xk ? " 🐥-40%" : ""}` : r.price} 💰 \xB7 +${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
+            `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${(e === DE && G3() < 1) || (e === Xk && ccsWear("cc:Hat_48")) ? `<s>${r.price}</s> ${Math.round(r.price * (e === DE ? G3() : 0.6))}${e === Xk ? " 🐥-40%" : ""}` : r.price} 💰 \xB7 ${r.bait ? `เหยื่อ ×${r.n} (มี ${z.bait?.[r.bait] ?? 0})` : `+${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""}`} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
         )
         .join(""),
       o = n === "sell" ? _T(i) : n === "trade" ? Kk() : "";
@@ -62700,6 +63003,11 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
             c = Math.round(a.price * (e === DE ? G3() : e === Xk && ccsWear("cc:Hat_48") ? 0.6 : 1));
           if (z.money < c) {
             ke("nope");
+            return;
+          }
+          if (a.bait) {
+            // v121: เหยื่อให้ปลาวาฬ (เก็บไว้โยนที่ท่าเรือ ไม่ได้กินเอง)
+            (((z.bait ??= {})[a.bait] = (z.bait[a.bait] ?? 0) + a.n), (z.money -= c), ke("coin"), Ei(), Ln(t, a.lines[Math.floor(Math.random() * a.lines.length)]), De(`ได้ ${a.icon} ${a.name.split(" (")[0]} ×${a.n} ไปโยนที่ปลายท่าเรือนะ 🐳`, 2400), _t(z), dd(i, e, t, n));
             return;
           }
           ((z.money -= c),
@@ -63530,6 +63838,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         bn(Zt("r112")),
         $g(Zt("horse2")),
         QM(Zt("fish"), Zt("dolphin")),
+        ccsWhaleLoad(Zt("orca"), Zt("pilotwhale"), Zt("spermwhale")),
       ]),
       nM(ze, je),
       (sE = e6(K, tl)),
@@ -63646,6 +63955,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         trTick: (d) => ho && ccsTRTick(Le[0], d),
         trMenu: () => ccsTRMenu(),
         bathStart: () => ccsBathStart(),
+        whales: () => ccsWh,
+        wthrow: (k) => ccsWhaleThrow(k),
+        wtick: (d) => (ccsWhaleTick(d), ccsBaitTick(d)),
+        wplay: () => ccsOrcaPlay(),
         bathTick: (d) => ccsBathTick(d),
         hatTick: (d) => ccsHatTick(d),
         signTick: () => (ccsTRFieldInit(), ccsTRSignTick()),
