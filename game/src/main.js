@@ -41667,6 +41667,10 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
     );
   }
   function yM(i, e, t) {
+    if (e < 0 && i.length > 1) {
+      let n = i[1].clone().sub(i[0]).setY(0).normalize();
+      return { done: !1, dir: Math.atan2(n.x, n.z), p: t.copy(i[0]).addScaledVector(n, e) };
+    }
     for (let n = 1; n < i.length; n++) {
       let s = i[n].distanceTo(i[n - 1]);
       if (e <= s)
@@ -47609,7 +47613,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     if (!ccsTRHud) {
       let e = document.createElement("div");
       ((e.id = "trHud"),
-        (e.innerHTML = `<div class="trp"></div><div class="trbar"><i></i><b></b></div><div class="trbtn"><button data-tr="L">⬅</button><button data-tr="A" class="big">⤴ กด!</button><button data-tr="R">➡</button></div>`),
+        (e.innerHTML = `<div class="trp"></div><div class="trdots"></div><div class="trbar"><b></b><s></s><i></i></div><div class="trbtn"><button data-tr="L">⬅</button><button data-tr="A" class="big">⤴ กด!</button><button data-tr="R">➡</button></div>`),
         document.body.appendChild(e),
         e.querySelectorAll("[data-tr]").forEach((t) =>
           t.addEventListener("pointerdown", (n) => {
@@ -47653,8 +47657,10 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
     let t = ho.tr,
       n = t.ev.find((l) => l.res === null),
       s = 4.2;
-    // ตั้งค่าเริ่ม
-    if (t.hold > 0) ((t.hold -= e), (s = 0));
+    // v118: นับถอยหลังก่อนเริ่ม + เกจของแต่ละจุดเริ่มจาก 0 เสมอ (ตั้งจุดเริ่มเมื่อจุดก่อนหน้าจบ)
+    if (n && n.s === void 0) ((n.s = ho.d), (n.S = Math.max(0.3, n.d - ho.d)));
+    if (t.cd > 0) ((t.cd -= e), (s = 0));
+    else if (t.hold > 0) ((t.hold -= e), (s = 0));
     else if (n) {
       let l = n.d - ho.d;
       if (n.k === "bal" && ho.d >= n.d) {
@@ -47672,7 +47678,8 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
           t.st > 3 && ccsTRRes(n, !0, "🏅 นั่งคอยเก่งมาก!");
         }
       } else {
-        l < 3 && (s = 2.8);
+        // ใกล้จุด: ช้าลงให้เกจวิ่งจาก 0 ถึงจุดอย่างน้อย ~1.4 วิ
+        l < 3 && (s = Math.min(2.8, Math.max(1.2, (n.S + 0.25) / 1.4)));
         l < -0.25 && ccsTRRes(n, !1, n.k === "A" ? (ho.st.id === "hurdle" ? "💥 ชนไม้!" : "💥 ช้าไป!") : "😵 ข้ามเสา!");
       }
     }
@@ -47688,14 +47695,28 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       let l = ccsTRHud.querySelector(".trp"),
         h = ccsTRHud.querySelector(".trbar i"),
         f = ccsTRHud.querySelector(".trbar b"),
+        g = ccsTRHud.querySelector(".trbar s"),
         d = t.ev.filter((p) => p.res !== null),
         u = n && n.res === null ? n : null;
-      if (u && u.k === "bal" && ho.d >= u.d) ((l.textContent = u.lab), (h.style.left = `${50 + t.bal * 50}%`), (f.style.cssText = "left:28%;width:44%"), ccsTRHud.classList.add("bal"));
-      else if (u && u.k === "stay" && ho.d >= u.d) ((l.textContent = t.stay === "wait" ? `🦋 คอย… ห้ามกด! ${Math.max(0, 3 - t.st).toFixed(1)}` : "🪑 สั่งนั่ง! กด ⤴"), (h.style.left = "50%"), (f.style.cssText = "display:none"), ccsTRHud.classList.remove("bal"));
+      if (u && u.k === "bal" && ho.d >= u.d) ((l.textContent = u.lab), (h.style.left = `${50 + t.bal * 50}%`), (f.style.cssText = "left:28%;width:44%"), (g.style.cssText = "left:39%;width:22%"), ccsTRHud.classList.add("bal"));
+      else if (u && u.k === "stay" && ho.d >= u.d) ((l.textContent = t.stay === "wait" ? `🦋 คอย… ห้ามกด! ${Math.max(0, 3 - t.st).toFixed(1)}` : "🪑 สั่งนั่ง! กด ⤴"), (h.style.left = `${t.stay === "wait" ? Math.min(100, (t.st / 3) * 100) : Math.min(100, ((t.st ?? 0) / 1.6) * 100)}%`), (f.style.cssText = "display:none"), (g.style.cssText = t.stay === "wait" ? "left:0;width:100%" : "display:none"), ccsTRHud.classList.remove("bal"));
+      else if (t.cd > 0) ((l.textContent = `${ho.st.icon} ${ho.st.name} · เริ่มใน ${Math.ceil(t.cd / 0.8)}…`), (h.style.left = "0%"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
       else if (u) {
-        let p = u.d - ho.d;
-        ((l.textContent = p < 1.7 ? u.lab : "เตรียมตัว…"), (h.style.left = `${Math.max(0, Math.min(100, 100 - (p / 3) * 100))}%`), (f.style.cssText = "left:58.3%;width:20.8%"), ccsTRHud.classList.remove("bal"), ccsTRHud.classList.toggle("hot", p < 1.25 && p > -0.25));
-      } else ((l.textContent = "🏁 เข้าเส้นชัย!"), (f.style.cssText = "display:none"));
+        let p = u.d - ho.d,
+          m = u.S + 0.25,
+          E = (x) => Math.max(0, Math.min(100, (1 - (x + 0.25) / m) * 100)),
+          y = d.length + 1;
+        ((l.textContent = `${y}/${t.ev.length} · ${u.lab} ${u.k === "A" ? "(⤴ / Space / Ⓐ)" : u.k === "L" ? "(⬅ / A / ◀)" : "(➡ / D / ▶)"}`),
+          (h.style.left = `${E(p)}%`),
+          (f.style.cssText = `left:${E(1.25)}%;width:${E(0.65) - E(1.25)}%`),
+          (g.style.cssText = `left:${E(0.65)}%;width:${100 - E(0.65)}%`),
+          ccsTRHud.classList.remove("bal"),
+          ccsTRHud.classList.toggle("hot", p < 1.25 && p > -0.25));
+      } else ((l.textContent = "🏁 เข้าเส้นชัย!"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
+      // ปุ่มที่ต้องกดเรืองแสง
+      let v = t.cd > 0 ? "" : u ? (u.k === "bal" ? "LR" : u.k === "stay" ? (t.stay === "wait" ? "" : "A") : u.k) : "";
+      ccsTRHud.querySelectorAll("[data-tr]").forEach((x) => x.classList.toggle("need", v.includes(x.dataset.tr)));
+      ccsTRHud.querySelector(".trdots").innerHTML = t.ev.map((x) => (x.res === null ? (x === u ? "🔸" : "⚪") : x.res >= 1 ? "🟢" : x.res > 0 ? "🟡" : "🔴")).join("");
       ccsTRHud.dataset.cnt = `${d.filter((p) => p.res > 0).length}/${t.ev.length}`;
       ccsTRHud.querySelector(".trp").dataset.cnt = ccsTRHud.dataset.cnt;
     }
@@ -47718,7 +47739,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
         ke("nope"));
       return;
     }
-    ((z.energy -= i.stamina), mi(-4, -6), (ho = { st: i, d: 0, tr: Object.assign(ccsTRBuild(i), { bal: 0, bv: 0, hold: 0 }) }), ke("pop"), ccsTRHudSet(!0));
+    ((z.energy -= i.stamina), mi(-4, -6), (ho = { st: i, d: 0, tr: Object.assign(ccsTRBuild(i), { bal: 0, bv: 0, hold: 0, cd: 2.4 }) }), (ho.d = Math.min(0, (ho.tr.ev[0]?.d ?? 9) - 2)), ke("pop"), ccsTRHudSet(!0)); // ถอยหลังให้มีระยะวิ่งเข้าจุดแรกอย่างน้อย 2 ม.
   }
   function VH(i) {
     let e = ho.st,
@@ -47738,7 +47759,7 @@ void main(){ float y = vUv.y, x = (vUv.x-0.5)*2.0;
       (fa.money.textContent = String(z.money)),
       rt(`${"⭐".repeat(l) || "💤"} ${e.icon} +${n} XP`, i.pos.clone().setY(1.6), l ? "big" : "bad"),
       ke(l === 3 ? "quest" : l ? "heart" : "nope"),
-      De(`${e.icon} ${e.name}: ${"⭐".repeat(l)}${"☆".repeat(3 - l)} (${a ? a.ev.filter((d) => d.res > 0).length : 0}/${a?.ev.length ?? 0})${f && l ? " · สถิติใหม่!" : ""} · +${n} XP +${5 + l * 5}💰`, 2600),
+      De(`${e.icon} ${e.name}: ${"⭐".repeat(l)}${"☆".repeat(3 - l)} ${a ? a.ev.map((d) => (d.res >= 1 ? "🟢" : d.res > 0 ? "🟡" : "🔴")).join("") : ""}${a?.fell ? " ตกสะพาน" : ""}${f && l ? " · สถิติใหม่!" : ""} · +${n} XP +${5 + l * 5}💰`, 2600),
       Rs(n, i),
       _t(z));
   }

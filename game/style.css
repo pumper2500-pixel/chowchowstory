@@ -258,3 +258,8 @@ body.pad #clawCancel::after{content:"Ⓑ";margin-left:6px;color:#e2463f}
 #trHud .trbtn button.big{flex:2;background:#ff9f43}
 #trHud{bottom:calc(112px + env(safe-area-inset-bottom))}
 body.training #act{display:none!important}
+#trHud .trbar{height:22px}#trHud .trbar s{position:absolute;top:0;bottom:0;background:rgba(20,150,50,.85);text-decoration:none}
+#trHud .trdots{align-self:center;font-size:15px;letter-spacing:2px;background:rgba(255,255,255,.8);padding:1px 10px;border-radius:999px}
+#trHud .trp::after{content:none}
+#trHud .trbtn button.need{background:#2ecc71;box-shadow:0 0 0 4px #fff,0 0 16px 6px #2ecc71;animation:trpulse .5s infinite alternate}
+@keyframes trpulse{to{transform:scale(1.05)}}
