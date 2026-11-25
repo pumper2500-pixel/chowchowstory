@@ -1104,7 +1104,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         C = new R(new re(0.22, 0.22, 0.6, 3), g);
       ((C.rotation.x = Math.PI / 2), C.position.set(T, F / 2, M), o.add(C));
       let P = new J();
-      (P.position.set(T, F, M), o.add(P));
+      (P.position.set(T, F, M), (P.userData.noMerge = !0), o.add(P));
       let I = new R(new ee(A, 0.08, 0.7), new X({ map: Cn(16765503, "#c99a00"), roughness: 0.7 }));
       P.add(I);
       for (let q of [-1, 1]) {
@@ -1115,6 +1115,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         D = -k;
       ((P.rotation.z = -D),
         v.push((q) => {
+          if (ccsSeeOv != null) return void ((D = -k + 2 * k * Math.min(1, ccsSeeOv)), (P.rotation.z = -D)); // v127: ฝึกกระดานหก (เบรกค่อย ๆ ลง)
           let te =
             Math.abs(q.z - M) < 0.5 && Math.abs(q.x - T) < A / 2 ? (q.x > T + 0.1 ? k : q.x < T - 0.1 ? -k : D) : D;
           ((D += (te - D) * 0.12), (P.rotation.z = -D));
@@ -4344,6 +4345,40 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
           [2093, 0.06, "sine"],
           [2637, 0.08, "sine"],
           [3136, 0.22, "triangle"],
+        ],
+        // v127: เสียงฝึก — เป๊ะ / ผ่าน / พลาด / ไม่ผ่าน / ดาว / แฟนแฟร์
+        trOk: [
+          [1319, 0.07, "triangle"],
+          [1760, 0.07, "triangle"],
+          [2637, 0.22, "sine"],
+        ],
+        trGood: [
+          [880, 0.09, "triangle"],
+          [1175, 0.16, "triangle"],
+        ],
+        trBad: [
+          [155, 0.16, "square"],
+          [110, 0.32, "sawtooth"],
+        ],
+        trFail: [
+          [392, 0.32, "sawtooth"],
+          [370, 0.32, "sawtooth"],
+          [349, 0.32, "sawtooth"],
+          [294, 0.85, "sawtooth"],
+        ],
+        trStar1: [[1047, 0.3, "triangle"]],
+        trStar2: [[1319, 0.3, "triangle"]],
+        trStar3: [[1568, 0.36, "triangle"]],
+        trChg: [[440, 0.05, "sine"]],
+        trFan: [
+          [523, 0.12, "square"],
+          [523, 0.08, "square"],
+          [523, 0.08, "square"],
+          [698, 0.3, "square"],
+          [880, 0.16, "square"],
+          [784, 0.12, "square"],
+          [880, 0.12, "square"],
+          [1047, 0.7, "triangle"],
         ],
         // v106: เสียงแตรสำเร็จภารกิจ (ต่างจากเสียงอื่นชัดเจน)
         quest: [

@@ -5,9 +5,9 @@
   // ===== v120: เวลาเปิดสนามฝึก, ไฟสนาม, ระดับการฝึก, อาบน้ำในอ่าง, หมวกพิเศษ =====
   var ccsTRSign = null,
     ccsTRLvDef = [
-      { n: "เบื้องต้น", e: 1.25, p: 0.65, spd: 1, bal: 1, stay: 3, sit: 1.6, mul: 1, gain: 1 },
-      { n: "ปานกลาง", e: 0.95, p: 0.45, spd: 1.25, bal: 1.35, stay: 4, sit: 1.2, mul: 1.5, gain: 1.4 },
-      { n: "ระดับสูง", e: 0.75, p: 0.3, spd: 1.5, bal: 1.7, stay: 5, sit: 0.9, mul: 2, gain: 1.8 },
+      { n: "เบื้องต้น", e: 1.25, p: 0.65, chg: 1.15, pw: 0.13, spd: 1, bal: 1, stay: 3, sit: 1.6, mul: 1, gain: 1 },
+      { n: "ปานกลาง", e: 0.95, p: 0.45, chg: 0.95, pw: 0.1, spd: 1.25, bal: 1.35, stay: 4, sit: 1.2, mul: 1.5, gain: 1.4 },
+      { n: "ระดับสูง", e: 0.75, p: 0.3, chg: 0.8, pw: 0.075, spd: 1.5, bal: 1.7, stay: 5, sit: 0.9, mul: 2, gain: 1.8 },
     ];
   var ccsTRCamA = null;
   function ccsTROpen() {
@@ -1164,7 +1164,7 @@ varying float vJz;
       s = n.pos.clone();
     (n.pos.copy(e.start), UH(e));
     if (!ho) return void n.pos.copy(s);
-    ((z.money -= t), Ei(), (z.trDay.c[i] = (z.trDay.c[i] ?? 0) + 1), (ho.paid = ccsCourse[i][0]), (ho.lv = z.trLv ?? 0), Ln(ccsTRNpc?.pos ?? n.pos, `${e.icon} ${e.name} พร้อมนะ! ดูแถบแล้วกดตอนเข้าช่องเขียว`), _t(z));
+    ((z.money -= t), Ei(), (z.trDay.c[i] = (z.trDay.c[i] ?? 0) + 1), (ho.paid = ccsCourse[i][0]), (ho.lv = z.trLv ?? 0), Ln(ccsTRNpc?.pos ?? n.pos, `${e.icon} ${e.name} พร้อมนะ! ${["hurdle", "tire", "hoops", "broad"].includes(i) ? "กดค้างชาร์จพลัง แล้วปล่อยตรงแถบเขียวตอนถึงจุดกระโดด" : i === "seesaw" ? "กดค้างก่อนถึงกลางกระดาน แล้วปล่อยตอนแตะพื้น" : "ดูแถบแล้วกดตอนเข้าช่องเขียว"}`), _t(z));
   }
   function ccsCmdMenu() {
     let i = ccsSt("obey");
@@ -1245,7 +1245,8 @@ varying float vJz;
     }
   }
   // ===== v117: สนามฝึกแบบต้องใช้ฝีมือ (กดตามจังหวะ / เลี้ยวสลาลอม / ทรงตัว / นั่งคอย) + ดาว 1-3 =====
-  var ccsTRHud = null;
+  var ccsTRHud = null,
+    ccsSeeOv = null;
   function ccsTRBuild(i) {
     let e = i.path,
       t = [0];
@@ -1286,7 +1287,7 @@ varying float vJz;
       case "seesaw": {
         let c = 0;
         for (let l = 1; l < e.length; l++) e[l].y > e[c].y && (c = l);
-        (s[0] !== void 0 && a(s[0], "A", "⬆ ขึ้นกระดาน!"), a(t[c], "A", "✋ รอกระดานลง!", "👌 นิ่งมาก"), (r[r.length - 1].hold = 0.7));
+        (s[0] !== void 0 && a(s[0], "A", "⬆ ขึ้นกระดาน!"), r.push({ d: t[c], k: "T", lab: "✋ กดค้างก่อนถึงกลาง → ปล่อยตอนกระดานแตะพื้น", res: null }));
         break;
       }
       case "beam":
@@ -1299,7 +1300,11 @@ varying float vJz;
         break;
       }
       default:
-        for (let c of s) a(c, "A", i.id === "broad" ? "🦘 กระโดดไกล!" : i.id === "hoops" ? "⭕ ลอดห่วง!" : i.id === "tire" ? "🛞 กระโดดลอดยาง!" : "🚧 กระโดด!", "✨ เป๊ะ!");
+        // v127: กระโดดแบบชาร์จพลัง — กดค้างให้พลังขึ้น (ขึ้น-ลงวนไป) แล้วปล่อยให้ตรงแถบพลังของสิ่งกีดขวางนั้น + ปล่อยในระยะกระโดด
+        for (let c of s) {
+          let l = i.id === "broad" ? 0.78 + Math.random() * 0.12 : i.id === "tire" ? 0.55 + Math.random() * 0.15 : i.id === "hoops" ? 0.4 + Math.random() * 0.3 : 0.35 + Math.random() * 0.45;
+          r.push({ d: Math.max(0.3, c), k: "J", pw: l, lab: i.id === "broad" ? "🦘 กระโดดไกล" : i.id === "hoops" ? "⭕ ลอดห่วง" : i.id === "tire" ? "🛞 ลอดยาง" : `🚧 ไม้สูง ${Math.round(l * 60 + 10)} ซม.`, ok: "✨ เป๊ะ! พลังพอดี", res: null });
+        }
         r.length || a(n / 2, "A", "⚡ กดเลย!");
     }
     return { ev: r, len: n };
@@ -1308,23 +1313,56 @@ varying float vJz;
     if (!ccsTRHud) {
       let e = document.createElement("div");
       ((e.id = "trHud"),
-        (e.innerHTML = `<div class="trp"></div><div class="trdots"></div><div class="trbar"><b></b><s></s><i></i></div><div class="trbtn"><button data-tr="L">⬅</button><button data-tr="A" class="big">⤴ กด!</button><button data-tr="R">➡</button></div>`),
+        (e.innerHTML = `<div class="trp"></div><div class="trdots"></div><div class="trbar"><b></b><s></s><i></i></div><div class="trdz"><b></b><i></i></div><div class="trbtn"><button data-tr="L">⬅</button><button data-tr="A" class="big">⤴ กด / ค้าง</button><button data-tr="R">➡</button></div>`),
         document.body.appendChild(e),
         e.querySelectorAll("[data-tr]").forEach((t) =>
           t.addEventListener("pointerdown", (n) => {
-            (n.preventDefault(), n.stopPropagation(), ccsTRInput(t.dataset.tr));
+            (n.preventDefault(), n.stopPropagation(), t.setPointerCapture?.(n.pointerId), ccsTRInput(t.dataset.tr));
           }),
         ),
+        e.querySelectorAll("[data-tr]").forEach((t) => {
+          for (let ev of ["pointerup", "pointercancel", "lostpointercapture"]) t.addEventListener(ev, (n) => { (n.preventDefault(), ccsTRInput(t.dataset.tr, 1)); });
+        }),
         (ccsTRHud = e));
     }
     ccsTRHud.classList.toggle("on", !!i);
     document.body.classList.toggle("training", !!i);
   }
-  function ccsTRInput(i) {
+  function ccsTRPow(i) {
+    let e = i % 2;
+    return e < 1 ? e : 2 - e;
+  }
+  function ccsTRInput(i, up) {
     let e = ho?.tr;
     if (!e) return;
+    if (i === "A") {
+      if (up ? !e.aHeld : e.aHeld) return; // กันกดซ้ำ/ปล่อยซ้ำ
+      e.aHeld = !up;
+    }
     let t = e.ev.find((s) => s.res === null);
     if (!t) return;
+    if (t.k === "T") {
+      // v127: กระดานหก — ต้องกดค้าง (เบรก) ก่อนถึงกลาง แล้วปล่อยตอนแตะพื้น
+      i === "A" && up && ho.d >= t.d - 0.02 && (e.tdn === void 0 ? ccsTRRes(t, !1, "🙈 ลงก่อนกระดานแตะพื้น!") : ccsTRRes(t, !0, e.tdn <= 0.4 ? "👌 ลงนิ่งสวย!" : "👍 ลงได้ (ช้าไปนิด)", e.tdn <= 0.4 ? 1 : 0.75));
+      return;
+    }
+    if (t.k === "J") {
+      if (i !== "A" || e.cd > 0) return;
+      let n = t.d - ho.d;
+      if (!up) return void (n < 7 && ((e.chg = { ph: 0 }), ke("trChg")));
+      if (!e.chg) return;
+      let s = ccsTRPow(e.chg.ph),
+        o = s - t.pw,
+        r = ccsTRL().pw + ccsSt("bal") * 0.0006;
+      ((e.chg = null), (t.pv = s));
+      if (n > ccsTRW().e) return void ccsTRRes(t, !1, "⏩ ปล่อยเร็วไป! ยังไม่ถึงจุดกระโดด");
+      if (Math.abs(o) > r * 2) return void ccsTRRes(t, !1, o < 0 ? (ho.st.id === "broad" ? "💦 แรงไม่พอ โดดไม่ถึง!" : "💥 แรงไม่พอ ชนเลย!") : "🌀 แรงเกิน ลงพลาด!");
+      let a = Math.abs(o) <= r ? 1 : 0.6,
+        c = n <= ccsTRW().p ? 1 : 0.8;
+      ccsTRRes(t, !0, a * c >= 1 ? t.ok : a < 1 ? (o < 0 ? "👍 ผ่าน (แรงน้อยไปนิด)" : "👍 ผ่าน (แรงเกินไปนิด)") : "👍 ผ่าน (ปล่อยช้าไปนิด)", a * c);
+      return;
+    }
+    if (up) return;
     if (t.k === "bal") return void (ho.d >= t.d && (e.bv += i === "L" ? -1.1 : i === "R" ? 1.1 : 0));
     if (t.k === "stay") {
       if (e.stay === "sit" && i === "A") ((e.stay = "wait"), (e.st = 0), ke("pop"), rt("🐕 นั่ง!", Le[0].pos, "big"));
@@ -1336,8 +1374,71 @@ varying float vJz;
     n > ccsTRW().e ? ccsTRRes(t, !1, "⏩ เร็วไป!") : t.k !== i ? ccsTRRes(t, !1, t.k === "A" ? "❌ ผิดปุ่ม" : "❌ ผิดทาง!") : ccsTRRes(t, !0, n <= ccsTRW().p ? t.ok : "👍 ดี", n <= ccsTRW().p ? 1 : 0.75);
   }
   function ccsTRRes(i, e, t, n = 1) {
-    ((i.res = e ? n : 0), rt(t, Le[0].pos, e ? "big" : "bad"), ke(e ? (n >= 1 ? "heart" : "pop") : "nope"), e && i.hold && (ho.tr.hold = i.hold));
+    ((i.res = e ? n : 0), ho?.tr && (ho.tr.chg = null), rt(t, Le[0].pos, e ? "big" : "bad"), ccsTRFx(e ? (n >= 1 ? "ok" : "good") : "bad", t), e && i.hold && (ho.tr.hold = i.hold));
   }
+  // ===== v127: สัญลักษณ์+เสียงที่ต่างกันชัด: เป๊ะ / ผ่าน / พลาด / ไม่ผ่าน / สำเร็จ =====
+  var ccsTRFxEl = null,
+    ccsTRFxT = 0;
+  function ccsTRFx(i, e) {
+    if (!ccsTRFxEl) {
+      ccsTRFxEl = document.createElement("div");
+      ccsTRFxEl.id = "trFx";
+      ccsTRFxEl.innerHTML = '<div class="ic"></div><div class="tx"></div>';
+      document.body.appendChild(ccsTRFxEl);
+      let t = document.createElement("div");
+      ((t.id = "trVig"), document.body.appendChild(t));
+    }
+    let t = { ok: ["✔", "เป๊ะ!"], good: ["👍", "ผ่าน"], bad: ["✖", "พลาด!"] }[i];
+    ccsTRFxEl.querySelector(".ic").textContent = t[0];
+    ccsTRFxEl.querySelector(".tx").textContent = (e || t[1]).replace(/^[^\p{L}\p{N}]+/u, "") || t[1];
+    ccsTRFxEl.className = "";
+    void ccsTRFxEl.offsetWidth;
+    ccsTRFxEl.className = i;
+    clearTimeout(ccsTRFxT);
+    ccsTRFxT = setTimeout(() => (ccsTRFxEl.className = ""), 1100);
+    ke(i === "ok" ? "trOk" : i === "good" ? "trGood" : "trBad");
+    if (i === "bad") {
+      let n = document.getElementById("trVig");
+      ((n.className = ""), void n.offsetWidth, (n.className = "on"), document.body.classList.remove("trshake"), void document.body.offsetWidth, document.body.classList.add("trshake"), setTimeout(() => document.body.classList.remove("trshake"), 450));
+      try { navigator.vibrate?.([60, 40, 90]); } catch {}
+      typeof ccsDogSay == "function" && ccsDogSay("whine");
+    } else i === "ok" && typeof ccsDogSay == "function" && Math.random() < 0.5 && ccsDogSay("happy");
+  }
+  var ccsTREndEl = null,
+    ccsTREndT = [];
+  function ccsTREndClose() {
+    (ccsTREndT.forEach(clearTimeout), (ccsTREndT = []), ccsTREndEl && ccsTREndEl.classList.remove("on"), (window.ccsTREndOn = !1));
+  }
+  function ccsTREnd(i, e, t, n) {
+    // i=ดาว 0-3, e=สถานี, t=รายละเอียด, n=จุดพลาด
+    if (!ccsTREndEl) {
+      ccsTREndEl = document.createElement("div");
+      ccsTREndEl.id = "trEnd";
+      ccsTREndEl.addEventListener("pointerdown", (s) => (s.preventDefault(), ccsTREndClose()));
+      document.body.appendChild(ccsTREndEl);
+    }
+    ccsTREndClose();
+    let s = i > 0;
+    ccsTREndEl.className = s ? (i === 3 ? "win3" : "win") : "fail";
+    ccsTREndEl.innerHTML = `<div class="card"><div class="big">${s ? (i === 3 ? "🏆" : "✅") : "❌"}</div><h2>${s ? (i === 3 ? "สมบูรณ์แบบ!" : "ผ่าน!") : "ไม่ผ่าน"}</h2><div class="who">${e.icon} ${e.name}</div><div class="stars">${[0, 1, 2].map(() => "<span>★</span>").join("")}</div><div class="det">${t}</div><div class="trhint">${s ? (n ? `พลาด ${n} จุด · ฝึกอีกเพื่อ ⭐⭐⭐` : "ไม่พลาดเลย! เก่งมาก") : "ลองใหม่นะ ดูแถบพลัง/จังหวะให้ดี"}</div><small>แตะเพื่อปิด</small></div>${i === 3 ? '<div class="conf">' + Array.from({ length: 46 }, (o, r) => `<i style="left:${(r * 37) % 100}%;background:hsl(${(r * 47) % 360} 90% 60%);animation-delay:${(r % 9) * 0.07 + 1.3}s;animation-duration:${1.6 + (r % 5) * 0.25}s"></i>`).join("") + "</div>" : ""}`;
+    (void ccsTREndEl.offsetWidth, ccsTREndEl.classList.add("on"), (window.ccsTREndOn = !0));
+    if (!s) {
+      (ke("trFail"), typeof ccsDogSay == "function" && ccsDogSay("whine"));
+      ccsTREndT.push(setTimeout(ccsTREndClose, 3600));
+      return;
+    }
+    let o = ccsTREndEl.querySelectorAll(".stars span");
+    for (let r = 0; r < i; r++) ccsTREndT.push(setTimeout(() => (o[r].classList.add("on"), ke("trStar" + (r + 1))), 450 + r * 420));
+    ccsTREndT.push(setTimeout(() => (ke(i === 3 ? "trFan" : "heart"), typeof ccsDogSay == "function" && ccsDogSay(i === 3 ? "bark" : "happy")), 500 + i * 420));
+    ccsTREndT.push(setTimeout(ccsTREndClose, i === 3 ? 5200 : 4000));
+  }
+  addEventListener(
+    "keydown",
+    (i) => {
+      window.ccsTREndOn && !ho && ["Enter", " ", "Escape"].includes(i.key) && (i.preventDefault(), i.stopPropagation(), ccsTREndClose());
+    },
+    !0,
+  );
   addEventListener(
     "keydown",
     (i) => {
@@ -1348,12 +1449,24 @@ varying float vJz;
     },
     !0,
   );
+  addEventListener(
+    "keyup",
+    (i) => {
+      if (!ho?.tr) return;
+      let e = i.key.length === 1 ? i.key.toLowerCase() : i.key,
+        t = { " ": "A", Enter: "A", ArrowUp: "A", w: "A", f: "A" }[e];
+      t && (i.preventDefault(), i.stopPropagation(), ccsTRInput(t, 1));
+    },
+    !0,
+  );
+  addEventListener("blur", () => ho?.tr?.aHeld && ccsTRInput("A", 1));
   function ccsTRTick(i, e) {
     let t = ho.tr,
       n = t.ev.find((l) => l.res === null),
       s = 4.2;
     // v118: นับถอยหลังก่อนเริ่ม + เกจของแต่ละจุดเริ่มจาก 0 เสมอ (ตั้งจุดเริ่มเมื่อจุดก่อนหน้าจบ)
     if (n && n.s === void 0) ((n.s = ho.d), (n.S = Math.max(0.3, n.d - ho.d)));
+    t.chg && (t.chg.ph += e / ccsTRL().chg);
     if (t.cd > 0) ((t.cd -= e), (s = 0));
     else if (t.hold > 0) ((t.hold -= e), (s = 0));
     else if (n) {
@@ -1366,6 +1479,17 @@ varying float vJz;
           return void ((ho.d = t.len), VH(i));
         }
         ho.d >= n.d1 && ((n.res = Math.abs(t.bal) < 0.45 ? 1 : 0.75), rt(n.res >= 1 ? "⚖️ ทรงตัวเยี่ยม!" : "👍 ผ่านสะพาน", i.pos, "big"), ke("heart"));
+      } else if (n.k === "T" && ho.d >= n.d) {
+        // v127: กระดานหก: ถ้ากดค้าง (เบรก) กระดานจะค่อย ๆ ลง ถ้าไม่กดจะกระแทก
+        ((s = 0), (t.tip = t.tip ?? 0));
+        if (t.tdn === void 0) {
+          t.tip += e * (t.aHeld ? 0.6 : 2.4);
+          t.tip >= 1 && ((t.tip = 1), t.aHeld ? ((t.tdn = 0), ke("pop"), rt("⬇ แตะพื้นแล้ว ปล่อย!", i.pos, "big")) : ccsTRRes(n, !1, "💥 กระดานกระแทกพื้น!"));
+        } else (t.tdn += e) > 1.1 && ccsTRRes(n, !0, "🐢 ค้างนานไป", 0.5);
+      } else if (n.k === "J") {
+        // v127: วิ่งความเร็วคงที่ ไม่ชะลอให้ — ต้องกะจังหวะชาร์จเอง
+        l < 8 && (s = 2.3 * ccsTRL().spd);
+        l < -0.25 && ccsTRRes(n, !1, t.chg ? "💥 ปล่อยช้าไป ชนเลย!" : "💥 ไม่ได้กระโดด!");
       } else if (n.k === "stay" && ho.d >= n.d) {
         ((s = 0), (t.st = (t.st ?? 0) + e), (t.stay = t.stay ?? "sit"));
         if (t.stay === "sit" && t.st > ccsTRL().sit + ccsSt("obey") * 0.01) ccsTRRes(n, !1, "😜 ไม่ยอมนั่ง");
@@ -1374,15 +1498,16 @@ varying float vJz;
         }
       } else {
         // ใกล้จุด: ช้าลงให้เกจวิ่งจาก 0 ถึงจุดอย่างน้อย ~1.4 วิ
-        l < 3 && (s = Math.min(2.8, Math.max(1.2, (n.S + 0.25) / 1.4)) * ccsTRL().spd);
+        l < 3 && (s = n.k === "A" ? Math.min(2.8, Math.max(1.2, (n.S + 0.25) / 1.4)) * ccsTRL().spd : 3.3 * ccsTRL().spd); // v127: สลาลอมไม่ชะลอ ต้องตามจังหวะ
         l < -0.25 && ccsTRRes(n, !1, n.k === "A" ? (ho.st.id === "hurdle" ? "💥 ชนไม้!" : "💥 ช้าไป!") : "😵 ข้ามเสา!");
       }
     }
+    ccsSeeOv = n && n.k === "T" && ho.d >= n.d - 0.02 && n.res === null ? (t.tip ?? 0) : null;
     ho.d += e * s;
     let o = yM(ho.st.path, ho.d, GH),
       r = o.p.y,
-      a = t.ev.find((l) => l.k === "A" && l.res === 0 && ho.d > l.d - 0.3 && ho.d < l.d + 2.6);
-    a && ["hurdle", "tire", "hoops", "broad"].includes(ho.st.id) && (r *= 0.35);
+      a = t.ev.find((l) => (l.k === "A" || l.k === "J") && l.res !== null && ho.d > l.d - 0.3 && ho.d < l.d + 2.6);
+    a && ["hurdle", "tire", "hoops", "broad"].includes(ho.st.id) && (r *= a.res === 0 ? 0.35 : a.pv !== void 0 ? 0.8 + a.pv * 0.4 : 1);
     let c = t.ev.find((l) => l.k === "bal" && ho.d >= l.d && ho.d <= l.d1 + 0.3);
     (i.pos.set(o.p.x + (c ? Math.cos(o.dir) * t.bal * 0.22 : 0), 0, o.p.z - (c ? Math.sin(o.dir) * t.bal * 0.22 : 0)), (j.jy = r), (i.dir = o.dir), (i.spd = s), i.rig.root && (i.rig.root.rotation.z = c ? -t.bal * 0.35 : 0));
     // HUD
@@ -1391,12 +1516,41 @@ varying float vJz;
         h = ccsTRHud.querySelector(".trbar i"),
         f = ccsTRHud.querySelector(".trbar b"),
         g = ccsTRHud.querySelector(".trbar s"),
+        zb = ccsTRHud.querySelector(".trdz b"),
+        zi = ccsTRHud.querySelector(".trdz i"),
         d = t.ev.filter((p) => p.res !== null),
         u = n && n.res === null ? n : null;
+      u?.k !== "J" && ccsTRHud.classList.remove("jz");
       if (u && u.k === "bal" && ho.d >= u.d) ((l.textContent = u.lab), (h.style.left = `${50 + t.bal * 50}%`), (f.style.cssText = "left:28%;width:44%"), (g.style.cssText = "left:39%;width:22%"), ccsTRHud.classList.add("bal"));
       else if (u && u.k === "stay" && ho.d >= u.d) ((l.textContent = t.stay === "wait" ? `🦋 คอย… ห้ามกด! ${Math.max(0, ccsTRL().stay - t.st).toFixed(1)}` : "🪑 สั่งนั่ง! กด ⤴"), (h.style.left = `${t.stay === "wait" ? Math.min(100, (t.st / ccsTRL().stay) * 100) : Math.min(100, ((t.st ?? 0) / ccsTRL().sit) * 100)}%`), (f.style.cssText = "display:none"), (g.style.cssText = t.stay === "wait" ? "left:0;width:100%" : "display:none"), ccsTRHud.classList.remove("bal"));
       else if (t.cd > 0) ((l.textContent = `${ho.st.icon} ${ho.st.name} · Lv.${(ho.lv ?? 0) + 1} ${ccsTRL().n} · เริ่มใน ${Math.ceil(t.cd / 0.8)}…`), (h.style.left = "0%"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
-      else if (u) {
+      else if (u && u.k === "J") {
+        // v127: แถบบน = พลัง (ชาร์จวนขึ้นลง) · แถบล่าง = ระยะถึงจุดกระโดด
+        let p = u.d - ho.d,
+          m = ccsTRL().pw + ccsSt("bal") * 0.0006,
+          E = (x) => Math.max(0, Math.min(100, x * 100)),
+          y = t.chg ? ccsTRPow(t.chg.ph) : 0,
+          q = Math.max(0, Math.min(100, (1 - (p + 0.25) / 7.25) * 100)),
+          Z = (x) => Math.max(0, Math.min(100, (1 - (x + 0.25) / 7.25) * 100)),
+          D = p <= ccsTRW().e && p > -0.25;
+        ((l.textContent = `${d.length + 1}/${t.ev.length} · ${u.lab} — ${t.chg ? (D ? "🟢 ปล่อยเลย!" : "⚡ ชาร์จอยู่…") : "กดค้าง ⤴ ชาร์จพลัง"}`),
+          (h.style.left = `${E(y)}%`),
+          (f.style.cssText = `left:${E(u.pw - 2 * m)}%;width:${E(u.pw + 2 * m) - E(u.pw - 2 * m)}%`),
+          (g.style.cssText = `left:${E(u.pw - m)}%;width:${E(u.pw + m) - E(u.pw - m)}%`),
+          (zb.style.cssText = `left:${Z(ccsTRW().e)}%;width:${100 - Z(ccsTRW().e)}%`),
+          (zi.style.left = `${q}%`),
+          ccsTRHud.classList.remove("bal"),
+          ccsTRHud.classList.add("jz"),
+          ccsTRHud.classList.toggle("hot", D && !!t.chg));
+      } else if (u && u.k === "T") {
+        let p = ho.d >= u.d - 0.02;
+        ((l.textContent = !p ? `${d.length + 1}/${t.ev.length} · ${t.aHeld ? "✋ ค้างไว้… กำลังไปกลางกระดาน" : u.lab}` : t.tdn !== void 0 ? "⬇ แตะพื้นแล้ว — ปล่อย!" : t.aHeld ? "✋ ค้างไว้… กระดานค่อย ๆ ลง" : "⚠️ กดค้างเร็ว!"),
+          (h.style.left = `${(t.tip ?? 0) * 100}%`),
+          (f.style.cssText = "display:none"),
+          (g.style.cssText = "left:94%;width:6%"),
+          ccsTRHud.classList.remove("bal"),
+          ccsTRHud.classList.toggle("hot", t.tdn !== void 0));
+      } else if (u) {
         let p = u.d - ho.d,
           m = u.S + 0.25,
           E = (x) => Math.max(0, Math.min(100, (1 - (x + 0.25) / m) * 100)),
@@ -1409,7 +1563,7 @@ varying float vJz;
           ccsTRHud.classList.toggle("hot", p < ccsTRW().e && p > -0.25));
       } else ((l.textContent = "🏁 เข้าเส้นชัย!"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
       // ปุ่มที่ต้องกดเรืองแสง
-      let v = t.cd > 0 ? "" : u ? (u.k === "bal" ? "LR" : u.k === "stay" ? (t.stay === "wait" ? "" : "A") : u.k) : "";
+      let v = t.cd > 0 ? "" : u ? (u.k === "bal" ? "LR" : u.k === "stay" ? (t.stay === "wait" ? "" : "A") : u.k === "J" || u.k === "T" ? "A" : u.k) : "";
       ccsTRHud.querySelectorAll("[data-tr]").forEach((x) => x.classList.toggle("need", v.includes(x.dataset.tr)));
       ccsTRHud.querySelector(".trdots").innerHTML = t.ev.map((x) => (x.res === null ? (x === u ? "🔸" : "⚪") : x.res >= 1 ? "🟢" : x.res > 0 ? "🟡" : "🔴")).join("");
       ccsTRHud.dataset.cnt = `${d.filter((p) => p.res > 0).length}/${t.ev.length}`;
@@ -1434,7 +1588,7 @@ varying float vJz;
         ke("nope"));
       return;
     }
-    ((z.energy -= i.stamina * (1 - ccsSt("stam") / 200)), mi(-4, -6), (ho = { st: i, d: 0, tr: Object.assign(ccsTRBuild(i), { bal: 0, bv: 0, hold: 0, cd: 2.4 }) }), (ho.d = Math.min(0, (ho.tr.ev[0]?.d ?? 9) - 2)), ke("pop"), ccsTRHudSet(!0)); // ถอยหลังให้มีระยะวิ่งเข้าจุดแรกอย่างน้อย 2 ม.
+    ((z.energy -= i.stamina * (1 - ccsSt("stam") / 200)), mi(-4, -6), (ho = { st: i, d: 0, tr: Object.assign(ccsTRBuild(i), { bal: 0, bv: 0, hold: 0, cd: 2.4 }) }), (ho.d = Math.min(0, (ho.tr.ev[0]?.d ?? 9) - (ho.tr.ev[0]?.k === "J" ? 4 : 2))), ke("pop"), ccsTRHudSet(!0)); // ถอยหลังให้มีระยะวิ่งเข้าจุดแรกอย่างน้อย 2 ม.
   }
   var ho_paid_tmp = null;
   function VH(i) {
@@ -1442,12 +1596,12 @@ varying float vJz;
       a = ho.tr;
     ho_paid_tmp = ho.paid ?? null;
     var lvX = ho.lv ?? 0;
-    ((ho = null), (j.jy = 0), ccsTRHudSet(!1), i.rig.root && (i.rig.root.rotation.z = 0));
+    ((ho = null), (ccsSeeOv = null), (j.jy = 0), ccsTRHudSet(!1), i.rig.root && (i.rig.root.rotation.z = 0));
     let t = Ma();
     t.runs += 1;
     // v117: ดาวตามฝีมือ (ตกสะพาน = 0 ดาว)
     let c = a?.ev.length ? a.ev.reduce((h, f) => h + (f.res ?? 0), 0) / a.ev.length : 1,
-      l = a?.fell ? 0 : c >= 0.95 ? 3 : c >= 0.6 ? 2 : c > 0 ? 1 : 0,
+      l = a?.fell ? 0 : c >= 0.95 && !a?.ev.some((d) => !d.res) ? 3 : c >= 0.6 ? 2 : c >= 0.3 ? 1 : 0, // v127: 3 ดาวต้องไม่พลาดเลย · ต่ำกว่า 30% = ไม่ผ่าน
       _q = (Ai("train"), l === 3 && (Ai("star3"), ccsSnapSoon(`⭐⭐⭐ ${e.icon} ${e.name} · Lv.${lvX + 1}`, 0.15, "star" + e.id))),
       n = Math.round(e.xp * [0.25, 0.7, 1, 1.5][l] * (1 + Math.random() * 0.2)),
       h = z.trainStars ?? (z.trainStars = {}),
@@ -1463,8 +1617,7 @@ varying float vJz;
       (j.score += n),
       (fa.money.textContent = String(z.money)),
       rt(`${"⭐".repeat(l) || "💤"} ${e.icon} +${n} XP`, i.pos.clone().setY(1.6), l ? "big" : "bad"),
-      ke(l === 3 ? "quest" : l ? "heart" : "nope"),
-      De(`${e.icon} ${e.name}: ${"⭐".repeat(l)}${"☆".repeat(3 - l)} ${a ? a.ev.map((d) => (d.res >= 1 ? "🟢" : d.res > 0 ? "🟡" : "🔴")).join("") : ""}${a?.fell ? " ตกสะพาน" : ""}${f && l ? " · สถิติใหม่!" : ""} · +${n} XP${gain ? ` · ${ccsStatDef.find((d) => d[0] === G)[1]} ${ccsStatDef.find((d) => d[0] === G)[2]} +${gain}` : ""}`, 3200),
+      ccsTREnd(l, e, `${a ? a.ev.map((d) => (d.res >= 1 ? "🟢" : d.res > 0 ? "🟡" : "🔴")).join("") : ""}${a?.fell ? " · ตกสะพาน" : ""}<br>+${n} XP${gain ? ` · ${ccsStatDef.find((d) => d[0] === G)[1]} ${ccsStatDef.find((d) => d[0] === G)[2]} +${gain}` : ""}${f && l ? "<br><b>🎉 สถิติใหม่!</b>" : ""}`, a ? a.ev.filter((d) => !d.res).length : 0),
       Rs(n, i),
       _t(z));
   }
