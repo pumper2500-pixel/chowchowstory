@@ -435,11 +435,26 @@
     ccsQb = new At(),
     ccsVa = new H(),
     ccsUp = new H(0, 1, 0);
+  function ccsBrkY(i, e, t) {
+    // v128: สูตรเดียวกับคลื่นหัวแตกใน shader (ของลอยน้ำขึ้นลงตามคลื่นที่เห็นจริง)
+    let n = e - Rt;
+    if (n < 0 || n > 40) return 0;
+    let s = 0.62832 * (-n - 3.4 * t) + 0.45 * Math.sin(i * 0.045 + 0.7) + 0.25 * Math.sin(i * 0.11 - 1.3),
+      o = 0.5 + 0.5 * Math.sin(s / 7.3 + 0.8 * Math.sin(s / 19)),
+      r = 0.22 + 1.45 * o * o * o,
+      a = (x, y, v) => ((v = Math.max(0, Math.min(1, (v - x) / (y - x)))), v * v * (3 - 2 * v)),
+      c = 0.16 * ccsSeaV * r * a(40, 16, n) * (1 + 0.9 * a(14, 4, n)),
+      l = 1.5 + c * 9;
+    c *= (1 + (0.35 - 1) * a(l, l - 4, n)) * a(0, 1.5, n);
+    let h = 0.5 + 0.5 * Math.sin(s),
+      f = Math.pow(h, 1 + 3 * a(26, 5, n));
+    return c * (f * 1.7 - 0.45);
+  }
   function ccsWaveY(i, e, t) {
     let n = Math.max(0, e - Rt),
-      s = 0.015 + 0.22 * Math.min(1, Math.max(0, (n - 4) / 36)),
+      s = (0.015 + 0.22 * Math.min(1, Math.max(0, (n - 4) / 36))) * ccsSeaV,
       o = Math.sin(i * 0.21 + t * 0.9) * 0.45 + Math.sin(e * 0.33 - t * 1.35 + i * 0.07) * 0.4 + Math.sin((i - e) * 0.6 + t * 2.1) * 0.15;
-    return Ph + o * s + 0.02 * Math.sin(t * 1.7 + i * 0.9 + e * 0.6);
+    return Ph + o * s + 0.02 * Math.sin(t * 1.7 + i * 0.9 + e * 0.6) + ccsBrkY(i, e, ccsSeaT || t);
   }
   function ccsMkCone() {
     let i = new J(),
@@ -619,6 +634,7 @@
     }
   }
   function ccsRingAt(i, e, t) {
+    if (ccsRipDrop(i, t, 0.25, 0.04)) return; // v128: ใช้คลื่นจำลองแทนวงแหวนแบน
     let n = ccsSplash.rings[ccsSplash.ri++ % ccsSplash.rings.length];
     (n.m.position.set(i, e + 0.02, t), (n.life = 1.2), (n.m.visible = !0));
   }

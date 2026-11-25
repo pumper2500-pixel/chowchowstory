@@ -2627,6 +2627,7 @@
       ccsFWTick(Math.min(0.05, e), t),
       ccsVolcanoTick(Math.min(0.05, e), t),
       tl.update(e),
+      ccsRipFeed(Math.min(0.05, e), t),
       sE?.update(e, Le[0]?.pos ?? new H(), !Se),
       oi.update(t),
       wH(t, e));

@@ -4,16 +4,50 @@
     let e = i - (Rt - 1.35);
     return e <= 0 ? 0 : -Math.min(3, e * 0.085 + e * e * 0.004);
   }
-  var oM = `
+  var ccsBrkGL = "",
+    oM = `
 float hsh(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
 float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
   return mix(mix(hsh(i),hsh(i+vec2(1,0)),u.x), mix(hsh(i+vec2(0,1)),hsh(i+vec2(1,1)),u.x), u.y); }
 float fbm(vec2 p){ float a=0.5, s=0.0; for(int i=0;i<4;i++){ s+=a*vn(p); p*=2.03; a*=0.5; } return s; }
 // ความสูงคลื่นเล็ก ๆ ใช้ทำ normal
 float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p.x*0.6)*0.3 + fbm(p*0.9+vec2(t*0.25,-t*0.18))*0.9; }
+// v128: คลื่นจริงรอบตัวน้อง — จำลองสมการคลื่น (heightfield) บน CPU แล้วส่งมาเป็น texture: x=ความชันแกน x, y=ความชันแกน z, z=ความสูง, w=ความแรงจาง
+uniform sampler2D uRipT; uniform vec3 uRipC;
+vec4 ripS(vec2 xz){
+  vec2 u = (xz - uRipC.xy) / uRipC.z + 0.5;
+  float ed = smoothstep(0.0, 0.12, u.x) * (1.0 - smoothstep(0.88, 1.0, u.x)) * smoothstep(0.0, 0.12, u.y) * (1.0 - smoothstep(0.88, 1.0, u.y));
+  if (ed <= 0.0) return vec4(0.0);
+  float px = 1.0 / 160.0, dx = uRipC.z / 160.0;
+  float hl = texture2D(uRipT, u - vec2(px, 0.0)).r, hr = texture2D(uRipT, u + vec2(px, 0.0)).r;
+  float hd = texture2D(uRipT, u - vec2(0.0, px)).r, hu = texture2D(uRipT, u + vec2(0.0, px)).r;
+  float h = texture2D(uRipT, u).r;
+  return vec4((hr - hl) / (2.0*dx), (hu - hd) / (2.0*dx), h, ed);
+}
+`,
+    // v128: คลื่นหัวแตกเข้าหาฝั่ง (shoaling breaker) — คลื่นมาเป็นชุด (set) ลูกใหญ่สลับลูกเล็ก ยิ่งน้ำตื้นยิ่งชันแล้วแตกเป็นฟอง
+    ccsBrkGL = `
+uniform float uSea;
+float brkPh(vec2 xz, float t, float sh){ float d = xz.y - sh; return 0.62832*(-d - 3.4*t) + 0.45*sin(xz.x*0.045 + 0.7) + 0.25*sin(xz.x*0.11 - 1.3); }
+float brkSet(float f){ float s = 0.5 + 0.5*sin(f/7.3 + 0.8*sin(f/19.0)); return 0.22 + 1.45*s*s*s; }
+// คืนค่า: x=ความสูง, y=ความแรงหัวแตก(0-1), z=สัดส่วนเฟส (0=ยอด), w=แอมพลิจูด
+vec4 brk(vec2 xz, float t, float sh){
+  float d = xz.y - sh; if (d < 0.0 || d > 40.0) return vec4(0.0);
+  float f = brkPh(xz, t, sh), E = brkSet(f);
+  float A = 0.16 * uSea * E * (1.0 - smoothstep(16.0, 40.0, d)) * (1.0 + 0.9*(1.0 - smoothstep(4.0, 14.0, d)));
+  float db = 1.5 + A*9.0;                                   // ลูกใหญ่แตกไกลฝั่งกว่า
+  float br = (1.0 - smoothstep(db - 0.5, db + 2.5, d));
+  A *= mix(1.0, 0.35, (1.0 - smoothstep(db - 4.0, db, d))) * smoothstep(0.0, 1.5, d);   // แตกแล้วกลายเป็นฟองยุบลง
+  float s = 0.5 + 0.5*sin(f);
+  float pr = pow(s, 1.0 + 3.0*(1.0 - smoothstep(5.0, 26.0, d)));   // ตื้นขึ้น → ยอดแหลม ท้องคลื่นแบน
+  return vec4(A*(pr*1.7 - 0.45), br, fract((1.5708 - f)/6.2832), A);
+}
 `,
     rM = [];
   function aM(i, e, t, n, s, o) {
+    ccsSeaT = i;
+    let ss = ccsSeaState(i);
+    for (let r of rM) r.uSea.value = ss;
     for (let r of rM)
       ((r.uT.value = i),
         r.uCam.value.copy(e),
@@ -34,7 +68,138 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
       uFog: { value: new ae(14676471) },
       uNight: { value: 0 },
       uCam: { value: new H() },
+      uSea: { value: 1 },
+      uRipT: { value: ccsRipGet().tex },
+      uRipC: { value: ccsRip.c },
     };
+  }
+  // ===== v128: ทะเลมีชีวิต — สภาพทะเลแรง/เบาสลับกันตามเวลา + ฝน, และคลื่นรอบตัวแบบจำลองฟิสิกส์ =====
+  var ccsSeaT = 0,
+    ccsSeaV = 1,
+    ccsRip = null;
+  function ccsSeaState(i) {
+    // ช่วงคลื่นลมแรงสลับสงบ (คาบหลายนาที, ไม่ซ้ำกันง่าย) + ฝน/พายุทำให้แรงขึ้น
+    let e = 0.5 + 0.26 * Math.sin((i / 211) * 6.2832) + 0.16 * Math.sin((i / 97) * 6.2832 + 1.1) + 0.08 * Math.sin((i / 41) * 6.2832 + 2.3),
+      t = typeof co != "undefined" && co?.cur?.r ? co.cur.r : 0,
+      n = 0.45 + e * 1.15 + t * 0.7;
+    return (window.__seaOv && ((ccsSeaV = window.__seaOv), 1)) ? ccsSeaV : ((ccsSeaV += (n - ccsSeaV) * 0.01), ccsSeaV);
+  }
+  function ccsRipGet() {
+    if (ccsRip) return ccsRip;
+    let i = 160,
+      e = 18,
+      t = new Uint16Array(i * i),
+      n = new Hs(t, i, i, Ku, Zi);
+    ((n.magFilter = n.minFilter = Bn), (n.wrapS = n.wrapT = Fi), (n.needsUpdate = !0));
+    return (ccsRip = { N: i, S: e, dx: e / i, h: new Float32Array(i * i), p: new Float32Array(i * i), d: t, tex: n, c: new H(0, 0, e), acc: 0, live: 0, ph: 0 });
+  }
+  function ccsRipPoke(i, e, t, n) {
+    // ดัน/ยกผิวน้ำเป็นก้อนเกาส์ รัศมี t เมตร สูง n เมตร (ลบ = กดลง)
+    let s = ccsRipGet(),
+      o = (i - s.c.x) / s.dx + s.N / 2,
+      r = (e - s.c.y) / s.dx + s.N / 2,
+      a = Math.ceil((t * 2) / s.dx);
+    if (o < -a || r < -a || o > s.N + a || r > s.N + a) return !1;
+    let c = 1 / ((t / s.dx) * (t / s.dx));
+    for (let l = Math.max(1, Math.floor(r - a)); l <= Math.min(s.N - 2, Math.ceil(r + a)); l++)
+      for (let h = Math.max(1, Math.floor(o - a)); h <= Math.min(s.N - 2, Math.ceil(o + a)); h++) {
+        let f = (h - o) * (h - o) + (l - r) * (l - r);
+        f < a * a && (s.h[l * s.N + h] += n * Math.exp(-f * c));
+      }
+    return ((s.live = 8), !0);
+  }
+  function ccsRipCenter(i, e) {
+    // เลื่อนกริดตามตัวน้อง (ขยับทีละช่อง ข้อมูลคลื่นเดิมยังอยู่)
+    let t = ccsRipGet(),
+      n = Math.round((i - t.c.x) / t.dx),
+      s = Math.round((e - t.c.y) / t.dx);
+    if (Math.abs(n) < 12 && Math.abs(s) < 12) return;
+    let o = t.N,
+      r = new Float32Array(o * o),
+      a = new Float32Array(o * o);
+    for (let c = 0; c < o; c++) {
+      let l = c + s;
+      if (l < 0 || l >= o) continue;
+      for (let h = 0; h < o; h++) {
+        let f = h + n;
+        f < 0 || f >= o || ((r[c * o + h] = t.h[l * o + f]), (a[c * o + h] = t.p[l * o + f]));
+      }
+    }
+    ((t.h = r), (t.p = a), (t.c.x += n * t.dx), (t.c.y += s * t.dx));
+  }
+  var ccsRipDrops = [];
+  function ccsRipDrop(i, e, t, n) {
+    // หยดน้ำ/ของตกน้ำ: แกว่งขึ้นลงหน่วงลง → ได้คลื่นเป็นชุดวงซ้อนแบบธรรมชาติ (ไม่ใช่วงแหวนแบน)
+    let s = ccsRipGet();
+    if (Math.abs(i - s.c.x) > s.S * 0.44 || Math.abs(e - s.c.y) > s.S * 0.44) return !1;
+    return (ccsRipPoke(i, e, t, -n * 0.6), ccsRipDrops.length < 24 && ccsRipDrops.push({ x: i, z: e, r: t, a: n, t: 0 }), !0);
+  }
+  function ccsRipFeed(i, e) {
+    // ป้อนแรงจากตัวน้อง/ตัวอื่นที่อยู่ในน้ำ: ว่ายแล้วดันน้ำหน้าตัวขึ้น ท้ายตัวยุบ (เกิดคลื่นหัวเรือ+รอยคลื่นท้ายเป็นรูปตัว V เอง) + ตีขาพายน้ำเป็นจังหวะ
+    let t = ccsRipGet(),
+      n = Le[0];
+    if (!n || Se) return;
+    let s = go(n.pos.x, n.pos.z);
+    (s > 0.06 || ccsRipDrops.length) && ccsRipCenter(n.pos.x, n.pos.z);
+    let o = Math.min(2, i * 60),
+      r = [n, ...(typeof ml != "undefined" ? ml : [])];
+    for (let a of r) {
+      if (!a?.pos) continue;
+      let c = a === n ? s : go(a.pos.x, a.pos.z);
+      if (c < 0.06) continue;
+      let l = Math.min(1, (c - 0.04) * 3),
+        h = Math.min(4, a.spd ?? 0),
+        f = a.dir ?? a.rig?.yaw ?? 0,
+        d = Math.sin(f),
+        u = Math.cos(f),
+        p = Math.sin(e * 15.5 + (a === n ? 0 : 1.7));
+      (a.rp = (a.rp ?? 0) + i * (2.4 + h * 0.8));
+      let m = Math.sin(a.rp * 6.2832);
+      // หัว: ดันน้ำขึ้น, ลำตัว/ท้าย: ยุบ (สัดส่วนกับความเร็ว)
+      h > 0.15 && (ccsRipPoke(a.pos.x + d * 0.42, a.pos.z + u * 0.42, 0.28, 0.0009 * Math.min(h, 2.2) * l * o), ccsRipPoke(a.pos.x - d * 0.25, a.pos.z - u * 0.25, 0.3, -0.0009 * Math.min(h, 2.2) * l * o));
+      // ตีขาพายน้ำ (สองข้างสลับ) + ตัวลอยขึ้นลงเบา ๆ
+      (ccsRipPoke(a.pos.x + u * 0.22, a.pos.z - d * 0.22, 0.16, 0.00035 * m * l * o * (0.6 + h * 0.3)),
+        ccsRipPoke(a.pos.x - u * 0.22, a.pos.z + d * 0.22, 0.16, -0.00035 * m * l * o * (0.6 + h * 0.3)),
+        ccsRipPoke(a.pos.x, a.pos.z, 0.3, 0.00028 * p * l * o));
+    }
+    for (let a = ccsRipDrops.length - 1; a >= 0; a--) {
+      let c = ccsRipDrops[a];
+      ((c.t += i), ccsRipPoke(c.x, c.z, c.r, c.a * Math.sin(c.t * 17) * Math.exp(-c.t * 3.2) * 0.2 * o), c.t > 1.2 && ccsRipDrops.splice(a, 1));
+    }
+    ccsRipTick(i, e);
+  }
+  function ccsRipTick(i, e) {
+    let t = ccsRipGet();
+    if (t.live <= 0) return;
+    if ((t.live -= i) <= 0) return void (t.h.fill(0), t.p.fill(0), t.d.fill(0), (t.tex.needsUpdate = !0));
+    t.acc = Math.min(t.acc + i, 0.06);
+    let n = t.N,
+      s = (1.15 / 60 / t.dx) ** 2,
+      o = 0.9955;
+    for (; t.acc >= 1 / 60; ) {
+      t.acc -= 1 / 60;
+      let r = t.h,
+        a = t.p;
+      for (let c = 1; c < n - 1; c++) {
+        let l = c * n;
+        for (let h = 1; h < n - 1; h++) {
+          let f = l + h;
+          let v = (2 * r[f] - a[f] + s * (r[f - 1] + r[f + 1] + r[f - n] + r[f + n] - 4 * r[f])) * o;
+          a[f] = v > 0.06 ? 0.06 + (v - 0.06) * 0.3 : v < -0.06 ? -0.06 + (v + 0.06) * 0.3 : v; // คลื่นสูงเกินจะแตกตัว (จำกัดความสูง)
+        }
+      }
+      // ขอบกริดดูดซับคลื่น (ไม่สะท้อนกลับ)
+      for (let c = 0; c < n; c++)
+        for (let l = 0; l < 6; l++) {
+          let h = 0.82 + l * 0.03;
+          ((a[c * n + l] *= h), (a[c * n + n - 1 - l] *= h), (a[l * n + c] *= h), (a[(n - 1 - l) * n + c] *= h));
+        }
+      ((t.h = a), (t.p = r));
+    }
+    let r = t.h,
+      a = t.d;
+    for (let c = 0; c < r.length; c++) a[c] = as(r[c]);
+    ((t.c.z = t.S), (t.tex.needsUpdate = !0));
   }
   var Z7 = (i) => 0.9 * Math.sin(i * 0.11) + 0.5 * Math.sin(i * 0.29 + 1.3) + 0.25 * Math.sin(i * 0.83 + 0.4);
   function lM(i, e, t, n, s) {
@@ -58,28 +223,37 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         float k = 6.2831/L; vec2 d = normalize(dir); float f = k*(dot(d, xz) - sp*uT); float c = cos(f), s = sin(f);
         T += vec3(-Q*d.x*d.x*A*k*s, d.x*A*k*c, -Q*d.x*d.y*A*k*s); B += vec3(-Q*d.x*d.y*A*k*s, d.y*A*k*c, -Q*d.y*d.y*A*k*s);
         return vec3(Q*A*d.x*c, A*s, Q*A*d.y*c); }
+      ${ccsBrkGL}
+      // กลุ่มคลื่น (wave group): คลื่นลึกเดินทางเป็นชุด ความเร็วกลุ่ม = ครึ่งหนึ่งของความเร็วคลื่น → ลูกใหญ่โผล่-หายสลับลูกเล็ก
+      float grp(vec2 p, vec2 dir, float L, float sp, float ph){ vec2 d = normalize(dir); float kg = 6.2831/(L*7.0);
+        float x = dot(d, p) - sp*0.5*uT; float g = 0.5 + 0.5*sin(kg*x + ph + 1.3*sin(kg*0.31*x + ph*2.0)); return (0.3 + 1.25*g*g) * uSea; }
       void main(){ vec4 w = modelMatrix*vec4(position,1.0);
         float d = max(0.0, w.z - uShore);
-        float amp = 0.015 + 0.22*smoothstep(4.0, 40.0, d);
+        float amp = (0.015 + 0.22*smoothstep(4.0, 40.0, d)) * grp(w.xz, vec2(0.1,-1.0), 30.0, 4.0, 0.0);
         float h = sin(w.x*0.21 + uT*0.9)*0.45 + sin(w.z*0.33 - uT*1.35 + w.x*0.07)*0.4 + sin((w.x - w.z)*0.6 + uT*2.1)*0.15;
         vN = vec3(0.0, 1.0, 0.0); vFoam = 0.0;
       #ifdef HQ
         float ga = smoothstep(3.0, 45.0, d);                   // ริมหาดคลื่นเบา ออกไปไกลคลื่นสูง
         vec3 T = vec3(1.0,0.0,0.0), B = vec3(0.0,0.0,1.0); vec3 off = vec3(0.0); vec2 p = w.xz;
-        off += gerst(p, vec2(0.15,-1.0), 38.0, 0.6*ga, 0.55, 5.2, T, B);
-        off += gerst(p, vec2(-0.35,-1.0), 21.0, 0.34*ga, 0.6, 4.1, T, B);
-        off += gerst(p, vec2(0.6,-0.8), 13.0, 0.26*ga, 0.65, 3.3, T, B);
-        off += gerst(p, vec2(-0.8,-0.6), 7.5, 0.14*ga, 0.7, 2.6, T, B);
-        off += gerst(p, vec2(0.3,-0.95), 4.2, 0.07*ga, 0.7, 1.9, T, B);
-        off += gerst(p, vec2(1.0,-0.2), 2.6, 0.035*ga, 0.6, 1.5, T, B);
+        float q = clamp(uSea, 0.4, 2.0);
+        off += gerst(p, vec2(0.15,-1.0), 38.0, 0.6*ga*grp(p, vec2(0.15,-1.0), 38.0, 5.2, 0.0), 0.55, 5.2, T, B);
+        off += gerst(p, vec2(-0.35,-1.0), 21.0, 0.34*ga*grp(p, vec2(-0.35,-1.0), 21.0, 4.1, 2.1), 0.6, 4.1, T, B);
+        off += gerst(p, vec2(0.6,-0.8), 13.0, 0.26*ga*grp(p, vec2(0.6,-0.8), 13.0, 3.3, 4.0), 0.65, 3.3, T, B);
+        off += gerst(p, vec2(-0.8,-0.6), 7.5, 0.14*ga*q, 0.7, 2.6, T, B);
+        off += gerst(p, vec2(0.3,-0.95), 4.2, 0.07*ga*q, 0.7, 1.9, T, B);
+        off += gerst(p, vec2(1.0,-0.2), 2.6, 0.035*ga*(0.6+0.4*q), 0.6, 1.5, T, B);
         w.xyz += off; w.y += h*amp*0.4; vN = normalize(cross(B, T)); vWave = off.y / max(0.3, 1.9*ga) ;
-        vFoam = clamp((off.y - 0.55*ga) / max(0.2, 0.9*ga), 0.0, 1.0);   // ยอดคลื่นสูง → ฟองขาว
+        vFoam = clamp((off.y - 0.55*ga*min(q, 1.3)) / max(0.2, 0.9*ga), 0.0, 1.0);   // ยอดคลื่นสูง → ฟองขาว (ทะเลแรง → ยอดแตกฟองบ่อยขึ้น)
       #else
         w.y += h*amp; vWave = h;
       #endif
+        { vec4 b = brk(w.xz, uT, uShore); float s0 = pow(1.0 - b.z, 6.0) + pow(b.z, 10.0);
+          w.y += b.x; w.z -= b.w * 1.1 * b.y * s0;            // ยอดคลื่นโน้มไปข้างหน้าตอนจะแตก
+          vWave = max(vWave, b.x / max(0.15, b.w*1.3)); }
         vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
         fragmentShader: `uniform float uT, uShore, uNight, uHasWave; uniform sampler2D uWave; uniform vec3 uSun, uSky, uFog, uCam; varying vec3 vW; varying float vWave; varying vec3 vN; varying float vFoam;
       ${oM}
+      ${ccsBrkGL}
       float sandY(float z){ float d = z - (uShore - 1.35); if (d <= 0.0) return 0.0; return -min(3.0, d*0.085 + d*d*0.004); }
       void main(){
         float d = vW.z - uShore;
@@ -97,7 +271,27 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         // normal จากระลอกเล็ก
         vec2 p = vW.xz*0.55; float e = 0.06;
         float h0 = rip(p,uT), hx = rip(p+vec2(e,0.0),uT), hz = rip(p+vec2(0.0,e),uT);
-        vec3 n = normalize(vec3(-(hx-h0)/e*0.14 + (wv.r-0.45)*0.5*uHasWave, 1.0, -(hz-h0)/e*0.14 + (wv.b-0.5)*0.5*uHasWave));
+        float chop = 0.75 + 0.25*clamp(uSea, 0.4, 2.0);
+        vec3 n = normalize(vec3((-(hx-h0)/e*0.14 + (wv.r-0.45)*0.5*uHasWave)*chop, 1.0, (-(hz-h0)/e*0.14 + (wv.b-0.5)*0.5*uHasWave)*chop));
+        // คลื่นลมละเอียด (wind chop) ในน้ำลึก: ยอดแหลมหลายทิศ ความแรงตามสภาพทะเล → ผิวน้ำเป็นเกล็ดแสงระยิบเหมือนทะเลจริง
+      #ifdef HQ
+        { float dk = smoothstep(3.0, 25.0, d) * clamp(uSea, 0.4, 2.0);
+          vec2 cg = vec2(0.0);
+          for (int i = 0; i < 4; i++) { float fi = float(i); float ang = -1.2 + fi*0.85 + 0.3*sin(fi*7.1); vec2 dr = vec2(sin(ang), -cos(ang));
+            float L = 3.2 / (1.0 + fi*0.75); float k = 6.2831/L; float ph = k*dot(dr, vW.xz) - sqrt(9.8*k)*uT + fi*1.7 + 2.0*vn(vW.xz*0.07 + fi);
+            float s = 0.5 + 0.5*sin(ph); cg += dr * (pow(s, 2.5) - 0.3) * k * cos(ph) * 0.045 / (1.0 + fi*0.3); }
+          n = normalize(n + vec3(-cg.x, 0.0, -cg.y) * dk); }
+      #endif
+        // คลื่นหัวแตก: ความชันจากสูตรเดียวกับ vertex
+        vec4 bk = brk(vW.xz, uT, uShore);
+      #ifdef HQ
+        { float be = 0.25; float bx = brk(vW.xz + vec2(be, 0.0), uT, uShore).x, bz = brk(vW.xz + vec2(0.0, be), uT, uShore).x;
+          n = normalize(n + vec3(-(bx - bk.x)/be, 0.0, -(bz - bk.x)/be) * 0.9); }
+      #endif
+        // คลื่นรอบตัวน้อง (heightfield) → ความชันจริง ใช้ทั้งแสงสะท้อน การหักเห และฟอง
+        vec4 rp = ripS(vW.xz);
+        float rg = length(rp.xy) * rp.w;
+        n = normalize(n + vec3(-rp.x, 0.0, -rp.y) * 1.8 * rp.w);
       #ifdef HQ
         n = normalize(vec3(vN.x + n.x*0.6, vN.y, vN.z + n.z*0.6));
         { vec3 L = normalize(uSun); vec3 V0 = normalize(uCam - vW);
@@ -118,20 +312,33 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         spec += pow(max(dot(n, H), 0.0), 18.0) * 0.12 * (1.0 - uNight*0.9);   // ประกายแดดกว้างบนผิวคลื่น
       #endif
         c += vec3(1.0,0.97,0.9) * spec * 1.6;
+        // v128: ทางแสงอาทิตย์บนทะเล (sun glitter) — แดดต่ำ (เช้า/เย็น) เกล็ดแสงสีส้มทองระยิบตามยอดคลื่นเล็ก
+        { vec3 L = normalize(uSun); vec3 Rf = reflect(-V, n); float lo = 1.0 - smoothstep(0.08, 0.45, L.y);
+          float rl = max(dot(Rf, L), 0.0), mk = smoothstep(0.5, 0.85, vn(vW.xz*6.0 + uT*2.2));
+          float gl = pow(rl, 260.0) * (0.3 + 2.2*mk) * (0.35 + lo) + pow(rl, 35.0) * lo * 0.35 * (0.4 + mk);
+          c += mix(vec3(1.0, 0.96, 0.85), vec3(1.0, 0.62, 0.25), lo) * gl * (1.0 - uNight) * smoothstep(2.0, 12.0, d); }
         // แสงลายน้ำในที่ตื้น
         float ca = pow(abs(sin(fbm(vW.xz*0.8 + uT*0.35)*9.0)), 6.0);
         c += vec3(0.9,1.0,0.95) * ca * 0.22 * (1.0 - smoothstep(0.0, 9.0, d));
+        // ระลอกรอบตัว: ด้านที่หันรับแสงสว่าง ด้านหลังเงาเข้ม (มีมิติแบบผิวน้ำจริง) + ลายแสงใต้น้ำถูกบิด
+        c *= 1.0 + clamp(dot(vec2(-rp.x, -rp.y), normalize(uSun.xz + vec2(0.001))) * 0.8, -0.18, 0.16) * rp.w;
         // ฟองคลื่นริมฝั่ง + แนวคลื่นซัดเข้าหาด
         float edge = 0.10 + 0.08*sin(vW.x*0.23 + uT*0.9) + 0.06*fbm(vW.xz*0.6 + uT*0.25);
         float foam = (1.0 - smoothstep(edge*0.4, edge + 0.12, wd)) * smoothstep(0.0, 0.03, wd);
         foam += smoothstep(0.9, 1.0, sin(wd*22.0 - uT*2.4 + fbm(vW.xz*0.5)*2.0)) * (1.0 - smoothstep(0.1, 0.5, wd)) * 0.6;
-        float band = smoothstep(0.82, 1.0, sin(d*0.9 - uT*1.6 + fbm(vW.xz*0.3)*3.0)) * (1.0 - smoothstep(1.0, 9.0, d)) * smoothstep(0.3, 0.7, fbm(vW.xz*1.6 + uT*0.4));
+        // ฟองคลื่นแตก: หัวคลื่นขาวตอนแตก + ฟองลากท้ายคลื่นที่จางลงเรื่อย ๆ (ลูกใหญ่ฟองเยอะ)
+        float fn = fbm(vW.xz*1.3 + vec2(0.0, uT*0.6));
+        float band = bk.y * ( smoothstep(0.9, 0.995, 1.0 - bk.z) * 1.2 + exp(-bk.z*5.0) * 0.8 ) * smoothstep(0.32, 0.62, fn + bk.w*1.2);
+        band = clamp(band * smoothstep(0.02, 0.12, bk.w), 0.0, 1.0);
+        // ฟองฟุ้งรอบตัวน้องเมื่อน้ำกระเพื่อมแรง
+        band += smoothstep(0.22, 0.6, rg) * smoothstep(0.45, 0.75, fbm(vW.xz*5.0 + uT)) * 0.45;
         float crest = smoothstep(0.75, 1.0, vWave) * smoothstep(10.0, 40.0, d) * 0.35 * fbm(vW.xz*2.0);
         c = mix(c, vec3(1.0), clamp(foam*0.9 + band*0.55 + crest, 0.0, 1.0));
         c *= mix(1.0, 0.35, uNight);
         float dist = length(vW - uCam);
         c = mix(c, uFog, smoothstep(150.0, 420.0, dist) * 0.85);
         float a = mix(0.5, 0.97, smoothstep(0.05, 1.6, wd));
+        a = min(1.0, a + rg * 0.35);
         a = max(a, min(foam, 1.0)*0.9);
         a *= smoothstep(0.0, 0.05, wd);
         gl_FragColor = vec4(c, a); }`,
@@ -191,6 +398,8 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
         vec2 p = vW.xz*1.6; float e = 0.04;
         float h0 = rip(p,uT*0.6) + 0.5*rip(p*2.3+7.1,uT*1.1), hx = rip(p+vec2(e,0.0),uT*0.6) + 0.5*rip((p+vec2(e,0.0))*2.3+7.1,uT*1.1), hz = rip(p+vec2(0.0,e),uT*0.6) + 0.5*rip((p+vec2(0.0,e))*2.3+7.1,uT*1.1);
         vec3 n = normalize(vec3(-(hx-h0)/e*0.05, 1.0, -(hz-h0)/e*0.05));
+        vec4 rp = ripS(vW.xz); n = normalize(n + vec3(-rp.x, 0.0, -rp.y) * 1.8 * rp.w);
+        c *= 1.0 + clamp(dot(-rp.xy, normalize(uSun.xz + vec2(0.001))) * 0.9, -0.28, 0.35) * rp.w;
         vec3 V = normalize(uCam - vW);
         c = mix(c, uSky, pow(1.0 - max(dot(n,V),0.0), 3.0)*0.5);
         c += vec3(1.0) * pow(max(dot(n, normalize(uSun + V)), 0.0), 120.0) * 1.3 * (1.0 - uNight*0.85);
@@ -294,16 +503,20 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
           vertexShader:
             "varying vec2 vUv; void main(){ vUv = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
           fragmentShader: `uniform float uT, uBig; varying vec2 vUv;
+      float hs(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+      float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f); return mix(mix(hs(i),hs(i+vec2(1,0)),u.x), mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),u.x), u.y); }
       void main(){
-        float r = length(vUv);
-        float front = uT * 0.62;                       // หน้าคลื่นลูกแรก (สัดส่วนของรัศมีแผ่น)
-        float d = front - r;                           // ระยะหลังหน้าคลื่น (คลื่นลูกถัด ๆ ไปตามมา)
-        float env = smoothstep(-0.02, 0.06, d) * exp(-d * 5.5);    // มีคลื่นเฉพาะหลังหน้าคลื่น ลดลงเรื่อย ๆ
-        float w = sin(d * 46.0) * env;
-        float fade = (1.0 - smoothstep(0.55, 1.0, uT)) * (1.0 - smoothstep(0.75, 1.0, r)) * smoothstep(0.0, 0.08, r + 0.02);
-        float hi = max(w, 0.0), lo = max(-w, 0.0);
-        vec3 col = mix(vec3(0.16, 0.36, 0.42), vec3(0.93, 0.98, 1.0), step(0.0, w));
-        float a = (hi * 0.42 + lo * 0.16) * fade;
+        // v128: ระลอกไกลตัว — แรเงาตามความชันเทียบทิศแดด (ด้านรับแสงสว่าง ด้านหลังเข้ม) ขอบวงบิดเบี้ยวตามผิวน้ำ ไม่ใช่วงขาวแบน
+        float r = length(vUv) + (vn(vUv*3.0 + uBig*7.0) - 0.5) * 0.07;
+        float front = uT * 0.62;
+        float d = front - r;
+        float env = smoothstep(-0.02, 0.06, d) * exp(-d * 6.5);
+        float sl = cos(d * 40.0) * env;                     // ความชันของผิวคลื่น
+        vec2 dir = normalize(vUv + 1e-4);
+        float lit = sl * dot(dir, normalize(vec2(0.55, 0.35)));
+        float fade = (1.0 - smoothstep(0.45, 1.0, uT)) * (1.0 - smoothstep(0.7, 1.0, r)) * smoothstep(0.0, 0.1, r);
+        vec3 col = lit > 0.0 ? vec3(0.88, 0.96, 1.0) : vec3(0.05, 0.22, 0.28);
+        float a = abs(lit) * (lit > 0.0 ? 0.32 : 0.2) * fade;
         if (a < 0.004) discard;
         gl_FragColor = vec4(col, a);
       }`,
@@ -328,6 +541,7 @@ float rip(vec2 p, float t){ return sin(p.x*1.7+t*1.9)*0.35 + sin(p.y*2.3-t*1.4+p
             (y.y0 = u),
             y.m.scale.setScalar(0.6 + Math.random() * 0.9));
         }
+        if (ccsRipDrop(d.x, d.z, 0.22 + p * 0.22, 0.05 + p * 0.07)) return; // v128: ใกล้ตัว → ใช้คลื่นจำลองจริง
         let E = a[l++ % a.length];
         ((E.m.visible = !0), (E.t = 0), (E.big = 0.6 + p * 0.8), E.m.position.set(d.x, u + 0.03, d.z));
       },
