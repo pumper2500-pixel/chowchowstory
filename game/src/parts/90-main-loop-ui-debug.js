@@ -4676,6 +4676,7 @@
         rip: () => ccsRipGet(),
         ripDrop: (x, z, r, a) => ccsRipDrop(x, z, r, a),
         ripFeed: (dt, t) => ccsRipFeed(dt, t),
+        lastErr: () => window.__ccsLastErr || localStorage.getItem("ccs-lastErr"),
         sea: () => ccsSeaV,
         trFx: (k, t) => ccsTRFx(k, t),
         trEnd: (s) => ccsTREnd(s, { icon: "🚧", name: "กระโดดข้ามรั้ว" }, "🟢🟢🔴<br>+30 XP", s === 3 ? 0 : 1),

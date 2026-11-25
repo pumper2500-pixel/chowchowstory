@@ -302,8 +302,7 @@
           }
           if (((m.turn += (Math.random() - 0.5) * f * 1.6), (m.turn *= 0.97), (m.yaw += m.turn * f), E.z < n + 4)) {
             let b = 0 - m.yaw;
-            for (; b > Math.PI;) b -= Math.PI * 2;
-            for (; b < -Math.PI;) b += Math.PI * 2;
+            b = ccsWrapA(b);
             m.yaw += b * Math.min(1, f * 1.2);
           }
           ((E.x += Math.sin(m.yaw) * m.spd * f), (E.z += Math.cos(m.yaw) * m.spd * f), (E.z = Math.max(n + 3.2, E.z)));

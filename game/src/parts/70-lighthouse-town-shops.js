@@ -2591,7 +2591,34 @@
     S6 = new H(),
     H6 = performance.now(),
     TE = 0;
+  // v129: ลูปหลักกันพัง — ถ้ามีระบบไหน error เกมไม่หยุดค้าง แต่เก็บข้อความไว้ให้ดู (__ccs.lastErr)
+  var ccsLoopErrT = 0;
   function U4(i) {
+    try {
+      U4b(i);
+    } catch (e) {
+      ((window.__ccsLastErr = String(e?.stack || e).slice(0, 600)), console.error("[ccs loop]", e));
+      try {
+        localStorage.setItem("ccs-lastErr", new Date().toISOString() + " " + window.__ccsLastErr);
+      } catch {}
+      performance.now() - ccsLoopErrT > 8e3 && ((ccsLoopErrT = performance.now()), typeof De == "function" && De("⚠️ มีข้อผิดพลาดเล็กน้อย เกมยังเล่นต่อได้", 1800));
+      try {
+        dn.render(K, Lt);
+      } catch {}
+      requestAnimationFrame(U4);
+    }
+  }
+  function ccsSafe(f, a, b) {
+    try {
+      return f(a, b);
+    } catch (e) {
+      ((window.__ccsLastErr = (f.name || "?") + ": " + String(e?.stack || e).slice(0, 500)), console.error("[ccs " + f.name + "]", e));
+      try {
+        localStorage.setItem("ccs-lastErr", new Date().toISOString() + " " + window.__ccsLastErr);
+      } catch {}
+    }
+  }
+  function U4b(i) {
     TE++;
     let e = Math.min(0.05, (i - H6) / 1e3);
     ((H6 = i), j.started && !C0() && (j.time += e / 900));
@@ -2627,7 +2654,7 @@
       ccsFWTick(Math.min(0.05, e), t),
       ccsVolcanoTick(Math.min(0.05, e), t),
       tl.update(e),
-      ccsRipFeed(Math.min(0.05, e), t),
+      ccsSafe(ccsRipFeed, Math.min(0.05, e), t),
       sE?.update(e, Le[0]?.pos ?? new H(), !Se),
       oi.update(t),
       wH(t, e));
@@ -2973,7 +3000,7 @@
               : null,
         );
       }
-      (ccsBathTick(e), ccsHatTick(e), ccsTRFieldInit(), ccsTRSignTick(), ccsWhaleTick(Math.min(0.1, e)), ccsBaitTick(Math.min(0.1, e)), ccsFxTick(Math.min(0.05, e)), ccsV126Tick(Math.min(0.1, e)));
+      (ccsSafe(ccsBathTick, e), ccsSafe(ccsHatTick, e), ccsSafe(ccsTRFieldInit), ccsSafe(ccsTRSignTick), ccsSafe(ccsWhaleTick, Math.min(0.1, e)), ccsSafe(ccsBaitTick, Math.min(0.1, e)), ccsSafe(ccsFxTick, Math.min(0.05, e)), ccsSafe(ccsV126Tick, Math.min(0.1, e)));
       if ((T4(e, n), Oo)) {
         let b = Oo.k.pos,
           CA = Math.max(-1.25, Math.min(1.25, j.yaw - (Oo.yaw0 ?? j.yaw)));

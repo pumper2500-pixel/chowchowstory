@@ -24,14 +24,19 @@
     }
     return o;
   }
+  // v129: หมุนมุมให้อยู่ในช่วง -π..π แบบไม่วนลูป (ค่าใหญ่มาก/อินฟินิตี้เคยทำให้เกมค้างได้)
+  function ccsWrapA(i) {
+    if (!Number.isFinite(i)) return 0;
+    let e = Math.PI * 2;
+    return ((((i + Math.PI) % e) + e) % e) - Math.PI;
+  }
   function Qi(i, e, t, n) {
     ((i.t += e), i.face?.update(e));
     let s = t > 0.3,
       o = i.t * (s ? 6 + t * 1.1 : 1);
     if (n !== null) {
       let h = n - i.yaw;
-      for (; h > Math.PI;) h -= Math.PI * 2;
-      for (; h < -Math.PI;) h += Math.PI * 2;
+      h = ccsWrapA(h);
       i.yaw += h * (1 - Math.exp(-e * 9));
     }
     i.root.rotation.y = i.yaw;

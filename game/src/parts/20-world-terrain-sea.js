@@ -139,6 +139,7 @@ vec4 brk(vec2 xz, float t, float sh){
     let t = ccsRipGet(),
       n = Le[0];
     if (!n || Se) return;
+    if (!Number.isFinite(n.pos.x + n.pos.z)) return;
     let s = go(n.pos.x, n.pos.z);
     (s > 0.06 || ccsRipDrops.length) && ccsRipCenter(n.pos.x, n.pos.z);
     let o = Math.min(2, i * 60),
@@ -333,13 +334,13 @@ vec4 brk(vec2 xz, float t, float sh){
         // ฟองฟุ้งรอบตัวน้องเมื่อน้ำกระเพื่อมแรง
         band += smoothstep(0.22, 0.6, rg) * smoothstep(0.45, 0.75, fbm(vW.xz*5.0 + uT)) * 0.45;
         float crest = smoothstep(0.75, 1.0, vWave) * smoothstep(10.0, 40.0, d) * 0.35 * fbm(vW.xz*2.0);
-        c = mix(c, vec3(1.0), clamp(foam*0.9 + band*0.55 + crest, 0.0, 1.0));
+        c = mix(c, vec3(1.0), clamp(foam*0.55 + band*0.55 + crest, 0.0, 1.0));
         c *= mix(1.0, 0.35, uNight);
         float dist = length(vW - uCam);
         c = mix(c, uFog, smoothstep(150.0, 420.0, dist) * 0.85);
         float a = mix(0.5, 0.97, smoothstep(0.05, 1.6, wd));
         a = min(1.0, a + rg * 0.35);
-        a = max(a, min(foam, 1.0)*0.9);
+        a = max(a, min(foam, 1.0)*0.55);
         a *= smoothstep(0.0, 0.05, wd);
         gl_FragColor = vec4(c, a); }`,
       }),
@@ -366,6 +367,7 @@ vec4 brk(vec2 xz, float t, float sh){
     (a.setAttribute("color", new Fe(l, 3)), a.computeVertexNormals());
     let u = new R(a, new bt({ vertexColors: !0 }));
     (a.translate(0, 0, Rt + 25), (u.receiveShadow = !0), i.add(u));
+    ccsSwashMk(i);
     let p = new bt({ color: 16773600 }),
       m = new bt({ color: 15895658 });
     for (let E = 0; E < 40; E++) {
@@ -378,6 +380,78 @@ vec4 brk(vec2 xz, float t, float sh){
       (b.position.set(g, Lc(y) + 0.02, y), (b.rotation.y = Math.random() * 6), i.add(b));
     }
     return n;
+  }
+  // ===== v129: คลื่นซัดขึ้นหาด (swash) — แผ่นน้ำบาง ๆ วิ่งขึ้นทรายแล้วไหลกลับ ขอบเป็นแฉกไม่ตรง ระยะซัดขึ้นตามความแรงทะเล/พายุ ทิ้งรอยทรายเปียก =====
+  function ccsSwashMk(i) {
+    let e = cM(),
+      t = new Te(900, 15, 360, 75);
+    t.rotateX(-Math.PI / 2);
+    let n = t.getAttribute("position");
+    for (let o = 0; o < n.count; o++) {
+      let r = n.getZ(o) + Rt - 4.5;
+      n.setZ(o, r);
+      n.setY(o, Math.max(Lc(r), Ph + 0.06) + 0.018);
+    }
+    t.computeBoundingSphere();
+    let s = new Qt({
+      uniforms: { ...e, uShore: { value: Rt } },
+      transparent: !0,
+      depthWrite: !1,
+      fog: !1,
+      vertexShader: "varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }",
+      fragmentShader: `uniform float uT, uNight, uShore; uniform vec3 uSun, uSky, uFog, uCam; varying vec3 vW;
+      ${oM}
+      ${ccsBrkGL}
+      // ระยะซัดขึ้นหาดของคลื่นลูกหนึ่ง ณ ตำแหน่ง x (แต่ละลูกแรงไม่เท่ากัน, ตามแนวหาดไม่เท่ากัน = ขอบเป็นแฉก)
+      float reach(float x, float t, out float u, out float big){
+        float storm = clamp((uSea - 0.75) / 1.1, 0.0, 1.0);
+        float per = mix(8.5, 6.0, storm);
+        float ph = t / per + 0.35*vn(vec2(x*0.018, 3.1)) + 0.15*sin(x*0.07);   // คลื่นเข้าเฉียง ๆ ไม่พร้อมกันทั้งหาด
+        float k = floor(ph); u = fract(ph);
+        big = 0.45 + 0.9*pow(hsh(vec2(k, 7.3)), 1.5);                         // ลูกใหญ่/ลูกเล็กสลับ
+        float lobe = 0.65 + 0.5*vn(vec2(x*0.11 + k*3.7, k)) + 0.25*sin(x*0.42 + k);   // แฉก (beach cusps)
+        float R = (1.1 + 5.8*storm) * big * lobe;
+        // ซัดขึ้นเร็ว (เบรกด้วยแรงเสียดทาน/แรงโน้มถ่วง) แล้วไหลลงช้า ๆ
+        float run = u < 0.32 ? 1.0 - pow(1.0 - u/0.32, 2.2) : 1.0 - pow((u - 0.32)/0.68, 1.6);
+        return R * max(run, 0.0);
+      }
+      void main(){
+        float sandY = vW.z - (uShore - 1.35) <= 0.0 ? 0.0 : -min(3.0, (vW.z - uShore + 1.35)*0.085 + pow(vW.z - uShore + 1.35, 2.0)*0.004);
+        float edge0 = uShore + 1.2;                       // แนวน้ำนิ่ง
+        float u, big; float R = reach(vW.x + (fbm(vW.xz*0.6) - 0.5)*1.2, uT, u, big);
+        float ez = edge0 - R + (fbm(vec2(vW.x*0.9, uT*0.3)) - 0.5)*0.35;    // ขอบน้ำ (ขรุขระ)
+        float inSheet = smoothstep(ez - 0.06, ez + 0.12, vW.z);
+        // ความหนาของแผ่นน้ำ: บางมากที่ขอบ หนาขึ้นใกล้ทะเล
+        float th = clamp((vW.z - ez) / 3.0, 0.0, 1.0);
+        float back = smoothstep(0.32, 0.45, u);           // ช่วงน้ำไหลกลับ: ฟองแตกเป็นลายลูกไม้
+        float lace = smoothstep(0.42, 0.62, fbm(vW.xz*2.4 + vec2(0.0, uT*(back > 0.5 ? -0.5 : 0.8))));
+        float lip = (1.0 - smoothstep(0.0, 0.35 + 0.25*big, vW.z - ez)) * inSheet;   // ฟองขาวที่หัวน้ำ
+        vec3 water = mix(vec3(0.70,0.92,0.90), vec3(0.35,0.78,0.78), th);
+        vec3 V = normalize(uCam - vW);
+        float fres = pow(1.0 - max(V.y, 0.0), 3.0);
+        water = mix(water, uSky, fres*0.4);
+        float sp = pow(max(dot(normalize(vec3((fbm(vW.xz*3.0+uT)-0.5)*0.4, 1.0, (fbm(vW.xz*3.0-uT)-0.5)*0.4)), normalize(uSun + V)), 0.0), 120.0);
+        water += vec3(1.0)*sp*1.2*(1.0 - uNight*0.85);
+        vec3 foamC = vec3(0.97, 0.99, 1.0);
+        float fo = clamp(lip*0.95 + lace*inSheet*(0.25 + 0.45*back)*(1.0 - th*0.6), 0.0, 1.0);
+        vec3 c = mix(water, foamC, fo);
+        float a = inSheet * mix(0.28, 0.62, th) ;
+        a = max(a, fo*0.92);
+        // ทรายเปียก: ตรงที่คลื่นเพิ่งถอยออกไป จะเข้มเป็นมันอยู่ครู่หนึ่ง
+        float wetR = R / max(0.05, (u < 0.32 ? 1.0 : 1.0 - pow((u - 0.32)/0.68, 1.6)));
+        float wet = (1.0 - inSheet) * smoothstep(edge0 - wetR - 0.2, edge0 - wetR + 0.6, vW.z) * back * (1.0 - smoothstep(0.55, 1.0, u)) ;
+        c = mix(c, vec3(0.55, 0.48, 0.36), wet);
+        a = max(a, wet*0.32);
+        // ไม่ทับทะเลจริง (ทะเลวาดต่อเอง) + จางที่ขอบแผ่น
+        a *= 1.0 - smoothstep(-0.02, 0.06, Ph - sandY);
+        c *= mix(1.0, 0.35, uNight);
+        if (a < 0.01) discard;
+        gl_FragColor = vec4(c, a); }`,
+    });
+    s.fragmentShader = s.fragmentShader.replace("Ph - sandY", "(" + Ph.toFixed(3) + ") - sandY");
+    let o = new R(t, s);
+    ((o.renderOrder = 2), (o.frustumCulled = !1), i.add(o));
+    return o;
   }
   function d3(i, e) {
     let t = cM(),

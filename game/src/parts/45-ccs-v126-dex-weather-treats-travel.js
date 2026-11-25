@@ -316,8 +316,7 @@
       s = Math.PI * 0.55,
       o = (a) => {
         let c = a - t;
-        for (; c > Math.PI; ) c -= Math.PI * 2;
-        for (; c < -Math.PI; ) c += Math.PI * 2;
+        c = ccsWrapA(c);
         return c;
       },
       r = "";

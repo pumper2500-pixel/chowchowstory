@@ -985,6 +985,7 @@ varying float vJz;
     if (!i || !e || !ccsWh) return;
     let t = (z.bait ??= {});
     if (!(t[k] > 0)) return void De(`ไม่มี${e.n} ซื้อได้ที่แผงปลาลุงทะเลริมหาด 🐟`, 2400);
+    if (ccsBaitFly) return void De("รอเหยื่อลงน้ำก่อนนะ 🐟", 1200); // v129: กันโยนซ้อน (เหยื่อชิ้นแรกค้างกลางอากาศ)
     ((t[k] -= 1), qs());
     let n = ccsBaitMesh(k);
     K.add(n);
@@ -1271,8 +1272,7 @@ varying float vJz;
           let l = Math.atan2(e[c - 1].x - e[c - 2].x, e[c - 1].z - e[c - 2].z),
             h = Math.atan2(e[c].x - e[c - 1].x, e[c].z - e[c - 1].z),
             f = h - l;
-          for (; f > Math.PI; ) f -= Math.PI * 2;
-          for (; f < -Math.PI; ) f += Math.PI * 2;
+          f = ccsWrapA(f);
           Math.abs(f) > 0.5 && (!r.length || t[c - 1] - r[r.length - 1].d > 0.9) && a(t[c - 1], f > 0 ? "L" : "R", f > 0 ? "⬅ เลี้ยวซ้าย!" : "เลี้ยวขวา ➡", "👌 อ้อมเสาสวย");
         }
         break;
