@@ -2145,7 +2145,7 @@
   }
   function Qp(i, e) {
     (i.rig.root.position.copy(i.pos),
-      i === Le[0] && hT(i.rig, e, i.spd > 0.3 || j.jy > 0.01, !!j.sleeping, uo),
+      i === Le[0] && hT(i.rig, e, i.spd > 0.3 || (j.jy > 0.01 && !ho?.tr?.tbOn), !!j.sleeping, uo), // v132: ตอนฝึกนั่งบนโต๊ะ (ตัวลอย) ไม่ล้างท่านั่ง
       Qi(i.rig, e, i.spd, i.dir));
   }
   var W3 = [

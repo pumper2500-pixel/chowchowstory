@@ -754,6 +754,8 @@ vObj = position;`,
         uShoeStyle: { value: 0 },
         uShoe: { value: new ae(14829119) },
         uDirt: { value: 0 },
+        uWet: { value: 0 },
+        uWetY: { value: 1.2 },
       },
       u = s.mat.clone();
     ((u.color = new ae(16777215).multiplyScalar(h.dark !== void 0 ? 1 : 1.18)),
@@ -777,7 +779,7 @@ vObj = position;`,
           uTailPZ: { value: s.tailPZ },
         }),
           (v.fragmentShader =
-            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
+            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt, uWet, uWetY; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
       // ลายผ้า 2 มิติ (ใช้คู่กับการฉาย 3 แกน): 0 = สีหลัก, 1 = สีรอง
       float wearPat(vec2 u, float st, float ax) {
         if (st < 1.5) return 0.0;
@@ -985,7 +987,18 @@ vObj = position;`,
           float m = smoothstep(1.0 - uDirt * (0.55 + 0.45 * low), 1.02 - uDirt * 0.2, n);
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.13, 0.1, 0.08), m * 0.88);
         }
+        // v132: ขนเปียก — เข้มขึ้นจากระดับน้ำลงมา ขนจับกันเป็นเส้น ๆ (แห้งแล้วค่อย ๆ จางขึ้นจากด้านบน)
+        if (uWet > 0.01) {
+          float lv = uWetY * uH + (vnoise(vPosM * 9.0) - 0.5) * 0.08 * uH;
+          float wm = uWet * (1.0 - smoothstep(lv - 0.04 * uH, lv + 0.04 * uH, vPosM.y));
+          float strand = 0.82 + 0.18 * vnoise(vec3(vPosM.x * 90.0, vPosM.y * 14.0, vPosM.z * 90.0));
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.5, 0.47, 0.45) * strand, wm);
+        }
       }`,
+            ).replace(
+              "#include <roughnessmap_fragment>",
+              `#include <roughnessmap_fragment>
+      if (uWet > 0.01) { float lv2 = uWetY * uH; roughnessFactor = mix(roughnessFactor, 0.38, 0.8 * uWet * (1.0 - smoothstep(lv2 - 0.04 * uH, lv2 + 0.04 * uH, vPosM.y))); }`,
             )),
           (v.vertexShader =
             `varying vec3 vPosM;
@@ -1116,6 +1129,9 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       }),
       (w.setDirt = (v) => {
         d.uDirt.value = v;
+      }),
+      (w.setWet = (v, y) => {
+        ((d.uWet.value = v), (d.uWetY.value = y));
       }),
       (w.tongue = E),
       o)

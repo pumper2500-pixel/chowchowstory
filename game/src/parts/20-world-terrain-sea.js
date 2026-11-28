@@ -252,7 +252,7 @@ vec4 brk(vec2 xz, float t, float sh){
           w.y += b.x; w.z -= b.w * 1.1 * b.y * s0;            // ยอดคลื่นโน้มไปข้างหน้าตอนจะแตก
           vWave = max(vWave, b.x / max(0.15, b.w*1.3)); }
         // v130: ใต้/รอบท่าเรือ คลื่นเบาลง (เสาเข็มสลายแรงคลื่น) ไม่ให้ยอดคลื่นท่วมพื้นไม้
-        { float pm = 1.0 - 0.85 * (1.0 - smoothstep(2.4, 6.0, abs(w.x))) * (1.0 - smoothstep(uShore + 23.0, uShore + 30.0, w.z));
+        { float pm = 1.0 - 0.85 * (1.0 - smoothstep(2.4, 6.0, abs(w.x))) * (1.0 - smoothstep(uShore + 23.0, uShore + 30.0, w.z)) * smoothstep(uShore + 1.5, uShore + 5.0, w.z);   // v132: ไม่กดคลื่นตรงแนวน้ำริมหาด (เดิมขอบน้ำซ้าย/ขวาท่าเป็นขั้นบันได)
           w.y = ${Ph.toFixed(3)} + (w.y - ${Ph.toFixed(3)}) * pm; }
         vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
         fragmentShader: `uniform float uT, uShore, uNight, uHasWave; uniform sampler2D uWave; uniform vec3 uSun, uSky, uFog, uCam; varying vec3 vW; varying float vWave; varying vec3 vN; varying float vFoam;
@@ -405,14 +405,19 @@ vec4 brk(vec2 xz, float t, float sh){
       fragmentShader: `uniform float uT, uNight, uShore; uniform vec3 uSun, uSky, uFog, uCam; varying vec3 vW;
       ${oM}
       ${ccsBrkGL}
+      // v132: hash แบบไม่ใช้ sin (ผลเหมือนกันบน CPU) → ตัวเกมคำนวณระยะคลื่นซัดตรงกับภาพ ใช้ทำให้น้องเปียก/น้ำกระเซ็น (ccsSwashAt)
+      float hs2(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+      float vn2(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.0-2.0*f);
+        return mix(mix(hs2(i),hs2(i+vec2(1,0)),u.x), mix(hs2(i+vec2(0,1)),hs2(i+vec2(1,1)),u.x), u.y); }
+      float fb2(vec2 p){ float a=0.5, s=0.0; for(int i=0;i<3;i++){ s+=a*vn2(p); p*=2.03; a*=0.5; } return s; }
       // ระยะซัดขึ้นหาดของคลื่นลูกหนึ่ง ณ ตำแหน่ง x (แต่ละลูกแรงไม่เท่ากัน, ตามแนวหาดไม่เท่ากัน = ขอบเป็นแฉก)
       float reach(float x, float t, out float u, out float big){
         float storm = clamp((uSea - 0.75) / 1.1, 0.0, 1.0);
         float per = mix(8.5, 6.0, storm);
-        float ph = t / per + 0.35*vn(vec2(x*0.018, 3.1)) + 0.15*sin(x*0.07);   // คลื่นเข้าเฉียง ๆ ไม่พร้อมกันทั้งหาด
+        float ph = t / per + 0.35*vn2(vec2(x*0.018, 3.1)) + 0.15*sin(x*0.07);   // คลื่นเข้าเฉียง ๆ ไม่พร้อมกันทั้งหาด
         float k = floor(ph); u = fract(ph);
-        big = 0.45 + 0.9*pow(hsh(vec2(k, 7.3)), 1.5);                         // ลูกใหญ่/ลูกเล็กสลับ
-        float lobe = 0.65 + 0.5*vn(vec2(x*0.11 + k*3.7, k)) + 0.25*sin(x*0.42 + k);   // แฉก (beach cusps)
+        big = 0.45 + 0.9*pow(hs2(vec2(k, 7.3)), 1.5);                         // ลูกใหญ่/ลูกเล็กสลับ
+        float lobe = 0.65 + 0.5*vn2(vec2(x*0.11 + k*3.7, k)) + 0.25*sin(x*0.42 + k);   // แฉก (beach cusps)
         float R = (1.1 + 5.8*storm) * big * lobe;
         // ซัดขึ้นเร็ว (เบรกด้วยแรงเสียดทาน/แรงโน้มถ่วง) แล้วไหลลงช้า ๆ
         float run = u < 0.32 ? 1.0 - pow(1.0 - u/0.32, 2.2) : 1.0 - pow((u - 0.32)/0.68, 1.6);
@@ -420,7 +425,7 @@ vec4 brk(vec2 xz, float t, float sh){
       }
       // ชั้นคลื่นซัดหนึ่งลูก: คืนค่า x=ความครอบคลุม y=ฟองหัวน้ำ z=ฟองลายลูกไม้ w=ทรายเปียก
       vec4 swashL(vec2 p, float t, float off, float edge0){
-        float u, big; float R = reach(p.x + off*37.0 + (fbm(p*0.6 + off) - 0.5)*1.2, t + off*7.3, u, big);
+        float u, big; float R = reach(p.x + off*37.0 + (fb2(p*0.6 + off) - 0.5)*1.2, t + off*7.3, u, big);
         float ez = edge0 - R + (fbm(vec2(p.x*0.9, t*0.3 + off)) - 0.5)*0.35 + (vn(vec2(p.x*3.2, off*5.0)) - 0.5)*0.12;   // ขอบขรุขระสองระดับ
         float inS = smoothstep(ez - 0.04, ez + 0.08, p.y);
         float back = smoothstep(0.32, 0.45, u);
@@ -4971,6 +4976,13 @@ vec4 brk(vec2 xz, float t, float sh){
             (S.frustumCulled = !1),
             (S.userData.noOcc = !0));
         });
+        // v132: ปิดช่องว่างระหว่างแผ่นไม้ (เดิมมองทะลุลงน้ำ ทั้งที่น้องเดินข้ามได้) → แผ่นไม้รองชั้นล่างใต้พื้นทั้งแผ่น เห็นผ่านร่องเป็นไม้สีเข้มในเงา
+        {
+          let mp = null;
+          _.traverse((S) => { S.isMesh && !mp && (mp = S.material.map); });
+          let sub = new R(new ee(6.9, 0.05, 25.25), new X({ map: mp, color: 0x6a5848, roughness: 1, metalness: 0 }));
+          (sub.position.set(0.03, 0.325, -0.1), (sub.receiveShadow = !0), (sub.userData.noOcc = !0), (sub.name = "ccsDockSub"), _.add(sub));
+        }
         ((_.userData.noMerge = !0), (_.userData.noOcc = !0), i.add(_)); // noOcc: น้องยืนบนท่า ระบบโปร่งใสของที่บังน้องจะทำให้ทั้งท่าจาง
         for (let S of tmp) o.remove(S);
       })

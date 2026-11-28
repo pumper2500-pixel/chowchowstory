@@ -2868,6 +2868,7 @@
         j.sleeping &&
           ((n.rig.body.scale.y = 0.82 + Math.sin(i / 600) * 0.03), (n.rig.body.position.y = Se === Rn ? 0 : -0.12)),
         JH(e, n),
+        ccsWetTick(e, n),
         w4(e, n),
         pT(e, n),
         $C(e, n),
@@ -3173,7 +3174,7 @@
       let n = Lt.position,
         s = QA.set(n.z - e.pos.z, 0, e.pos.x - n.x).normalize();
       for (let [o, r] of JA) {
-        let a = V4.set(e.pos.x + s.x * r, e.pos.y + o, e.pos.z + s.z * r),
+        let a = V4.set(e.pos.x + s.x * r, Math.max(e.pos.y, e.rig.root.position.y) + o, e.pos.z + s.z * r), // v132: เล็งที่ตัวน้องจริง (ตอนอยู่บนสะพาน/โต๊ะฝึก ตัวลอยสูงกว่า pos.y → ของใต้เท้าเคยโปร่งใสทั้งชิ้น)
           c = n.distanceTo(a);
         (rn.ray.set(n, a.sub(n).normalize()), (rn.ray.far = c - 0.35), (rn.ray.near = 0.05));
         let l = [];
