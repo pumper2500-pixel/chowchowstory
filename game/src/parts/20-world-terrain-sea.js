@@ -559,27 +559,49 @@ vec4 brk(vec2 xz, float t, float sh){
     return ((f.colorSpace = Ye), f);
   }
   function dM(i) {
+    // v137: เมฆเป็นโมเดล 3D (cloud.glb = แผ่นภาพเมฆ 400 แผ่นซ้อนเป็นก้อน มีเงาในเนื้อเมฆ) แทนภาพเมฆ 2D แบบเดิม
+    //   โหลดไม่ได้ → กลับไปใช้ภาพเมฆแบบเดิม (K7)
     let e = [],
-      t = [1, 2, 3, 4, 5, 6].map((s) => K7(s * 7919)),
-      n = new ae(1, 1, 1);
-    for (let s = 0; s < 26; s++) {
-      let o = new vi({ map: t[s % t.length], transparent: !0, depthWrite: !1, fog: !1, color: n }),
-        r = new zi(o),
-        a = (s / 26) * Math.PI * 2 + Math.random() * 0.2,
-        c = 230 + Math.random() * 150,
-        l = 90 + Math.random() * 90;
-      (r.scale.set(l, l * 0.56, 1),
-        r.position.set(Math.cos(a) * c, 58 + Math.random() * 50 + (c - 230) * 0.15, Math.sin(a) * c),
-        (r.renderOrder = -1),
-        i.add(r),
-        e.push({ s: r, v: 0.8 + Math.random() * 1.2 }));
-    }
+      mt3 = null;
+    Promise.resolve() // dM ถูกเรียกตอนสร้างฉาก ก่อนตัวโหลดโมเดล (Zt) ถูกกำหนด → เลื่อนไปโหลดหลังสคริปต์รันจบ
+      .then(() => Po(Zt("cloud")))
+      .then((v) => {
+        let src = null;
+        (v.scene.updateMatrixWorld(!0), v.scene.traverse((o) => { o.isMesh && !src && (src = o); }));
+        let g = src.geometry.clone().applyMatrix4(src.matrixWorld);
+        mt3 = new be({ map: src.material.map, vertexColors: !0, transparent: !0, depthWrite: !1, fog: !1, side: 2, color: 16777215 });
+        for (let s = 0; s < 18; s++) {
+          let m = new R(g, mt3),
+            a = (s / 18) * Math.PI * 2 + Math.random() * 0.25,
+            c = 230 + Math.random() * 150,
+            l = 50 + Math.random() * 60;
+          (m.scale.set(l, l * (0.75 + Math.random() * 0.4), l * (0.8 + Math.random() * 0.5)),
+            (m.rotation.y = Math.random() * Math.PI * 2),
+            m.position.set(Math.cos(a) * c, 74 + Math.random() * 40 + (c - 230) * 0.12, Math.sin(a) * c), // ฐานเมฆอยู่เหนือขอบฟ้าเสมอ (ไม่ดูเหมือนเนินบนพื้น)
+            (m.renderOrder = -1),
+            (m.userData.noOcc = !0),
+            (m.userData.noMerge = !0),
+            (m.castShadow = m.receiveShadow = !1),
+            i.add(m),
+            e.push({ s: m, v: 0.8 + Math.random() * 1.2 }));
+        }
+      })
+      .catch(() => {
+        let t = [1, 2, 3, 4, 5, 6].map((s) => K7(s * 7919));
+        for (let s = 0; s < 26; s++) {
+          let r = new zi(new vi({ map: t[s % t.length], transparent: !0, depthWrite: !1, fog: !1, color: new ae(1, 1, 1) })),
+            a = (s / 26) * Math.PI * 2 + Math.random() * 0.2,
+            c = 230 + Math.random() * 150,
+            l = 90 + Math.random() * 90;
+          (r.scale.set(l, l * 0.56, 1), r.position.set(Math.cos(a) * c, 58 + Math.random() * 50 + (c - 230) * 0.15, Math.sin(a) * c), (r.renderOrder = -1), i.add(r), e.push({ s: r, v: 0.8 + Math.random() * 1.2, sp: 1 }));
+        }
+      });
     return (s, o, r = 1) => {
       for (let a of e) {
         ((a.s.position.x += a.v * s), a.s.position.x > 420 && (a.s.position.x = -420));
-        let c = a.s.material;
-        (c.color.copy(o), (c.opacity = r));
+        a.sp && (a.s.material.color.copy(o), (a.s.material.opacity = r));
       }
+      mt3 && (mt3.color.copy(o), (mt3.opacity = r));
     };
   }
   function fM(i) {
