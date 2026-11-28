@@ -1041,8 +1041,9 @@ uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uT
             )),
           (v.vertexShader =
             `varying vec3 vPosM;
+attribute float aEar;
 #ifdef FUR_SHELL
-attribute float aEar; varying float vFm;
+varying float vFm;
 #endif
 uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF, uPuff, uFurLen, uShellK, uFurT, uHX; uniform vec3 uNeck, uFurVel; uniform mat4 uFootM;
 ` +
@@ -1063,7 +1064,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         float front = smoothstep(hc.z + 0.04 * uL, uNoseZ, position.z);                         // หน้า/ปาก
         float sHead = uPuff * (1.5 + 1.4 * top * (1.0 - front));                                  // v144: หัวด้านบนพองกลมขึ้น
         vec3 anc = mix(sp, hc, hw);
-        vec3 off = (position - anc) * mix(sBody, sHead, hw);
+        vec3 off = (position - anc) * mix(sBody, sHead, hw) * (1.0 - 0.45 * aEar);   // v145b: หูไม่ถูกดึงยืดออกไปตามหัวที่ฟู (ไม่แหลมโผล่)
         off.z -= hw * front * (0.035 * uL) * smoothstep(0.0, 1.0, 1.0 - top);                    // v144: ปากสั้นลงนิดหน่อย
         off.y *= mix(legM, 1.0, hw);                                   // ขา: ฟูออกด้านข้างอย่างเดียว ไม่ยืดลงพื้น
         transformed += off * uChow;   // v145: ฟูถึงฝ่าเท้า (เดิมขอบล่างไม่ฟู → เห็นเป็นขอบสีส้มสว่างใต้เท้า)
@@ -1124,17 +1125,23 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         }
       }
       { // หางกระดิก: หมุนทั้งพวงรอบโคนหาง (ไม่ลากหลังให้เบี้ยว)
-        float tw = (1.0 - smoothstep(uTailZ - 0.08, uTailZ, position.z)) * smoothstep(uTailY, uTailY1, position.y);   // v143: ใช้ตำแหน่งเดิม — ขนกลางหลังที่ฟูขึ้นไม่หมุนตามหาง
+        float tw = (1.0 - smoothstep(uTailZ - 0.08, uTailZ, position.z)) * mix(smoothstep(uTailY, uTailY1, position.y), smoothstep(uTailY - 0.05 * uH, uTailY + 0.02 * uH, position.y), uChow);   // v143: ใช้ตำแหน่งเดิม — ขนกลางหลังที่ฟูขึ้นไม่หมุนตามหาง
         if (tw > 0.0) {
-          float a = sin(uWag) * mix(0.42, 0.5, uChow) * tw;
-          vec2 q = vec2(transformed.x, transformed.z - uTailPZ);
-          float ca = cos(a), sa = sin(a);
-          transformed.x = q.x * ca - q.y * sa;
-          transformed.z = uTailPZ + q.x * sa + q.y * ca;
-          // v145 เชาเชา: พวงหางเอียงตามจังหวะ (หมุนรอบแกนหน้า-หลังที่โคนหาง) → หางปัดซ้าย-ขวาบนหลังเป็นธรรมชาติ ไม่ใช่แค่เลื่อน
-          float b = -sin(uWag) * 0.3 * tw * uChow; vec2 r2 = vec2(transformed.x, transformed.y - uTailY);
-          transformed.x = r2.x * cos(b) - r2.y * sin(b); transformed.y = uTailY + r2.x * sin(b) + r2.y * cos(b);
-          transformed.y += abs(sin(uWag)) * 0.012 * tw;
+          if (uChow < 0.5) {
+            float a = sin(uWag) * 0.42 * tw;
+            vec2 q = vec2(transformed.x, transformed.z - uTailPZ);
+            float ca = cos(a), sa = sin(a);
+            transformed.x = q.x * ca - q.y * sa;
+            transformed.z = uTailPZ + q.x * sa + q.y * ca;
+          } else {
+            // v145b เชาเชา: หางของโมเดลติดเป็นผืนเดียวกับแผ่นหลัง → ไม่เลื่อนทั้งพวง (จะดึงผิวหลังยืดเป็นแผ่น)
+            //   แต่ "เอน" ซ้าย-ขวาจากผิวหลัง: ยิ่งสูงจากหลังยิ่งปัดมาก ใต้หางที่ติดหลังแทบไม่ขยับ → ไม่มีผิวยืด
+            float py = uTailY - 0.03 * uH, h = max(position.y - py, 0.0);
+            float b = sin(uWag) * 0.5 * tw;
+            transformed.x += h * sin(b);
+            transformed.y -= h * (1.0 - cos(b));
+          }
+          transformed.y += abs(sin(uWag)) * 0.012 * tw * (1.0 - uChow);
         }
       }
       { // เท้าติดพื้นตอนนั่ง/หมอบ/ก้ม: ปลายเท้าคืนสู่ตำแหน่งเดิมบนพื้น ไล่น้ำหนักขึ้นไปถึงสะโพก (ขาที่กำลังเกาไม่ดึง)

@@ -4687,7 +4687,7 @@
         rip: () => ccsRipGet(),
         ripDrop: (x, z, r, a) => ccsRipDrop(x, z, r, a),
         ripFeed: (dt, t) => ccsRipFeed(dt, t),
-        cloudInfo: () => ({ ...ccsCloudInfo, ver: "farm-v145" }),
+        cloudInfo: () => ({ ...ccsCloudInfo, ver: "farm-v146" }),
         fluff: (a, b, c) => ccsFluff(a, b, c),
         swashAt: (x, z) => ccsSwashAt(x, z),
         wet: () => ccsWet,

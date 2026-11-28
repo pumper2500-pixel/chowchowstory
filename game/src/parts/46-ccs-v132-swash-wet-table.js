@@ -272,34 +272,73 @@
   // ===== v140 (ร่าง): ขนฟูแบบชั้นเปลือก (shell fur) ให้น้องเชาเชา — ใช้เรขาคณิตเดียวกับตัว + วัสดุชุดเดียวกัน (ท่าทางขยับตามกัน) =====
   var ccsFurList = [];
 
-  // v145: หาตำแหน่งหูของเชาเชาจากรูปทรงโมเดล — ผิวบนหัวที่ไม่ได้หันออกจากกลางหัว (แผ่นหู/ขอบหู) → ค่า aEar 0..1
-  //   แล้วเกลี่ยเฉลี่ยกับจุดรอบ ๆ (รัศมี ~5 ซม.) ให้ขอบนุ่ม ไม่มีจุดเดี่ยว ๆ โด่เป็นเส้น
+  // v145b: หูเชาเชา — (1) หาจุดกลางหูทั้งสองข้างจากรูปทรง (ผิวบนหัวที่ไม่ได้หันออกจากกลางหัว = แผ่นหู)
+  //   (2) เกลี่ยผิวรอบหูให้มน (หูเดิมเป็นสันบาง ปลายแหลมงอ) → หูกลมเล็ก ๆ แบบตุ๊กตาหมี
+  //   (3) ค่า aEar 0..1 เป็นทรงกลมรอบหู → ไม่มีขนชั้นนอกบนหูเลย
   function ccsEarMask(g, H, L, hx) {
-    let P = g.getAttribute("position"), N = g.getAttribute("normal"), n = P.count,
+    let P = g.getAttribute("position"), N = g.getAttribute("normal"), n = P.count, I = g.index,
       sc = H / 1.15, ny = 0.71 * sc, nz = 0.33 * sc,
       cx = hx, cy = ny + 0.19 * H, cz = nz + 0.07 * L,
-      raw = new Float32Array(n), ear = new Float32Array(n), idx = [], cell = 0.04 * sc, grid = new Map();
+      ear = new Float32Array(n), ss = (a, b, x) => { let t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    // (1) จุดกลางหู: เฉลี่ยตำแหน่งผิวที่ไม่หันออกจากกลางหัว แยกซ้าย/ขวา
+    let acc = [[0, 0, 0, 0], [0, 0, 0, 0]];
     for (let i = 0; i < n; i++) {
       let x = P.getX(i), y = P.getY(i), z = P.getZ(i);
-      if (y < cy + 0.04 * H || z < nz - 0.12 * L || z > cz + 0.12 * L) continue;
-      let dx = x - cx, dy = y - cy, dz = z - cz, dl = Math.hypot(dx, dy, dz) || 1,
-        al = (N.getX(i) * dx + N.getY(i) * dy + N.getZ(i) * dz) / dl;
-      raw[i] = al < 0.45 ? 1 : 0;
-      idx.push(i);
-      let k = Math.floor(x / cell) + "," + Math.floor(y / cell) + "," + Math.floor(z / cell);
-      (grid.get(k) ?? grid.set(k, []).get(k)).push(i);
+      if (y < cy + 0.12 * H || z < nz - 0.12 * L || z > cz + 0.12 * L) continue;
+      let dx = x - cx, dy = y - cy, dz = z - cz, dl = Math.hypot(dx, dy, dz) || 1;
+      if ((N.getX(i) * dx + N.getY(i) * dy + N.getZ(i) * dz) / dl > 0.3) continue;
+      let k = acc[x < cx ? 0 : 1]; ((k[0] += x), (k[1] += y), (k[2] += z), k[3]++);
     }
-    let R2 = (0.05 * sc) ** 2;
-    for (let i of idx) {
-      let x = P.getX(i), y = P.getY(i), z = P.getZ(i), gx = Math.floor(x / cell), gy = Math.floor(y / cell), gz = Math.floor(z / cell), s = 0, c = 0;
-      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let d = -1; d <= 1; d++) {
-        let lst = grid.get(gx + a + "," + (gy + b) + "," + (gz + d));
-        if (lst) for (let j of lst) { let ex = P.getX(j) - x, ey = P.getY(j) - y, ez = P.getZ(j) - z; ex * ex + ey * ey + ez * ez < R2 && ((s += raw[j]), c++); }
+    let C = acc.filter((k) => k[3] > 8).map((k) => [k[0] / k[3], k[1] / k[3], k[2] / k[3]]);
+    if (!C.length) return;
+    let dist = (i) => Math.min(...C.map((c) => Math.hypot(P.getX(i) - c[0], P.getY(i) - c[1], P.getZ(i) - c[2])));
+    // (2) เกลี่ยให้มน: รวมจุดซ้ำ (ตะเข็บ UV) แล้วเฉลี่ยกับเพื่อนบ้านหลายรอบ เฉพาะรอบหู
+    let key = new Map(), w = new Int32Array(n), wt = new Float32Array(n), adj = new Map();
+    for (let i = 0; i < n; i++) {
+      let d = dist(i);
+      if (d > 0.11 * sc) { w[i] = -1; continue; }
+      let k = Math.round(P.getX(i) * 1e4) + "," + Math.round(P.getY(i) * 1e4) + "," + Math.round(P.getZ(i) * 1e4);
+      key.has(k) || key.set(k, i); w[i] = key.get(k); wt[w[i]] = 1 - ss(0.04 * sc, 0.09 * sc, d);
+      ear[i] = 1 - ss(0.04 * sc, 0.1 * sc, d);   // ไล่ความยาวขนช้า ๆ รอบหู (เปลี่ยนเร็วจะเกิดเส้นขนโด่เป็นแท่ง)
+    }
+    if (I) for (let t = 0; t < I.count; t += 3) {
+      let v = [w[I.getX(t)], w[I.getX(t + 1)], w[I.getX(t + 2)]];
+      if (v[0] < 0 || v[1] < 0 || v[2] < 0) continue;
+      for (let j = 0; j < 3; j++) { let a = v[j], b = v[(j + 1) % 3]; a !== b && ((adj.get(a) ?? adj.set(a, new Set()).get(a)).add(b), (adj.get(b) ?? adj.set(b, new Set()).get(b)).add(a)); }
+    }
+    let ids = [...adj.keys()], Q = new Map(ids.map((i) => [i, [P.getX(i), P.getY(i), P.getZ(i)]]));
+    for (let it = 0; it < 25; it++) {
+      let R = new Map();
+      for (let i of ids) {
+        let q = Q.get(i), s = [0, 0, 0], c = 0;
+        for (let j of adj.get(i)) { let o = Q.get(j); ((s[0] += o[0]), (s[1] += o[1]), (s[2] += o[2]), c++); }
+        let k = wt[i] * 0.5 / c;
+        R.set(i, [q[0] + (s[0] - q[0] * c) * k, q[1] + (s[1] - q[1] * c) * k, q[2] + (s[2] - q[2] * c) * k]);
       }
-      let m = c ? s / c : 0, t = Math.min(1, Math.max(0, (m - 0.2) / 0.35));
-      ear[i] = t * t * (3 - 2 * t);
+      Q = R;
     }
+    let touched = [];
+    for (let i = 0; i < n; i++) if (w[i] >= 0 && Q.has(w[i])) { let q = Q.get(w[i]); P.setXYZ(i, q[0], q[1], q[2]); touched.push(i); }
+    P.needsUpdate = !0;
+    // ทิศผิวใหม่เฉพาะจุดที่ขยับ (รวมจากหน้าสามเหลี่ยมรอบ ๆ ใช้ค่าเดียวกันทุกจุดซ้ำ → ไม่เห็นตะเข็บ)
+    let acN = new Map();
+    if (I) for (let t = 0; t < I.count; t += 3) {
+      let a = I.getX(t), b = I.getX(t + 1), c = I.getX(t + 2);
+      if (w[a] < 0 && w[b] < 0 && w[c] < 0) continue;
+      let ux = P.getX(b) - P.getX(a), uy = P.getY(b) - P.getY(a), uz = P.getZ(b) - P.getZ(a),
+        vx = P.getX(c) - P.getX(a), vy = P.getY(c) - P.getY(a), vz = P.getZ(c) - P.getZ(a),
+        fn = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
+      for (let v of [a, b, c]) if (w[v] >= 0) { let m = acN.get(w[v]) ?? acN.set(w[v], [0, 0, 0]).get(w[v]); ((m[0] += fn[0]), (m[1] += fn[1]), (m[2] += fn[2])); }
+    }
+    for (let i of touched) {
+      let m = acN.get(w[i]); if (!m) continue;
+      let l = Math.hypot(m[0], m[1], m[2]); if (!l) continue;
+      let k = wt[w[i]], ox = N.getX(i), oy = N.getY(i), oz = N.getZ(i), nx = ox + (m[0] / l - ox) * k, ny2 = oy + (m[1] / l - oy) * k, nz2 = oz + (m[2] / l - oz) * k, l2 = Math.hypot(nx, ny2, nz2) || 1;
+      N.setXYZ(i, nx / l2, ny2 / l2, nz2 / l2);
+    }
+    N.needsUpdate = !0;
     g.setAttribute("aEar", new Je(ear, 1));
+    g.userData.ccsEars = C;
   }
   function ccsFurShells(p, u, d) {
     let base = u.onBeforeCompile,
