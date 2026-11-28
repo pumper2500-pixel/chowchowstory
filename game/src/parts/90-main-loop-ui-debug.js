@@ -945,12 +945,13 @@
             );
     if (e.distanceTo(vH) < 1.6)
       return nt(
-        "🐟 ซื้อปลาลุงทะเล \xB7 ดูเมนู",
+        "🐟 ซื้อปลา / ขายของเกยตื้น \xB7 ลุงทะเล",
         () =>
           dd(
             "ปลาสดลุงทะเล 🐟",
             Yk,
             od.clone().setY(od.y + 2.4),
+            "beach",
           ),
       );
     if (e.distanceTo(fn.clone().setZ(fn.z - 1.4)) < 1.8 || e.distanceTo(fn) < 2)
@@ -3682,9 +3683,10 @@
             `<div class="row"><span class="ic">${r.pic ? `<img src="${RT(r.pic)}" alt="" style="width:40px;height:40px;display:block">` : r.icon}</span><div><b>${r.name}</b><small>${ccsPriceF(e, r) < 1 ? `<s>${r.price}</s> ${Math.round(r.price * ccsPriceF(e, r))}` : r.price} 💰 \xB7 ${r.bait ? `เหยื่อ ×${r.n} (มี ${z.bait?.[r.bait] ?? 0})` : `+${r.food}🍖${r.energy ? " +" + r.energy + "⚡" : ""}`} \xB7 ${r.note}</small></div><button data-food="${a}" ${z.money < r.price ? "disabled" : ""}>ซื้อ</button></div>`,
         )
         .join(""),
-      o = n === "sell" ? _T(i) : n === "trade" ? Kk() : "";
-    (Gi(i, `<p class="note">💰 ${z.money}</p>${s}${o}`),
+      o = n === "sell" ? _T(i) : n === "trade" ? Kk() : n === "beach" ? ccsBeachSellHTML() : "";
+    (Gi(i, `<p class="note">💰 ${z.money}</p>${n === "beach" ? o + s : s + o}`), // v136: ส่วนขายของเกยตื้นอยู่บนสุด ไม่ต้องเลื่อนหา
       n && ST(t, () => dd(i, e, t, n)),
+      n === "beach" && ccsBeachSellBind(() => dd(i, e, t, n), t),
       document.querySelectorAll("[data-food]").forEach((r) =>
         r.addEventListener("click", () => {
           let a = e[+r.dataset.food],

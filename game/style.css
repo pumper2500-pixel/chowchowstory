@@ -269,7 +269,8 @@ body.training #act{display:none!important}
 .stb{display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:6px}.stb b{font-size:13px}
 .stb span{height:12px;border-radius:7px;background:#eadfcf;overflow:hidden;border:1.5px solid #8a6a4a}.stb span i{display:block;height:100%;background:linear-gradient(90deg,#ffb84d,#2ecc71)}
 .stb em{font-style:normal;font-size:12px;text-align:right}.stb small{grid-column:1/-1;font-size:11px;opacity:.7;margin-top:-3px}
-.buy.wide{width:100%;margin:4px 0 8px}
+.buy.wide{width:100%;margin:4px 0 8px;border:2.5px solid var(--ink);background:#FFD23F;border-radius:99px;padding:8px 10px;font:700 14px Mitr,sans-serif;cursor:pointer;box-shadow:0 2px 0 var(--ink);color:inherit}
+.buy.wide:disabled{background:#eee;color:#999;cursor:not-allowed}
 .row div.ic{flex:0 0 40px;text-align:center}.row div.nm{text-align:left}
 
 /* v120 */

@@ -139,7 +139,7 @@
         let tw = r.g.userData.tw;
         tw && ((tw.userData.tw += dt * 3), tw.scale.setScalar(0.08 + Math.abs(Math.sin(tw.userData.tw)) * 0.12), (tw.material.opacity = 0.25 + Math.abs(Math.sin(tw.userData.tw)) * 0.5));
         if (t.pos.distanceTo(r.p) > 1.3) continue;
-        (ccsV126Save(), (z.ing[r.k] = (z.ing[r.k] ?? 0) + 1), K.remove(r.g), ccsWea.drops.splice(o, 1), ke("pop"), rt(`+1 ${ccsLootDef[r.k].ic} ${ccsLootDef[r.k].n}`, r.p.clone().setY(1.2)), Ai("loot"), _t(z));
+        (ccsV126Save(), (z.ing[r.k] = (z.ing[r.k] ?? 0) + 1), K.remove(r.g), ccsWea.drops.splice(o, 1), ke("pop"), rt(`+1 ${ccsLootDef[r.k].ic} ${ccsLootDef[r.k].n}`, r.p.clone().setY(1.2)), Ai("loot"), z.lootTip || ((z.lootTip = 1), De(`${ccsLootDef[r.k].ic} เอาไปขายที่แผงปลาลุงทะเลริมหาดได้นะ (ไข่มุกราคาดี!)`, 3200)), _t(z));
       }
   }
   // ---------- สมุดภาพสัตว์ทะเล (ตรวจตอนถ่ายรูป) ----------

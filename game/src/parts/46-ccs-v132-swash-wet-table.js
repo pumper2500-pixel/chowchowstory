@@ -235,3 +235,34 @@
     else u.on ? ((l.textContent = `${c}/${t.ev.length} · 📣 เรียกลง! กด ⤴ ตอนแถบเขียว`), bar()) : ((l.textContent = `${c}/${t.ev.length} · 🐕 คอยอีกนิด… ห้ามกด!`), off());
     (ccsTRHud.classList.remove("bal"), ccsTRHud.classList.toggle("hot", (u.k === "sit" || u.on) && p >= Z.g0 && p <= Z.g1));
   }
+  // ===== v136: ขายของเกยตื้น (เปลือกหอย/สาหร่าย/ไข่มุก) ที่แผงปลาลุงทะเล (แทนชามผสมขนมที่เอาออกไป) =====
+  var ccsBeachPrice = { shell: 15, kelp: 10, pearl: 80 };
+  function ccsBeachSellHTML() {
+    let have = Object.keys(ccsBeachPrice).map((k) => z.ing?.[k] ?? 0),
+      tot = Object.keys(ccsBeachPrice).reduce((s, k, i) => s + have[i] * ccsBeachPrice[k], 0);
+    return (
+      `<p class="note">🐚 รับซื้อของเกยตื้นริมหาด (เก็บได้ทุกเช้าและหลังฝนหยุด)</p>` +
+      Object.keys(ccsBeachPrice)
+        .map((k, i) => `<div class="row"><span class="ic">${ccsLootDef[k].ic}</span><div><b>ขาย${ccsLootDef[k].n}</b><small>ชิ้นละ ${ccsBeachPrice[k]} 💰 · มี ${have[i]} ชิ้น</small></div><button class="buy" data-bsell="${k}" ${have[i] > 0 ? "" : "disabled"}>ขาย 1</button></div>`)
+        .join("") +
+      `<button class="buy wide" data-bsell="all" ${tot > 0 ? "" : "disabled"}>💰 ขายทั้งหมด (+${tot} 💰)</button>`
+    );
+  }
+  function ccsBeachSellBind(redo, pos) {
+    document.querySelectorAll("[data-bsell]").forEach((b) =>
+      b.addEventListener("click", () => {
+        z.ing ??= { shell: 0, kelp: 0, pearl: 0 };
+        let ks = b.dataset.bsell === "all" ? Object.keys(ccsBeachPrice) : [b.dataset.bsell],
+          got = 0,
+          n = 0;
+        for (let k of ks) {
+          let c = b.dataset.bsell === "all" ? z.ing[k] ?? 0 : Math.min(1, z.ing[k] ?? 0);
+          ((z.ing[k] = (z.ing[k] ?? 0) - c), (got += c * ccsBeachPrice[k]), (n += c));
+        }
+        if (!n) return void ke("nope");
+        ((z.money += got), ke("coin"), Ei(), _t(z), rt(`+${got} 💰`, Le[0].pos.clone().setY(1.5), "big"));
+        Ln(pos, ["ของสวยดีนี่ ลุงรับไว้ทำของที่ระลึก", "ไข่มุกเม็ดนี้งามจริง ๆ", "สาหร่ายสดเอาไปทำอาหารได้ ขอบใจนะ"][Math.floor(Math.random() * 3)]);
+        redo();
+      }),
+    );
+  }
