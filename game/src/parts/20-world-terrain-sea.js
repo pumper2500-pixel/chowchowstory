@@ -558,13 +558,25 @@ vec4 brk(vec2 xz, float t, float sh){
     let f = new ut(n);
     return ((f.colorSpace = Ye), f);
   }
+  var ccsCloudInfo = { mode: "loading", err: "" };
   function dM(i) {
     // v137: เมฆเป็นโมเดล 3D (cloud.glb = แผ่นภาพเมฆ 400 แผ่นซ้อนเป็นก้อน มีเงาในเนื้อเมฆ) แทนภาพเมฆ 2D แบบเดิม
     //   โหลดไม่ได้ → กลับไปใช้ภาพเมฆแบบเดิม (K7)
     let e = [],
       mt3 = null;
-    Promise.resolve() // dM ถูกเรียกตอนสร้างฉาก ก่อนตัวโหลดโมเดล (Zt) ถูกกำหนด → เลื่อนไปโหลดหลังสคริปต์รันจบ
-      .then(() => Po(Zt("cloud")))
+    // dM ถูกเรียกตอนสร้างฉาก ก่อนตัวโหลดโมเดล (Zt) ถูกกำหนด → เลื่อนไปโหลดหลังสคริปต์รันจบ · รอรายชื่อไฟล์บน Cloudflare (D4) ก่อนเหมือนโมเดลอื่น · โหลดพลาดลองใหม่ 2 ครั้ง
+    let ld = async () => {
+        await D4;
+        for (let k = 0; ; k++)
+          try {
+            return await Po(Zt("cloud"));
+          } catch (x) {
+            if (((ccsCloudInfo.err = String(x?.message ?? x)), k >= 2)) throw x;
+            await new Promise((w) => setTimeout(w, 1500 * (k + 1)));
+          }
+      };
+    Promise.resolve()
+      .then(ld)
       .then((v) => {
         let src = null;
         (v.scene.updateMatrixWorld(!0), v.scene.traverse((o) => { o.isMesh && !src && (src = o); }));
@@ -585,8 +597,11 @@ vec4 brk(vec2 xz, float t, float sh){
             i.add(m),
             e.push({ s: m, v: 0.8 + Math.random() * 1.2 }));
         }
+        ((ccsCloudInfo.mode = "3d"), console.log("[cloud] 3D", e.length));
       })
-      .catch(() => {
+      .catch((x) => {
+        ((ccsCloudInfo.mode = "2d-fallback"), (ccsCloudInfo.err = String(x?.message ?? x)), console.warn("[cloud] fallback", x));
+        try { localStorage.setItem("ccs-cloudErr", ccsCloudInfo.err); } catch {}
         let t = [1, 2, 3, 4, 5, 6].map((s) => K7(s * 7919));
         for (let s = 0; s < 26; s++) {
           let r = new zi(new vi({ map: t[s % t.length], transparent: !0, depthWrite: !1, fog: !1, color: new ae(1, 1, 1) })),
