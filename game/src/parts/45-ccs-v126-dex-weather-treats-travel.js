@@ -232,21 +232,6 @@
     ),
       document.querySelectorAll("[data-treat]").forEach((e) => e.addEventListener("click", () => ccsTreatMake(e.dataset.treat))));
   }
-  function ccsBowlTick() {
-    let i = Rn && Se === Rn;
-    if (i && !ccsBowl) {
-      let e = new J(),
-        t = new R(new re(0.36, 0.24, 0.24, 20, 1, !0), Ae(15104546, 0.4, { side: Ke }));
-      t.position.y = 0.12;
-      let n = new R(new re(0.31, 0.31, 0.03, 20), Ae(16641008, 0.7));
-      n.position.y = 0.17;
-      let s = new R(new re(0.02, 0.025, 0.5, 6), Ae(10506797, 0.6));
-      ((s.position.set(0.12, 0.3, 0), (s.rotation.z = -0.6)), e.add(t, n, s));
-      let o = Rn.bowls.clone().add(new H(-1.15, 0, 0));
-      e.scale.setScalar(0.85);
-      (e.position.copy(o), e.traverse((r) => r.isMesh && (r.castShadow = !0)), K.add(e), (ccsBowl = { g: e, p: o }));
-    } else !i && ccsBowl && (K.remove(ccsBowl.g), (ccsBowl = null));
-  }
   // ---------- เดินทางด่วน ----------
   var ccsWarpDef = [
       { id: "home", ic: "🏠", n: "หน้าบ้าน", x: -96, z: 54.4 },
@@ -358,7 +343,7 @@
     ccsPantT = 0;
   function ccsV126Tick(dt) {
     if (!Le[0]) return;
-    (ccsV126Save(), ccsWeaTick(dt), ccsBowlTick(), ccsCompTick());
+    (ccsV126Save(), ccsWeaTick(dt), ccsCompTick()); // v135: เอาชามผสมขนมในบ้านออก (ccsBowlTick)
     if ((ccsBuffT -= dt) < 0) {
       ((ccsBuffT = 1), ccsBuffEl || ((ccsBuffEl = document.createElement("div")), (ccsBuffEl.id = "ccsBuff"), document.body.appendChild(ccsBuffEl)));
       let i = Date.now() < z.buff.until;

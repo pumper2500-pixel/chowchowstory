@@ -1008,7 +1008,6 @@
         ? nt("🐳 เล่นกับออร์กา", ccsOrcaPlay)
         : nt(`🐳 ให้อาหารปลาวาฬ · ${Object.entries(z.bait ?? {}).filter(([, f]) => f > 0).map(([f, d]) => ccsBaitDef[f].icon + d).join(" ") || "ยังไม่มีเหยื่อ"}${h && (h.mode === "linger" || h.mode === "beg") ? " · เล่นกับออร์กา" : ""}`, ccsWhaleMenu);
     }
-    if (ccsBowl && e.distanceTo(ccsBowl.p) < 1.3) return nt("🥣 ทำขนมบัฟ (ชามผสม)", ccsTreatMenu);
     if (ccsFreeGift && e.distanceTo(ccsFreeGift.p) < 1.3)
       return nt({ chick: "🍗 กินไก่ย่างฟรี (หมวกลูกไก่)", santa: "🎁 เปิดกล่องของขวัญ (หมวกซานต้า)", pumpkin: "🥧 กินพายฟักทองฟรี (หมวกฟักทอง)" }[ccsFreeGift.k], () => ccsGiftTake(e));
     if ((ccsTRMakeNpc(), ccsTRNpc && !Se && !ho && e.distanceTo(ccsTRNpc.pos) < 2))
@@ -4644,7 +4643,6 @@
         trMenu: () => ccsTRMenu(),
         bathStart: () => ccsBathStart(),
         leaveIn: () => Sd(null),
-        bowlAt: () => ccsBowl && ccsBowl.p,
         v126: { dex: () => ccsDexOpen(), dexSnap: () => ccsDexOnSnap(), warp: (k) => ccsWarp(k), warpMenu: () => ccsWarpMenu(), treat: () => ccsTreatMenu(), make: (k) => ccsTreatMake(k), buff: (k) => ccsBuffOn(k), loot: (n) => ccsLootSpawn(n), wea: () => ccsWea, rain: (t) => (ccsWea.wasRain = !0, ccsWea.rbT = 0), say: (m) => ccsDogSay(m), comp: () => ccsCompToggle() },
         photos: () => ccsPhotos(),
         snap: (c) => ccsSnapSoon(c, 0),

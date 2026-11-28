@@ -914,11 +914,10 @@
       ["bath", 1, "ร้านอาบน้ำ: อาบน้ำหอม ๆ ที่ร้าน 1 ครั้ง", 35],
       ["dex", 1, "ลุงทะเล: ถ่ายรูปสัตว์ทะเลลงสมุดภาพ 1 แบบใหม่", 90],
       ["loot", 3, "เด็ก ๆ ริมหาด: เก็บของเกยตื้นริมหาด 3 ชิ้น", 40],
-      ["treat", 1, "แม่บ้าน: ทำขนมบัฟที่ชามผสมในบ้าน 1 ชิ้น", 40],
     ];
   function lb() {
     let i = I0();
-    if (xn.daily?.day === i) return xn.daily;
+    if (xn.daily?.day === i) return (xn.daily.q = xn.daily.q.filter((q) => q.ev !== "treat")), xn.daily; // v135: ชามผสมขนมถูกเอาออก → ตัดเควสทำขนมที่ค้างอยู่
     let e = [..._C].sort(() => Math.random() - 0.5).slice(0, 4);
     return (
       (xn.daily = { day: i, q: e.map(([t, n, s, o]) => ({ ev: t, n, t: s, m: o, base: C1(t), got: !1 })), box: !1 }),
