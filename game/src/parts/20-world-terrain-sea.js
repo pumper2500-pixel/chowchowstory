@@ -345,6 +345,7 @@ vec4 brk(vec2 xz, float t, float sh){
         a = min(1.0, a + rg * 0.35);
         a = max(a, min(foam, 1.0)*0.55);
         a *= smoothstep(0.0, 0.05, wd);
+        a *= smoothstep(uShore + 1.2, uShore + 2.8, vW.z);   // v139: ริมฝั่งให้แผ่นคลื่นซัด (คำนวณขอบทีละพิกเซล) เป็นน้ำแทน — ขอบน้ำของทะเลเกิดจากตาข่ายหยาบ (4 ม.) จึงเป็นเหลี่ยม/ขั้นบันได
         gl_FragColor = vec4(c, a); }`,
       }),
       o = new Te(900, 420, t ? 640 : 220, t ? 300 : 110);
@@ -387,13 +388,20 @@ vec4 brk(vec2 xz, float t, float sh){
   // ===== v129: คลื่นซัดขึ้นหาด (swash) — แผ่นน้ำบาง ๆ วิ่งขึ้นทรายแล้วไหลกลับ ขอบเป็นแฉกไม่ตรง ระยะซัดขึ้นตามความแรงทะเล/พายุ ทิ้งรอยทรายเปียก =====
   function ccsSwashMk(i) {
     let e = cM(),
-      t = new Te(900, 15, 360, 75);
+      t = new Te(900, 15, 720, 75);
     t.rotateX(-Math.PI / 2);
     let n = t.getAttribute("position");
+    // v139: แผ่นน้ำต้องอยู่เหนือ "ทรายเนินริมหาด" (mM) ด้วย — เดิมวางตามพื้นหาด (Lc) อย่างเดียว ทรายเนินที่สูง 3 ซม.
+    //        จึงบังแผ่นน้ำ และขอบทรายเนินเป็นเส้นตรงทีละ 1 ม. → ขอบคลื่นซัดเป็นเหลี่ยม/ขั้นบันได
+    let dune = (x, z) => {
+      if (Math.abs(x) > 160 || z < Rt - 12 || z > Rt - 1) return -9;
+      let yb = Rt - 1.7 + 0.55 * Math.sin(x * 0.13) + 0.35 * Math.sin(x * 0.37 + 1) + 0.15 * Math.sin(x * 1.1);
+      return z > yb + 0.3 ? -9 : 0.03 + (z >= Ap(x) && z <= yb ? zo(x, z) * Math.min(1, (yb - z) / 0.8) : 0);
+    };
     for (let o = 0; o < n.count; o++) {
       let r = n.getZ(o) + Rt - 4.5;
       n.setZ(o, r);
-      n.setY(o, Math.max(Lc(r), Ph + 0.06) + 0.018);
+      n.setY(o, Math.max(Lc(r), Ph + 0.06, dune(n.getX(o), r)) + 0.02);
     }
     t.computeBoundingSphere();
     let s = new Qt({
@@ -466,6 +474,7 @@ vec4 brk(vec2 xz, float t, float sh){
         c = mix(c, vec3(0.55, 0.48, 0.36), wet);
         a = max(a, wet*0.32);
         a *= 1.0 - smoothstep(-0.02, 0.06, Ph - sandY);
+        a *= 1.0 - smoothstep(uShore + 2.3, uShore + 3.0, vW.z);   // v139: ปลายแผ่นค่อย ๆ จางไปต่อกับทะเล (ไม่เห็นรอยต่อ)
         c *= mix(1.0, 0.35, uNight);
         if (a < 0.01) discard;
         gl_FragColor = vec4(c, a); }`,
