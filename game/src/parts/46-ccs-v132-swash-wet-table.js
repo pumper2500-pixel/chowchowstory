@@ -86,6 +86,7 @@
   function ccsWetTick(e, n) {
     if (!n || !n.rig) return;
     ccsShakeFxTick(e);
+    ccsFurTick(e);
     let w = ccsWet,
       rg = n.rig,
       hgt = Math.max(0.3, rg.height ?? 0.8),
@@ -265,4 +266,63 @@
         redo();
       }),
     );
+  }
+  // ===== v140 (ร่าง): ขนฟูแบบชั้นเปลือก (shell fur) ให้น้องเชาเชา — ใช้เรขาคณิตเดียวกับตัว + วัสดุชุดเดียวกัน (ท่าทางขยับตามกัน) =====
+  var ccsFurList = [];
+  function ccsFurShells(p, u, d) {
+    let base = u.onBeforeCompile,
+      n = 8,
+      list = [];
+    for (let i = 0; i < n; i++) {
+      let k = (i + 1) / n,
+        sm = u.clone();
+      ((sm.color = u.color),
+        (sm.onBeforeCompile = (v, r) => {
+          (base(v, r), (v.uniforms.uShellK = { value: k }), (v.vertexShader = "#define FUR_SHELL\n" + v.vertexShader), (v.fragmentShader = "#define FUR_SHELL\n" + v.fragmentShader));
+        }),
+        (sm.customProgramCacheKey = () => "ccsFur"));
+      let m = new R(p.geometry, sm);
+      ((m.castShadow = !1), (m.receiveShadow = !0), (m.visible = !1), (m.userData.noOcc = !0), p.add(m), list.push(m));
+    }
+    ccsFurList.push({ list, d, p, last: null, on: 0 });
+  }
+  // ทุกเฟรม: เปิดชั้นขนเฉพาะน้องเชาเชาที่อยู่ใกล้กล้อง (คอม 8 ชั้น ≤ 5 ตัว · มือถือ 4 ชั้น ≤ 3 ตัว) · คำนวณความเร็วให้ขนลู่ตามการวิ่ง
+  var ccsFurMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent) || innerWidth < 900,
+    ccsFurOff = !1,
+    ccsFurV = new H(),
+    ccsFurW = new H();
+  function ccsFurTick(e) {
+    if (!ccsFurList.length) return;
+    let cam = Lt.position,
+      near = [];
+    for (let f of ccsFurList) {
+      f.p.getWorldPosition(ccsFurW);
+      let vis = !ccsFurOff;
+      for (let o = f.p; o && vis; o = o.parent) o.visible || (vis = !1);
+      let dd = ccsFurW.distanceTo(cam);
+      // ความเร็วในแกนของตัวหมา (ให้ปลายขนลู่ไปทางตรงข้าม)
+      if (f.last && e > 0) {
+        ccsFurV.subVectors(ccsFurW, f.last).divideScalar(Math.max(e, 0.001));
+        let q = f.p.getWorldQuaternion(ccsFurQ).invert(),
+          sc = f.p.getWorldScale(ccsFurS).x || 1;
+        (ccsFurV.applyQuaternion(q).divideScalar(sc * 6).clampLength(0, 1), f.d.uFurVel.value.lerp(ccsFurV, Math.min(1, e * 6)));
+      }
+      ((f.last = (f.last ?? new H()).copy(ccsFurW)), (f.d.uFurT.value += e));
+      vis && dd < (ccsFurMobile ? 9 : 14) && near.push([dd, f]);
+    }
+    near.sort((a, b) => a[0] - b[0]);
+    let cap = ccsFurMobile ? 3 : 5,
+      keep = new Set(near.slice(0, cap).map((x) => x[1]));
+    for (let f of ccsFurList)
+      f.list.forEach((m, i) => {
+        m.visible = keep.has(f) && (!ccsFurMobile || i % 2 === 1);
+      });
+  }
+  var ccsFurQ = new At(),
+    ccsFurS = new H();
+  // ดีบัก: puff = ความอ้วน (สัดส่วนความสูงตัว), shells = เปิด/ปิดชั้นขน, len = ความยาวขน
+  function ccsFluff(puff = 0.06, shells = !0, len = 0.05) {
+    ccsFurOff = !shells;
+    for (let f of ccsFurList) ((f.d.uPuff.value = puff), (f.d.uFurLen.value = len));
+    return { puff, shells, len, dogs: ccsFurList.length, mobile: ccsFurMobile };
   }

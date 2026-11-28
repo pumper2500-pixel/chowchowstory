@@ -756,6 +756,11 @@ vObj = position;`,
         uDirt: { value: 0 },
         uWet: { value: 0 },
         uWetY: { value: 1.2 },
+        uPuff: { value: o ? 0.06 : 0 },
+        uFurLen: { value: 0.05 },
+        uFurDen: { value: 150 },
+        uFurT: { value: Math.random() * 50 },
+        uFurVel: { value: new H() },
       },
       u = s.mat.clone();
     ((u.color = new ae(16777215).multiplyScalar(h.dark !== void 0 ? 1 : 1.18)),
@@ -779,7 +784,7 @@ vObj = position;`,
           uTailPZ: { value: s.tailPZ },
         }),
           (v.fragmentShader =
-            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt, uWet, uWetY; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
+            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt, uWet, uWetY, uShellK, uFurDen; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
       // ลายผ้า 2 มิติ (ใช้คู่กับการฉาย 3 แกน): 0 = สีหลัก, 1 = สีรอง
       float wearPat(vec2 u, float st, float ax) {
         if (st < 1.5) return 0.0;
@@ -994,6 +999,16 @@ vObj = position;`,
           float strand = 0.82 + 0.18 * vnoise(vec3(vPosM.x * 90.0, vPosM.y * 14.0, vPosM.z * 90.0));
           diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.5, 0.47, 0.45) * strand, wm);
         }
+        #ifdef FUR_SHELL
+        { // ขนฟู: ชั้นเปลือกขน — เส้นขนสุ่มเป็นจุด ๆ ยิ่งชั้นนอกยิ่งเหลือน้อย (ปลายขนเรียว) · ปลายขนสว่าง โคนขนมืด
+          vec3 q = vPosM * (uFurDen * 1.5 / uH);
+          float st = hsh(floor(q)), st2 = hsh(floor(q * 1.9 + 7.3));
+          float keep = max(st, st2 * 0.9);
+          if (keep < 0.18 + uShellK * 0.78) discard;
+          if (uPat > 0.5 || uWet > 0.6 || vPosM.y < uHip * 0.18 || dot(diffuseColor.rgb, vec3(0.33)) < 0.16) discard;   // ใส่เสื้อ/ตัวเปียก/อุ้งเท้า/ส่วนสีเข้ม (ตา จมูก ปาก): ไม่มีขนฟู
+          diffuseColor.rgb *= mix(0.93, 1.12, uShellK);
+        }
+        #endif
       }`,
             ).replace(
               "#include <roughnessmap_fragment>",
@@ -1002,12 +1017,31 @@ vObj = position;`,
             )),
           (v.vertexShader =
             `varying vec3 vPosM;
-uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF; uniform vec3 uNeck; uniform mat4 uFootM;
+uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF, uPuff, uFurLen, uShellK, uFurT; uniform vec3 uNeck, uFurVel; uniform mat4 uFootM;
 ` +
             v.vertexShader.replace(
               "#include <begin_vertex>",
               `#include <begin_vertex>
       vPosM = position;
+      { // v140 (ร่าง): น้องอ้วนฟู — พองตามแนวผิว มากที่แผงคอ/อก/หลัง น้อยที่ขาและปลายจมูก
+        float legM = smoothstep(uHip * 0.2, uHip * 0.95, position.y);
+        float nose = 1.0 - smoothstep(0.06 * uL, 0.2 * uL, distance(position.yz, vec2(uNoseY, uNoseZ)));
+        float mane = exp(-pow((position.z - uNeck.z) / (0.17 * uL), 2.0)) * smoothstep(uHip * 0.5, uHip * 1.15, position.y);
+        float m = (0.35 + 0.65 * legM + 0.9 * mane) * (1.0 - 0.9 * nose) * smoothstep(0.0, 0.12 * uHip, position.y) * uChow;   // ฝ่าเท้าไม่พอง (ไม่จมพื้น)
+        vec3 nn = normalize(objectNormal);
+        transformed += nn * (uPuff * uH * m);
+        #ifdef FUR_SHELL
+        float face = smoothstep(0.2 * uL, 0.4 * uL, distance(position.yz, vec2(uNoseY, uNoseZ)));   // หน้า (ตา/ปาก/จมูก) ขนสั้น เห็นหน้าชัด
+        float fl = uShellK * uFurLen * uH * clamp((0.12 + 0.88 * legM + 0.7 * mane) * face, 0.0, 1.6);
+        transformed += nn * fl;
+        // ขนไหว: ปลายขนลู่ตามแรงลม/การวิ่ง (ลู่ไปทางหลังเมื่อวิ่ง) + เด้งตามจังหวะก้าว + ลมโชยเบา ๆ
+        float k2 = uShellK * uShellK, fw = k2 * uFurLen * uH * 6.0 * clamp((0.12 + 0.88 * legM + 0.7 * mane) * face, 0.0, 1.6);
+        transformed -= uFurVel * fw * 0.5;
+        transformed.y -= fw * (0.08 + 0.12 * abs(sin(uPhase * 2.0)) * uAmp * 3.0);
+        transformed.x += fw * 0.05 * sin(uFurT * 1.7 + position.z * 9.0 + position.y * 7.0);
+        transformed.z += fw * 0.04 * sin(uFurT * 1.3 + position.x * 8.0);
+        #endif
+      }
       { // ขากรรไกรล่าง: หุบ/อ้า
         float jw = smoothstep(uNoseZ - 0.22 * uL, uNoseZ - 0.1 * uL, transformed.z) * (1.0 - smoothstep(uNoseY - 0.06 * uH, uNoseY - 0.025 * uH, transformed.y)) * smoothstep(uNoseY - 0.3 * uH, uNoseY - 0.18 * uH, transformed.y);
         jw *= uChow;
@@ -1062,6 +1096,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       }));
     let p = new R(s.geo, u);
     o && p.scale.set(1.24, 1.02, 1.08);
+    o && ccsFurShells(p, u, d);
     let m = (v) => {
       let _ = o0[v] ?? o0.orange;
       ((f.uRecolor.value = _.dark !== void 0 ? 1 : 0),
