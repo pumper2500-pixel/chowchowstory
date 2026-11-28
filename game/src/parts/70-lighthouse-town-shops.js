@@ -2026,7 +2026,7 @@
             : i.key === "bulldog" && vp.pet_britbull
               ? ccsTB("pet_britbull", 0.42)
               : ui("orange", 0.8, i.key, i.tint);
-      K.add(t.root);
+      (ccsLifeOn(t), K.add(t.root));
       let n = new H(i.home[0], 0, i.home[1]);
       po(n) && (n.z += n.z < 0 ? -7 : 7);
       for (let s = 0; s < 60 && (ri(n, 0.9) || po(n)); s++)

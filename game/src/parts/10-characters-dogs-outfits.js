@@ -31,7 +31,7 @@
     return ((((i + Math.PI) % e) + e) % e) - Math.PI;
   }
   function Qi(i, e, t, n) {
-    ((i.t += e), i.face?.update(e));
+    ((i.t += e), i.face?.update(e), i.life && ccsLifeTick(i, e, t));
     let s = t > 0.3,
       o = i.t * (s ? 6 + t * 1.1 : 1);
     if (n !== null) {
@@ -1840,11 +1840,13 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         uDim: { value: new H(e.W, e.H, e.L) },
         uPat: { value: t.pat },
       },
+      lu = ccsLifeUni(-e.L / 2, e.L / 2, e.H, e.H * t.legTop),
       s = new X({ roughness: 0.85, metalness: 0 });
     s.onBeforeCompile = (d) => {
-      (Object.assign(d.uniforms, n),
+      (Object.assign(d.uniforms, n, lu),
         (d.vertexShader =
           `uniform float uT, uWalk, uLegTop, uCZ; uniform vec3 uDim; varying vec3 vO;
+${ccsLifeGL}
 ` +
           d.vertexShader.replace(
             "#include <begin_vertex>",
@@ -1854,7 +1856,8 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         float front = step(uCZ, position.z), left = step(0.0, position.x);
         float off = abs(front - left) * 3.14159;
         float a = sin(uT + off) * 0.5 * uWalk; float d = max(0.0, uLegTop - position.y);
-        transformed.z += d * sin(a) * w; transformed.y += d * (1.0 - cos(a)) * w * 0.4 + abs(sin(uT)) * 0.012 * uDim.y * uWalk; }`,
+        transformed.z += d * sin(a) * w; transformed.y += d * (1.0 - cos(a)) * w * 0.4 + abs(sin(uT)) * 0.012 * uDim.y * uWalk;
+        transformed = ccsLife(transformed); }`,
           )),
         (d.fragmentShader =
           `uniform int uPat; varying vec3 vO;
@@ -1886,10 +1889,168 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           l = d === "walk" ? u : 0;
         },
       },
-      f = { root: r, body: a, head: c, legs: [], arms: [], eyes: [], quad: !0, t: 0, blink: 9, yaw: 0, height: e.H };
+      f = { root: r, body: a, head: c, legs: [], arms: [], eyes: [], quad: !0, t: 0, blink: 9, yaw: 0, height: e.H, lu };
     return ((f.person = h), f);
   }
   // v109: สัตว์เลี้ยงโมเดลมีเท็กซ์เจอร์จริง (ลาบราดอร์ ฟาโรห์ แมว ลูกบูลด็อก) เดินด้วยการแกว่งขาในเชเดอร์แบบเดียวกับ Kr
+  // ===== v131: ชีวิตชีวาของหมาทุกสายพันธุ์ (โมเดลจริง/โมเดลสร้าง) — หัวหัน/ก้ม/เอียง หางกระดิก/ชี้ นั่ง หมอบ โค้งชวนเล่น หายใจ + เห่าตามขนาดตัว =====
+  // ทำงานในพิกัดโมเดล: +z = หัว (ทิศที่เดิน), y = สูง · uBox = (zmin, zmax, H, legTop)
+  var ccsLifeGL = `
+uniform mat4 uToM, uFromM; uniform vec4 uBox, uLHead, uLTail, uLPose;
+vec3 ccsRotY(vec3 v, float a){ float c = cos(a), s = sin(a); return vec3(v.x*c + v.z*s, v.y, -v.x*s + v.z*c); }
+vec3 ccsRotX(vec3 v, float a){ float c = cos(a), s = sin(a); return vec3(v.x, v.y*c - v.z*s, v.y*s + v.z*c); }
+vec3 ccsRotZ(vec3 v, float a){ float c = cos(a), s = sin(a); return vec3(v.x*c - v.y*s, v.x*s + v.y*c, v.z); }
+vec3 ccsLife(vec3 p){
+  float L = max(0.05, uBox.y - uBox.x), H = uBox.z, lt = uBox.w, zs = (p.z - uBox.x) / L;
+  float lg = clamp(p.y / max(0.01, lt), 0.0, 1.0);            // 0 ที่เท้า → 1 ที่ลำตัว
+  // ท่าทาง: นั่ง (ก้นลง) · หมอบ (ทั้งตัวลง) · โค้งชวนเล่น (อกลง ก้นชี้)
+  float rear = 1.0 - smoothstep(0.15, 0.6, zs), front = smoothstep(0.42, 0.85, zs);
+  float drop = lt * (0.78 * uLPose.x * rear + 0.82 * uLPose.y + 0.6 * uLPose.z * front);
+  p.y -= drop * lg;
+  p.z += L * (0.14 * uLPose.x * rear * (1.0 - lg) + 0.12 * uLPose.y * (1.0 - lg) * (front * 2.0 - 1.0) * step(0.5, front + rear));
+  p.y += H * 0.06 * uLPose.x * front * lg;
+  p.x *= 1.0 + uLPose.w * smoothstep(0.25, 0.55, zs) * (1.0 - smoothstep(0.62, 0.75, zs)) * lg;   // หายใจ (อกขยาย)
+  // หัว: หมุนรอบคอ
+  float hw = smoothstep(0.66, 0.8, zs) * smoothstep(0.34 * H, 0.52 * H, p.y + drop * lg);
+  vec3 pv = vec3(0.0, 0.62 * H - drop * front, uBox.x + 0.72 * L);
+  vec3 q = p - pv; q = ccsRotZ(q, uLHead.z); q = ccsRotX(q, uLHead.y); q = ccsRotY(q, uLHead.x);
+  p = mix(p, pv + q, hw);
+  // หาง: กระดิกซ้าย-ขวา + ยก/ลด
+  float tw = (1.0 - smoothstep(0.03, 0.16, zs)) * smoothstep(0.32 * H, 0.5 * H, p.y + drop * lg);
+  vec3 pt = vec3(0.0, 0.6 * H - drop * rear, uBox.x + 0.1 * L);
+  vec3 r = p - pt; r = ccsRotX(r, -uLTail.y); r = ccsRotY(r, uLTail.x);
+  p = mix(p, pt + r, tw);
+  return p;
+}`;
+  function ccsLifeUni(zmin, zmax, H, lt) {
+    return {
+      uToM: { value: new Oe() },
+      uFromM: { value: new Oe() },
+      uBox: { value: new Kt(zmin, zmax, H, lt) },
+      uLHead: { value: new Kt() },
+      uLTail: { value: new Kt() },
+      uLPose: { value: new Kt() },
+    };
+  }
+  // เสียงเห่าตามขนาดตัว (ตัวเล็กเสียงแหลม ตัวใหญ่เสียงทุ้ม) ดังเบาตามระยะห่างจากกล้อง
+  var ccsBarkCd = 0;
+  function ccsBarkAt(i, e, t = 1) {
+    let n = _i();
+    if (!n || !Dh || !i) return;
+    let s = Lt.position.distanceTo(i);
+    if (s > 22 || performance.now() < ccsBarkCd) return;
+    ccsBarkCd = performance.now() + 2200; // ไม่ให้เห่ากันระงม
+    let o = Math.max(0.62, Math.min(1.75, 1.32 - (e - 0.6) * 0.55)) * (0.95 + Math.random() * 0.1),
+      r = 0.85 * Math.max(0.08, 1 - s / 22);
+    for (let a = 0; a < t; a++) {
+      let c = n.createBufferSource();
+      ((c.buffer = Dh), (c.playbackRate.value = o * (a ? 0.97 : 1)));
+      let l = n.createGain();
+      l.gain.value = r * (a ? 0.85 : 1);
+      let h = n.createStereoPanner ? n.createStereoPanner() : null;
+      if (h) {
+        let f = i.clone().sub(Lt.position),
+          d = new H(1, 0, 0).applyQuaternion(Lt.quaternion);
+        h.pan.value = Math.max(-0.8, Math.min(0.8, f.normalize().dot(d)));
+        c.connect(l).connect(h).connect(n.destination);
+      } else c.connect(l).connect(n.destination);
+      c.start(n.currentTime + 0.01 + a * (0.28 / o), 0.1, 0.34);
+    }
+  }
+  // สมองพฤติกรรม (ใช้กับหมา NPC/ในคอก/เพื่อนเดินตาม): สุ่มท่าเมื่อหยุด ตื่นเต้นเมื่อน้องเข้าใกล้
+  var ccsLifeAct = [
+    ["look", 3], ["sniff", 3], ["sit", 2.2], ["lie", 1.3], ["bow", 1], ["shake", 0.8], ["bark", 1.1], ["tilt", 1], ["yawn", 0.7], ["scratch", 0.7],
+  ];
+  function ccsLifeTick(i, e, t) {
+    let n = i.life;
+    if (!n) return;
+    let s = t > 0.3,
+      o = i.root.getWorldPosition(ccsLifeV),
+      r = Le[0]?.pos,
+      a = r ? Math.hypot(r.x - o.x, r.z - o.z) : 99,
+      c = a < 3.2;
+    n.t -= e;
+    if (s) (n.act !== "walk" && ((n.act = "walk"), (n.t = 0)));
+    else if (n.t <= 0 || n.act === "walk") {
+      // เลือกท่าใหม่: ถ้าน้องอยู่ใกล้ มักจะหันมามอง กระดิกหางแรง โค้งชวนเล่น หรือเห่าทัก
+      let l = c ? [["happy", 5], ["bow", 2], ["bark", 1.6], ["sit", 1.5], ["tilt", 1.5]] : ccsLifeAct,
+        h = l.reduce((d, u) => d + u[1], 0) * Math.random(),
+        f = l[0][0];
+      for (let [d, u] of l) if ((h -= u) <= 0) {
+        f = d;
+        break;
+      }
+      ((n.act = f), (n.t = { sit: 4 + Math.random() * 5, lie: 6 + Math.random() * 8, bow: 1.6, shake: 0.9, bark: 1.2, yawn: 1.8, scratch: 2.2, happy: 2.5 + Math.random() * 2 }[f] ?? 1.5 + Math.random() * 3), (n.at = 0), (n.side = Math.random() < 0.5 ? -1 : 1));
+      f === "bark" && setTimeout(() => ccsBarkAt(i.root.getWorldPosition(new H()).setY(0.5), i.height * i.root.scale.y, 1 + (Math.random() < 0.5 ? 1 : 0)), 120);
+    }
+    n.at = (n.at ?? 0) + e;
+    let l = n.act,
+      h = n.at,
+      f = c && r ? ccsWrapA(Math.atan2(r.x - o.x, r.z - o.z) - i.yaw) : 0,
+      d = { hy: 0, hp: 0, hr: 0, wag: 0.25, wagS: 5, tu: 0.1, sit: 0, lie: 0, bow: 0, sh: 0 };
+    switch (l) {
+      case "walk":
+        ((d.wag = 0.35), (d.wagS = 7), (d.tu = 0.25), (d.hp = Math.sin(i.t * 7) * 0.04));
+        break;
+      case "look":
+        d.hy = (Math.sin(h * 0.9) > 0 ? 0.75 : -0.7) * n.side;
+        break;
+      case "sniff":
+        ((d.hp = 0.8), (d.hy = Math.sin(h * 1.7) * 0.3), (d.wag = 0.15));
+        break;
+      case "sit":
+        ((d.sit = 1), (d.hp = -0.12), (d.hy = c ? f : Math.sin(h * 0.5) * 0.35), (d.wag = c ? 0.5 : 0.1), (d.wagS = 9));
+        break;
+      case "lie":
+        ((d.lie = 1), (d.hp = h > 3 ? 0.18 : 0), (d.hy = Math.sin(h * 0.3) * 0.3), (d.wag = 0.05), (d.tu = -0.2));
+        break;
+      case "bow":
+        ((d.bow = 1), (d.hp = -0.25), (d.wag = 0.7), (d.wagS = 16), (d.tu = 0.6));
+        break;
+      case "shake":
+        d.sh = Math.sin(h * 34) * 0.22 * Math.sin(Math.min(1, h / 0.9) * Math.PI);
+        break;
+      case "bark":
+        ((d.hp = -0.25 - Math.abs(Math.sin(h * 11)) * 0.18), (d.tu = 0.5), (d.wag = 0.3), (d.hy = c ? f : 0));
+        break;
+      case "tilt":
+        ((d.hr = 0.38 * n.side), (d.hy = c ? f : 0.1), (d.wag = 0.3));
+        break;
+      case "yawn":
+        ((d.hp = -0.45 * Math.sin(Math.min(1, h / 1.8) * Math.PI)), (d.tu = 0));
+        break;
+      case "scratch":
+        ((d.sit = 0.8), (d.hr = 0.25 * n.side), (d.hp = 0.1), (d.sh = Math.sin(h * 26) * 0.04));
+        break;
+      case "happy":
+        ((d.hy = f), (d.hp = -0.1 + Math.sin(h * 6) * 0.05), (d.wag = 0.75), (d.wagS = 18), (d.tu = 0.6), (d.hop = Math.abs(Math.sin(h * 6)) * 0.04));
+        break;
+    }
+    d.hy = Math.max(-0.85, Math.min(0.85, d.hy));
+    let u = i.lu;
+    if (u) {
+      // โมเดลจริง/โมเดลสร้าง: ขับ uniform ของ shader
+      let p = Math.min(1, e * 5),
+        m = n.k ?? (n.k = { hy: 0, hp: 0, hr: 0, wag: 0, tu: 0, sit: 0, lie: 0, bow: 0 });
+      for (let E in m) m[E] += (d[E] - m[E]) * (E === "sit" || E === "lie" || E === "bow" ? Math.min(1, e * 3) : p);
+      ((n.wp = (n.wp ?? 0) + e * d.wagS),
+        u.uLHead.value.set(m.hy, m.hp, m.hr, 0),
+        u.uLTail.value.set(Math.sin(n.wp) * m.wag, m.tu, 0, 0),
+        u.uLPose.value.set(m.sit, m.lie, m.bow, Math.sin(i.t * (l === "happy" || l === "bow" ? 9 : 2.2)) * 0.03),
+        (i.body.rotation.z = d.sh),
+        (i.body.position.y = d.hop ?? 0));
+    } else if (i.uni && i.M) {
+      // หมาที่มีระบบท่าทางอยู่แล้ว (เชาเชา/พุดเดิ้ล): ส่งชื่อท่าให้ระบบเดิม
+      let p = i.pose ?? (i.pose = Gy()),
+        m = { look: "look", sniff: "sniff", sit: "sit", lie: "lie", bow: "bow", shake: "shake", bark: "alert", tilt: "tilt", yawn: "yawn", scratch: "scratch", happy: "happy" }[l] ?? "none";
+      s || (p.want !== m && ((p.want = m), (p.t = 0), (p.side = n.side ?? 1)));
+      l === "bark" && i.uni.uJaw && (i.uni.uJaw.value = Math.abs(Math.sin(h * 11)) * 1.1);
+    }
+  }
+  var ccsLifeV = new H();
+  function ccsLifeOn(i) {
+    return (i && (i.lu || (i.uni && i.M)) && (i.life ??= { act: "idle", t: Math.random() * 3 }), i);
+  }
   function ccsTB(i, e = 0.42, t) {
     let n = vp[i];
     if (!n) return t ? t() : null;
@@ -1903,29 +2064,37 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         uLegTop: { value: r * e },
         uCZ: { value: (o.min.z + o.max.z) / 2 },
         uHH: { value: r },
-      };
+      },
+      lu = ccsLifeUni(o.min.z, o.max.z, r, r * e);
     s.traverse((u) => {
       if (!u.isMesh) return;
       ((u.castShadow = !0), (u.receiveShadow = !0), (u.frustumCulled = !1));
+      // v131: แปลงพิกัด mesh → พิกัดโมเดล (บางไฟล์มี transform ซ้อน) เพื่อให้ขา/หัว/หางขยับถูกจุด
+      let tm = u.matrixWorld.clone(),
+        fm = tm.clone().invert();
       let p = (Array.isArray(u.material) ? u.material : [u.material]).map((m) => {
         let E = m.clone();
         return (
           (E.onBeforeCompile = (g) => {
-            (Object.assign(g.uniforms, a),
+            (Object.assign(g.uniforms, a, lu, { uToM: { value: tm }, uFromM: { value: fm } }),
               (g.vertexShader =
                 `uniform float uT, uWalk, uLegTop, uCZ, uHH;
+${ccsLifeGL}
 ` +
                 g.vertexShader.replace(
                   "#include <begin_vertex>",
                   `#include <begin_vertex>
-      { float w = smoothstep(uLegTop, uLegTop * 0.45, position.y);
-        float front = step(uCZ, position.z), left = step(0.0, position.x);
+      { vec3 pm = (uToM * vec4(position, 1.0)).xyz;
+        float w = smoothstep(uLegTop, uLegTop * 0.45, pm.y);
+        float front = step(uCZ, pm.z), left = step(0.0, pm.x);
         float off = abs(front - left) * 3.14159;
-        float a = sin(uT + off) * 0.5 * uWalk; float d = max(0.0, uLegTop - position.y);
-        transformed.z += d * sin(a) * w; transformed.y += d * (1.0 - cos(a)) * w * 0.4 + abs(sin(uT)) * 0.012 * uHH * uWalk; }`,
+        float a = sin(uT + off) * 0.5 * uWalk; float d = max(0.0, uLegTop - pm.y);
+        pm.z += d * sin(a) * w; pm.y += d * (1.0 - cos(a)) * w * 0.4 + abs(sin(uT)) * 0.012 * uHH * uWalk;
+        pm = ccsLife(pm);
+        transformed = (uFromM * vec4(pm, 1.0)).xyz; }`,
                 )));
           }),
-          (E.customProgramCacheKey = () => "ccsTB"),
+          (E.customProgramCacheKey = () => "ccsTB2"),
           E
         );
       });
@@ -1947,7 +2116,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           f = u === "walk" ? p : 0;
         },
       };
-    return { root: c, body: l, head: h, legs: [], arms: [], eyes: [], quad: !0, t: 0, blink: 9, yaw: 0, height: r, person: d };
+    return { root: c, body: l, head: h, legs: [], arms: [], eyes: [], quad: !0, t: 0, blink: 9, yaw: 0, height: r, person: d, lu };
   }
   var yy = new WeakMap();
   function Jg(i) {

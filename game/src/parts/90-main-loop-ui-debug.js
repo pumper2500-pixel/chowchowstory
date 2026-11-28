@@ -2729,7 +2729,7 @@
             (g.root.scale.multiplyScalar(x / y), (p = x / 0.6));
           }
           let y = new H(c + (m % 2 ? 0.7 : -0.7), 0, l + (m < 2 ? -0.45 : 0.45));
-          (g.root.position.copy(y), (g.yaw = Math.random() * 6), K.add(g.root), wT.push({ rig: g, pos: y, pen: pen, st: 0, tt: Math.random() * 2, tgt: y.clone(), sp: 0, hop: 0, r: 0.32 * p + 0.12, base: y }));
+          (g.root.position.copy(y), (g.yaw = Math.random() * 6), ccsLifeOn(g), K.add(g.root), wT.push({ rig: g, pos: y, pen: pen, st: 0, tt: Math.random() * 2, tgt: y.clone(), sp: 0, hop: 0, r: 0.32 * p + 0.12, base: y }));
         } catch (E) {
           console.warn("pen dog", u, E);
         }
@@ -3859,7 +3859,7 @@
     if (t)
       try {
         let n = t.make();
-        K.add(n.root);
+        (ccsLifeOn(n), K.add(n.root));
         let s = Le[0],
           o = (e ?? s?.pos ?? new H()).clone().add(new H(Math.random() - 0.5, 0, 1 + Pr.length * 0.8));
         Pr.push({ rig: n, pos: o, spd: 0, dir: null, sale: t, stuck: 0 });
@@ -4654,6 +4654,14 @@
         po: (u) => Po(u),
         scn: () => K,
         T3: { mt, Ls, H },
+        shops: () => zn,
+        pens: () => wT,
+        petMake: (k) => {
+          let t = T1.find((n) => n.key === k),
+            n = t && t.make();
+          return (n && (ccsLifeOn(n), K.add(n.root)), n);
+        },
+        qi: (r, e, t, n) => Qi(r, e, t, n),
         wthrow: (k) => ccsWhaleThrow(k),
         wtick: (d) => (ccsWhaleTick(d), ccsBaitTick(d), ccsFxTick(d)),
         bigSplash: (x, z, e) => ccsBigSplash(new H(x, 0, z), e),
