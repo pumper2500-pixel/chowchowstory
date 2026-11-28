@@ -1001,12 +1001,15 @@ vObj = position;`,
         }
         #ifdef FUR_SHELL
         { // ขนฟู: ชั้นเปลือกขน — เส้นขนสุ่มเป็นจุด ๆ ยิ่งชั้นนอกยิ่งเหลือน้อย (ปลายขนเรียว) · ปลายขนสว่าง โคนขนมืด
-          vec3 q = vPosM * (uFurDen * 1.5 / uH);
-          float st = hsh(floor(q)), st2 = hsh(floor(q * 1.9 + 7.3));
-          float keep = max(st, st2 * 0.9);
-          if (keep < 0.18 + uShellK * 0.78) discard;
-          if (uPat > 0.5 || uWet > 0.6 || vPosM.y < uHip * 0.18 || dot(diffuseColor.rgb, vec3(0.33)) < 0.16) discard;   // ใส่เสื้อ/ตัวเปียก/อุ้งเท้า/ส่วนสีเข้ม (ตา จมูก ปาก): ไม่มีขนฟู
-          diffuseColor.rgb *= mix(0.93, 1.12, uShellK);
+          // เส้นขนกลม ปลายเรียว: แต่ละช่องมีขน 1 เส้น (ตำแหน่งสุ่ม) รัศมีเล็กลงเรื่อย ๆ ตามชั้น
+          vec3 q = vPosM * (uFurDen * 1.6 / uH);
+          vec3 ci = floor(q), cf = fract(q) - 0.5;
+          vec3 jit = vec3(hsh(ci), hsh(ci + 3.1), hsh(ci + 7.7)) - 0.5;
+          float r = length(cf - jit * 0.5);
+          float rad = 0.62 * (1.0 - uShellK * 0.85) * (0.75 + 0.5 * hsh(ci + 1.9));
+          if (r > rad) discard;
+          if (uPat > 0.5 || uWet > 0.6 || vPosM.y < uHip * 0.18 || dot(diffuseColor.rgb, vec3(0.33)) < 0.22) discard;   // ใส่เสื้อ/ตัวเปียก/อุ้งเท้า/ส่วนสีเข้ม: ไม่มีขนฟู
+          diffuseColor.rgb *= mix(0.9, 1.12, uShellK);
         }
         #endif
       }`,
@@ -1023,27 +1026,32 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
               "#include <begin_vertex>",
               `#include <begin_vertex>
       vPosM = position;
-      { // v141: น้องอ้วนฟู — ตัวพองตามผิว · หัวขยายทั้งลูกจากจุดกลางหัว (หน้าไม่แบน สัดส่วนเดิม หูไม่แตก) · แผงคอฟูรอบคอ
+      { // v142: น้องอ้วนฟู — ขยายตัวออกจาก "แกนกลางลำตัว" (เส้นจากโคนหางถึงคอ) และหัวขยายจากจุดกลางหัว ไล่ต่อเนื่องกัน
+        //        (ไม่ใช้ทิศ normal → ไม่มีรอยหัก/รอยพับตอนขยับ) · ขาฟูออกด้านข้าง ไม่ยืดลงพื้น · หน้าไม่มีขนชั้นนอก (เรียบร้อยแบบหมาจริง)
         vec3 hc = vec3(0.0, uNeck.y + 0.19 * uH, uNeck.z + 0.07 * uL);                       // จุดกลางหัว
-        float hw = smoothstep(uNeck.z - 0.04 * uL, uNeck.z + 0.08 * uL, position.z) * smoothstep(uNeck.y - 0.12 * uH, uNeck.y + 0.02 * uH, position.y);
-        float legM = smoothstep(uHip * 0.2, uHip * 0.95, position.y);
-        float mane = exp(-pow((position.z - (uNeck.z - 0.04 * uL)) / (0.15 * uL), 2.0)) * smoothstep(uHip * 0.5, uHip * 1.15, position.y) * (1.0 - 0.85 * hw);
-        float m = (0.35 + 0.65 * legM + 0.9 * mane) * smoothstep(0.0, 0.12 * uHip, position.y) * uChow;   // ฝ่าเท้าไม่พอง (ไม่จมพื้น)
-        vec3 nn = normalize(objectNormal);
-        vec3 bodyOff = nn * (uPuff * uH * m);
-        vec3 headOff = (position - hc) * (uPuff * 1.5) * uChow;                                 // ขยายหัวทั้งลูก ~9%
-        transformed += mix(bodyOff, headOff, hw);
+        vec3 sa = vec3(0.0, uHip * 1.25, uZB + 0.05 * uL), sb = vec3(0.0, uNeck.y - 0.02 * uH, uNeck.z - 0.02 * uL);   // แกนลำตัว
+        vec3 ab = sb - sa; float tt = clamp(dot(position - sa, ab) / dot(ab, ab), 0.0, 1.0); vec3 sp = sa + ab * tt;
+        float hw = smoothstep(uNeck.z - 0.06 * uL, uNeck.z + 0.1 * uL, position.z) * smoothstep(uNeck.y - 0.16 * uH, uNeck.y + 0.04 * uH, position.y);
+        float legM = smoothstep(uHip * 0.15, uHip * 1.0, position.y);
+        float mane = exp(-pow((position.z - (uNeck.z - 0.03 * uL)) / (0.16 * uL), 2.0)) * smoothstep(uHip * 0.6, uHip * 1.3, position.y);
+        float sBody = uPuff * (3.0 + 2.2 * mane) * (0.35 + 0.65 * legM);
+        float sHead = uPuff * 1.5;
+        vec3 anc = mix(sp, hc, hw);
+        vec3 off = (position - anc) * mix(sBody, sHead, hw);
+        off.y *= mix(legM, 1.0, hw);                                   // ขา: ฟูออกด้านข้างอย่างเดียว ไม่ยืดลงพื้น
+        transformed += off * smoothstep(0.0, 0.1 * uHip, position.y) * uChow;
         #ifdef FUR_SHELL
-        float face = mix(0.3, 1.0, smoothstep(0.08 * uL, 0.3 * uL, distance(position.yz, vec2(uNoseY, uNoseZ))));   // หน้า: ขนสั้นลง (ไม่โล้น)
-        float fm = clamp((0.12 + 0.88 * legM + 0.7 * mane) * face, 0.0, 1.6);
+        vec3 nn = normalize(objectNormal);
+        float fd = distance(position.yz, vec2(uNoseY, uNoseZ));
+        float face = 1.0 - (1.0 - smoothstep(0.24 * uL, 0.36 * uL, fd)) * step(hc.z - 0.02 * uL, position.z);   // หน้า (ตา/ปาก/จมูก) ไม่มีขนชั้นนอก
+        float fm = (0.25 + 0.75 * legM + 0.5 * mane) * face;
         float fl = uShellK * uFurLen * uH * fm;
         transformed += nn * fl;
-        // ขนไหว: ปลายขนลู่ตามแรงลม/การวิ่ง (ลู่ไปทางหลังเมื่อวิ่ง) + เด้งตามจังหวะก้าว + ลมโชยเบา ๆ
-        float fw = uShellK * uShellK * uFurLen * uH * 6.0 * fm;
-        transformed -= uFurVel * fw * 0.5;
-        transformed.y -= fw * (0.08 + 0.12 * abs(sin(uPhase * 2.0)) * uAmp * 3.0);
-        transformed.x += fw * 0.05 * sin(uFurT * 1.7 + position.z * 9.0 + position.y * 7.0);
-        transformed.z += fw * 0.04 * sin(uFurT * 1.3 + position.x * 8.0);
+        // ขนไหวเบา ๆ: ปลายขนลู่ตามการวิ่ง + เด้งตามจังหวะก้าว + ลมโชย (ขยับน้อย ๆ ไม่ให้ขนหลุดจากตัว)
+        float fw = uShellK * uShellK * uFurLen * uH * fm;
+        transformed -= uFurVel * fw * 0.35;
+        transformed.y -= fw * (0.1 + 0.15 * abs(sin(uPhase * 2.0)) * min(uAmp * 3.0, 1.0));
+        transformed.x += fw * 0.08 * sin(uFurT * 1.7 + position.z * 9.0 + position.y * 7.0);
         #endif
       }
       { // ขากรรไกรล่าง: หุบ/อ้า
