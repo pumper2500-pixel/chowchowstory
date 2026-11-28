@@ -49,7 +49,7 @@
     }
     return best;
   }
-  var ccsWet = { v: 0, y: 0, src: 0, prevIn: 0, k: -1, msgT: 0, hopT: 0, outT: 0, shakes: 0, shakeT: 0, applied: -1, appliedY: -1 },
+  var ccsWet = { flat: 0, v: 0, y: 0, src: 0, prevIn: 0, k: -1, msgT: 0, hopT: 0, outT: 0, shakes: 0, shakeT: 0, applied: -1, appliedY: -1 },
     ccsShakeFx = null;
   function ccsShakeDrops(p, h) {
     if (!ccsShakeFx) {
@@ -122,12 +122,13 @@
       rain && ((w.y = 1.25), (w.v = Math.min(0.6, w.v + e * 0.02)));
       if (lvl > 0) {
         ((w.y = Math.max(w.y, lvl)), (w.v = Math.min(1, w.v + e * 3)), (w.src = lvl), (w.outT = 0));
+        lvl > 0.3 && (w.flat = 1);   // v144: ลงน้ำถึงตัว → ขนลีบ (จนกว่าจะสะบัดตัว)
         w.y > 0.45 && (w.shakes = 0);
       } else {
         // ขึ้นจากน้ำ: แห้งช้า ๆ (แดดแรงแห้งเร็ว กลางคืน/ฝนแห้งช้า)
         let hr = ((j.time ?? 0.5) % 1) * 24,
           dry = (rain ? 0 : 1) * (hr >= 7 && hr < 18 ? 1 / 55 : 1 / 110);
-        ((w.v = Math.max(0, w.v - e * dry)), (w.outT += e), w.v < 0.03 && ((w.y = 0), (w.v = 0)));
+        ((w.v = Math.max(0, w.v - e * dry)), (w.outT += e), w.v < 0.03 && ((w.y = 0), (w.v = 0)), w.v < 0.15 && (w.flat = 0));
         // เปียกมาก (ลงน้ำถึงตัว) → หยุดยืนแล้วสะบัดตัว 1-2 ครั้ง ไล่น้ำ
         if (w.y > 0.38 && w.v > 0.3 && w.shakes < 2 && w.outT > 0.5 && w.shakeT < 0 && n.spd < 0.1 && j.jy <= 0.001 && !j.sleeping) ccsDoShake(n);
       }
@@ -135,6 +136,7 @@
     let vv = Math.round(w.v * 50) / 50,
       yy = Math.round(w.y * 25) / 25;
     (vv !== w.applied || yy !== w.appliedY) && rg.setWet && (rg.setWet(vv, yy), (w.applied = vv), (w.appliedY = yy));
+    rg.setFurFlat && rg.setFurFlat(w.flat);
     // เพื่อนที่เดินตาม: ขึ้นจากน้ำแล้วสะบัดตัวเหมือนกัน
     for (let c of Pr) {
       if (!c.rig) continue;
@@ -144,7 +146,7 @@
   }
   function ccsDoShake(n) {
     let w = ccsWet;
-    ((w.shakes++), (w.shakeT = 2.6), (w.v *= 0.55), Io(n.rig, "shake"));
+    ((w.shakes++), (w.shakeT = 2.6), (w.v *= 0.55), (w.flat = 0), Io(n.rig, "shake"));   // v144: สะบัดแล้วขนฟูกลับมา
     let o = B6.get(n.rig);
     o && ((o.it = 0), (o.end = 1.25));
     (ccsShakeDrops(n.rig.root.position, n.rig.height ?? 0.8), kp(_i(), 0.25));
@@ -287,7 +289,7 @@
     ccsFurList.push({ list, d, p, last: null, on: 0 });
   }
   // ทุกเฟรม: เปิดชั้นขนเฉพาะน้องเชาเชาที่อยู่ใกล้กล้อง (คอม 8 ชั้น ≤ 5 ตัว · มือถือ 4 ชั้น ≤ 3 ตัว) · คำนวณความเร็วให้ขนลู่ตามการวิ่ง
-  var ccsFurMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent) || innerWidth < 900,
+  var ccsFurMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent),
     ccsFurOff = !1,
     ccsFurV = new H(),
     ccsFurW = new H();
@@ -308,7 +310,9 @@
         (ccsFurV.applyQuaternion(q).divideScalar(sc * 6).clampLength(0, 1), f.d.uFurVel.value.lerp(ccsFurV, Math.min(1, e * 6)));
       }
       ((f.last = (f.last ?? new H()).copy(ccsFurW)), (f.d.uFurT.value += e));
-      vis && dd < (ccsFurMobile ? 9 : 14) && near.push([dd, f]);
+      let me = !1;
+      for (let o = f.p; o; o = o.parent) o === Le[0]?.rig?.root && (me = !0);
+      vis && (me || dd < (ccsFurMobile ? 12 : 22)) && near.push([me ? -1 : dd, f]);   // v144: น้องของเรามีขนฟูเสมอ (ไม่หายตามระยะกล้อง)
     }
     near.sort((a, b) => a[0] - b[0]);
     let cap = ccsFurMobile ? 3 : 5,
