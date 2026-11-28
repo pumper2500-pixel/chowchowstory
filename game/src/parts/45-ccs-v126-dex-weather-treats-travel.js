@@ -332,7 +332,7 @@
     }
     let a = [],
       c = ccsWh?.pods.find((h) => h.k === "orca");
-    (c?.mode === "beg" && a.push({ ic: "🐳", x: c.m[0].pos.x, z: c.m[0].pos.z, u: 1 }), ccsTROpen() && a.push({ ic: "🏅", x: -18, z: 15 }), (z.bait?.salmon || z.bait?.squid || z.bait?.giant) && a.push({ ic: "⚓", x: 0, z: Rt + 18 }));
+    (c?.mode === "beg" && a.push({ ic: "🐳", x: c.m[0].pos.x, z: c.m[0].pos.z, u: 1 }), ccsTROpen() && a.push({ ic: "🏅", x: -18, z: 15 }), (z.bait?.salmon || z.bait?.squid || z.bait?.giant) && a.push({ ic: "⚓", x: 0, z: Rt + 22 }));
     let l = null,
       h = 1e9;
     for (let f of ccsWea.drops) {

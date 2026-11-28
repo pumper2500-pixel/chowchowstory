@@ -1566,18 +1566,18 @@
     // v84: คบเพลิงตลอดสะพานไม้ (สองฝั่ง) ไฟติดตอนกลางคืน แสงส้มอุ่นส่องพื้นไม้
     if (ze("tiki_torch")) {
       let o = Rt + 1;
-      for (let [r, a] of [[0.6, !0], [5.1, !1], [9.6, !0], [14.1, !1], [17.5, !0]])
-        for (let c of [-1.42, 1.42]) {
-          if (r === 17.5 && c > 0) continue;
+      for (let [r, a] of [[0.6, !0], [6, !1], [11.4, !0], [16.8, !1], [21.6, !0]])
+        for (let c of [-1.62, 1.62]) {
+          if (r === 21.6 && c > 0) continue;
           let l = je("tiki_torch", 1.7);
-          (l.position.set(c, 0.3, o + r), K.add(l), l.updateMatrixWorld(!0));
+          (l.position.set(c, 0.34, o + r), K.add(l), l.updateMatrixWorld(!0));
           let h = null;
           l.traverse((d) => {
             d.isMesh && (d.material.name === "fire_flame" || d.name === "fire_flame") && ((h = new mt().setFromObject(d)), (d.visible = !1));
           });
           let f = lE(0.48, 0.26);
           (h ? f.position.set((h.min.x + h.max.x) / 2, h.min.y + 0.02, (h.min.z + h.max.z) / 2) : f.position.set(c, 1.85, o + r), (f.visible = !1), K.add(f), hE.push(f), i1.push(f));
-          if (a && (c < 0 || r === 17.5)) {
+          if (a && (c < 0 || r === 21.6)) {
             let d = new En(16747056, 0, 10, 1.4);
             (d.position.set(0, f.position.y + 0.3, f.position.z), K.add(d), u4.push(d));
           }

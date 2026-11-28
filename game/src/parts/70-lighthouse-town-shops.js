@@ -2132,7 +2132,7 @@
       return !1;
     }
     if (
-      !((Math.abs(i.x) < 1.5 && i.z > Rt - 1.5 && i.z < Rt + 19.5) || Rd(i.x, i.z) !== null || ba(i.x, i.z) !== null) &&
+      !((Math.abs(i.x) < 1.9 && i.z > Rt - 1.5 && i.z < Rt + 23.5) || Rd(i.x, i.z) !== null || ba(i.x, i.z) !== null) &&
       (i.z > Rt + 5.2 || Math.abs(i.x) > 150 || i.z < -150)
     )
       return !0;

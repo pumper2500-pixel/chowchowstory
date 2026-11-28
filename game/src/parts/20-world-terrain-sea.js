@@ -251,6 +251,9 @@ vec4 brk(vec2 xz, float t, float sh){
         { vec4 b = brk(w.xz, uT, uShore); float s0 = pow(1.0 - b.z, 6.0) + pow(b.z, 10.0);
           w.y += b.x; w.z -= b.w * 1.1 * b.y * s0;            // ยอดคลื่นโน้มไปข้างหน้าตอนจะแตก
           vWave = max(vWave, b.x / max(0.15, b.w*1.3)); }
+        // v130: ใต้/รอบท่าเรือ คลื่นเบาลง (เสาเข็มสลายแรงคลื่น) ไม่ให้ยอดคลื่นท่วมพื้นไม้
+        { float pm = 1.0 - 0.85 * (1.0 - smoothstep(2.4, 6.0, abs(w.x))) * (1.0 - smoothstep(uShore + 23.0, uShore + 30.0, w.z));
+          w.y = ${Ph.toFixed(3)} + (w.y - ${Ph.toFixed(3)}) * pm; }
         vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
         fragmentShader: `uniform float uT, uShore, uNight, uHasWave; uniform sampler2D uWave; uniform vec3 uSun, uSky, uFog, uCam; varying vec3 vW; varying float vWave; varying vec3 vN; varying float vFoam;
       ${oM}
@@ -415,34 +418,48 @@ vec4 brk(vec2 xz, float t, float sh){
         float run = u < 0.32 ? 1.0 - pow(1.0 - u/0.32, 2.2) : 1.0 - pow((u - 0.32)/0.68, 1.6);
         return R * max(run, 0.0);
       }
+      // ชั้นคลื่นซัดหนึ่งลูก: คืนค่า x=ความครอบคลุม y=ฟองหัวน้ำ z=ฟองลายลูกไม้ w=ทรายเปียก
+      vec4 swashL(vec2 p, float t, float off, float edge0){
+        float u, big; float R = reach(p.x + off*37.0 + (fbm(p*0.6 + off) - 0.5)*1.2, t + off*7.3, u, big);
+        float ez = edge0 - R + (fbm(vec2(p.x*0.9, t*0.3 + off)) - 0.5)*0.35 + (vn(vec2(p.x*3.2, off*5.0)) - 0.5)*0.12;   // ขอบขรุขระสองระดับ
+        float inS = smoothstep(ez - 0.04, ez + 0.08, p.y);
+        float back = smoothstep(0.32, 0.45, u);
+        float dz = p.y - ez;
+        // หัวน้ำ: เส้นฟองหนาที่ขอบ + เส้นฟองบาง ๆ อีกชั้นตามหลัง (ฟองแตกเป็นสาย)
+        float lip = (1.0 - smoothstep(0.0, 0.22 + 0.2*big, dz)) * inS;
+        float lip2 = exp(-pow((dz - 0.55 - 0.3*big) * 6.0, 2.0)) * inS * smoothstep(0.35, 0.6, vn(vec2(p.x*2.2, t*0.5 + off)));
+        // ลายลูกไม้ละเอียด: ฟองเป็นตาข่าย (เส้นขอบของ noise สองความถี่)
+        float n1 = fbm(p*3.2 + vec2(0.0, t*(back > 0.5 ? -0.45 : 0.7)) + off);
+        float n2 = vn(p*9.0 + vec2(t*0.3, off*3.0));
+        float net = (1.0 - smoothstep(0.0, 0.06, abs(n1 - 0.5))) * (0.55 + 0.45*n2);
+        float streak = smoothstep(0.62, 0.8, vn(vec2(p.x*6.0, p.y*0.8 - t*0.9*back))) * back;    // ทางฟองยาวตอนน้ำไหลกลับ
+        float lace = clamp(net*(0.5 + 0.5*back) + streak*0.6 + smoothstep(0.7, 0.9, n2)*0.25, 0.0, 1.0) * inS * (1.0 - smoothstep(0.5, 3.5, dz)*0.6);
+        float wetR = R / max(0.05, (u < 0.32 ? 1.0 : 1.0 - pow((u - 0.32)/0.68, 1.6)));
+        float wet = (1.0 - inS) * smoothstep(edge0 - wetR - 0.2, edge0 - wetR + 0.6, p.y) * back * (1.0 - smoothstep(0.55, 1.0, u));
+        return vec4(inS * (1.0 - 0.35*back*smoothstep(0.0, 1.0, 1.0 - clamp(dz, 0.0, 1.0))), clamp(lip + lip2*0.7, 0.0, 1.0), lace, wet);
+      }
       void main(){
         float sandY = vW.z - (uShore - 1.35) <= 0.0 ? 0.0 : -min(3.0, (vW.z - uShore + 1.35)*0.085 + pow(vW.z - uShore + 1.35, 2.0)*0.004);
-        float edge0 = uShore + 1.2;                       // แนวน้ำนิ่ง
-        float u, big; float R = reach(vW.x + (fbm(vW.xz*0.6) - 0.5)*1.2, uT, u, big);
-        float ez = edge0 - R + (fbm(vec2(vW.x*0.9, uT*0.3)) - 0.5)*0.35;    // ขอบน้ำ (ขรุขระ)
-        float inSheet = smoothstep(ez - 0.06, ez + 0.12, vW.z);
-        // ความหนาของแผ่นน้ำ: บางมากที่ขอบ หนาขึ้นใกล้ทะเล
-        float th = clamp((vW.z - ez) / 3.0, 0.0, 1.0);
-        float back = smoothstep(0.32, 0.45, u);           // ช่วงน้ำไหลกลับ: ฟองแตกเป็นลายลูกไม้
-        float lace = smoothstep(0.42, 0.62, fbm(vW.xz*2.4 + vec2(0.0, uT*(back > 0.5 ? -0.5 : 0.8))));
-        float lip = (1.0 - smoothstep(0.0, 0.35 + 0.25*big, vW.z - ez)) * inSheet;   // ฟองขาวที่หัวน้ำ
-        vec3 water = mix(vec3(0.70,0.92,0.90), vec3(0.35,0.78,0.78), th);
+        float edge0 = uShore + 1.2;
+        // คลื่นซ้อนสองลูก: ลูกใหม่ซัดขึ้นมาตอนลูกเก่ายังไหลกลับ (เห็นเส้นฟองตัดกันแบบหาดจริง)
+        vec4 s1 = swashL(vW.xz, uT, 0.0, edge0);
+        vec4 s2 = swashL(vW.xz, uT, 0.5, edge0);
+        float inSheet = max(s1.x, s2.x);
+        float th = clamp((vW.z - (edge0 - 1.0)) / 3.5, 0.0, 1.0);
+        vec3 water = mix(vec3(0.72,0.93,0.91), vec3(0.35,0.78,0.78), th);
         vec3 V = normalize(uCam - vW);
         float fres = pow(1.0 - max(V.y, 0.0), 3.0);
         water = mix(water, uSky, fres*0.4);
-        float sp = pow(max(dot(normalize(vec3((fbm(vW.xz*3.0+uT)-0.5)*0.4, 1.0, (fbm(vW.xz*3.0-uT)-0.5)*0.4)), normalize(uSun + V)), 0.0), 120.0);
-        water += vec3(1.0)*sp*1.2*(1.0 - uNight*0.85);
-        vec3 foamC = vec3(0.97, 0.99, 1.0);
-        float fo = clamp(lip*0.95 + lace*inSheet*(0.25 + 0.45*back)*(1.0 - th*0.6), 0.0, 1.0);
-        vec3 c = mix(water, foamC, fo);
-        float a = inSheet * mix(0.28, 0.62, th) ;
-        a = max(a, fo*0.92);
-        // ทรายเปียก: ตรงที่คลื่นเพิ่งถอยออกไป จะเข้มเป็นมันอยู่ครู่หนึ่ง
-        float wetR = R / max(0.05, (u < 0.32 ? 1.0 : 1.0 - pow((u - 0.32)/0.68, 1.6)));
-        float wet = (1.0 - inSheet) * smoothstep(edge0 - wetR - 0.2, edge0 - wetR + 0.6, vW.z) * back * (1.0 - smoothstep(0.55, 1.0, u)) ;
+        vec3 nn = normalize(vec3((fbm(vW.xz*4.0+uT)-0.5)*0.5, 1.0, (fbm(vW.xz*4.0-uT*0.8)-0.5)*0.5));
+        float sp = pow(max(dot(nn, normalize(uSun + V)), 0.0), 140.0);
+        water += vec3(1.0)*sp*1.3*(1.0 - uNight*0.85);
+        float fo = clamp(max(s1.y, s2.y)*0.95 + max(s1.z, s2.z)*0.85, 0.0, 1.0);
+        vec3 c = mix(water, vec3(0.97, 0.99, 1.0), fo);
+        float a = inSheet * mix(0.25, 0.6, th);
+        a = max(a, fo*0.95);
+        float wet = max(s1.w, s2.w) * (1.0 - inSheet);
         c = mix(c, vec3(0.55, 0.48, 0.36), wet);
         a = max(a, wet*0.32);
-        // ไม่ทับทะเลจริง (ทะเลวาดต่อเอง) + จางที่ขอบแผ่น
         a *= 1.0 - smoothstep(-0.02, 0.06, Ph - sandY);
         c *= mix(1.0, 0.35, uNight);
         if (a < 0.01) discard;
@@ -4924,25 +4941,45 @@ vec4 brk(vec2 xz, float t, float sh){
     }
     ((o.count = a.count = h), i.add(o, a));
   }
+  var ccsPierLen = 24.5; // ความยาวท่าเรือ (จาก Rt-1 ถึง Rt+23.5)
   function qM(i, e) {
     let t = (v) => new bt({ color: v }),
       n = t(10185274),
       s = t(7029280),
       o = new J();
-    for (let v = e - 1; v < e + 19; v += 0.9) {
-      let _ = new R(new ee(3.2, 0.18, 0.8), Math.round(v * 3) % 3 ? n : t(9067051));
-      (_.position.set(0, 0.25, v), (_.rotation.y = (Math.random() - 0.5) * 0.04), o.add(_));
+    // v130: สะพานไม้โมเดลจริง (rustic wooden dock) ยาวขึ้น ~4 ม. ยื่นลงทะเล · ระหว่างโหลดใช้แผ่นไม้ชั่วคราว
+    let tmp = [];
+    for (let v = e - 2; v < e + ccsPierLen - 2; v += 0.9) {
+      let _ = new R(new ee(3.4, 0.18, 0.8), Math.round(v * 3) % 3 ? n : t(9067051));
+      (_.position.set(0, 0.25, v), o.add(_), tmp.push(_));
     }
-    for (let v = e + 1; v < e + 19; v += 3.5)
-      for (let _ of [-1.6, 1.6]) {
-        let S = new R(new re(0.16, 0.18, 2.2, 8), s);
-        (S.position.set(_, -0.5, v), o.add(S));
-      }
+    setTimeout(() =>
+    Po(Zt("dock"))
+      .then((v) => {
+        let _ = v.scene;
+        // โมเดลยาว 25.8 ม. กว้าง 8 ม. พื้นไม้สูง 0.5 → บีบความกว้างให้พอดีทางเดิน ยืดยาวตามท่าเรือ ให้พื้นไม้อยู่ที่ 0.36
+        (_.scale.set(0.55, 1, ccsPierLen / 25.8), _.position.set(0, -0.14, e - 2 + ccsPierLen / 2), (_.rotation.y = Math.PI));
+        _.traverse((S) => {
+          if (!S.isMesh) return;
+          let T = S.material;
+          S.geometry.deleteAttribute("tangent"); // tangent แบบบีบอัดทำให้ normal map คำนวณเป็น NaN (พื้นไม้หายเป็นโปร่ง) → ให้ three คำนวณจากอนุพันธ์แทน
+          // ไม้ไม่ใช่โลหะ: ไฟล์ตั้ง metallic=1 ทำให้สะท้อนท้องฟ้า/ทะเลจนดูโปร่งเหมือนจมน้ำ → ทำวัสดุใหม่ ใช้แค่สี/นอร์มอล/ความหยาบ
+          ((S.material = new X({ map: T.map, normalMap: T.normalMap, roughnessMap: T.roughnessMap, roughness: 1, metalness: 0, side: Ke })),
+            T.dispose(),
+            (S.castShadow = !0),
+            (S.receiveShadow = !0),
+            (S.frustumCulled = !1),
+            (S.userData.noOcc = !0));
+        });
+        ((_.userData.noMerge = !0), (_.userData.noOcc = !0), i.add(_)); // noOcc: น้องยืนบนท่า ระบบโปร่งใสของที่บังน้องจะทำให้ทั้งท่าจาง
+        for (let S of tmp) o.remove(S);
+      })
+      .catch((v) => console.warn("dock", v)), 0);
     let r = new R(new re(0.07, 0.07, 2.2, 6), s);
-    (r.position.set(1.4, 1.3, e + 17.5), o.add(r));
+    (r.position.set(1.55, 1.4, e + ccsPierLen - 3.2), o.add(r));
     let a = new be({ color: 16773242 }),
       c = new R(new we(0.28, 10, 8), a);
-    (c.position.set(1.4, 2.5, e + 17.5), o.add(c), i.add(o));
+    (c.position.set(1.55, 2.6, e + ccsPierLen - 3.2), o.add(c), i.add(o));
     let l = new J(),
       h = new mn();
     (h.moveTo(-7, 0),
