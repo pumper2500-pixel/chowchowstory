@@ -8,6 +8,6 @@ cp cloudflare/_headers cdn/_headers
 # รายชื่อไฟล์ + แฮช (เกมเช็กไฟล์นี้ก่อน: ไฟล์ไหนไม่มีบน Cloudflare จะใช้ของ Vercel แทน)
 { echo "ccs $(date -u +%Y%m%d%H%M)"; for f in cdn/farm/*.glb cdn/farm/*.mp3; do echo "$(basename "$f") $(md5sum "$f" | cut -c1-10)"; done; } > cdn/farm/cdn-ok.txt
 # เผลอเปิด /farm/ บนโดเมนนี้ → พาไปหน้าเกมจริง (ไฟล์ที่นี่มีแต่โมเดล ไม่มีหน้าเว็บ)
-echo '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=https://chowchowstory.vercel.app/sim"><title>ChowChowStory</title><a href="https://chowchowstory.vercel.app/sim">ไปหน้าเกม</a>' > cdn/farm/index.html
-echo '<!doctype html><meta charset="utf-8"><title>ChowChowStory assets</title><p>ไฟล์เกม ChowChowStory · <a href="https://chowchowstory.vercel.app/sim">เล่นเกม</a></p>' > cdn/index.html
+echo '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=https://chowchowstory.com/sim"><title>ChowChowStory</title><a href="https://chowchowstory.com/sim">ไปหน้าเกม</a>' > cdn/farm/index.html
+echo '<!doctype html><meta charset="utf-8"><title>ChowChowStory assets</title><p>ไฟล์เกม ChowChowStory · <a href="https://chowchowstory.com/sim">เล่นเกม</a></p>' > cdn/index.html
 echo "cdn: $(ls cdn/farm | wc -l) files, $(du -sh cdn | cut -f1)"

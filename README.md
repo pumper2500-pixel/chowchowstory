@@ -59,8 +59,8 @@ public/img/     ตัวการ์ตูนเชาเชา (ลิขส�
 
 1. Supabase › SQL Editor › New query › วางไฟล์ `supabase/migrations/0001_init.sql` ทั้งไฟล์ › Run
 2. Authentication › URL Configuration
-   - Site URL: `https://chowchowstory.vercel.app`
-   - Redirect URLs: `https://chowchowstory.vercel.app/**` และ `http://localhost:3000/**`
+   - Site URL: `https://chowchowstory.com`
+   - Redirect URLs: `https://chowchowstory.com/**`, `https://chowchowstory.vercel.app/**` และ `http://localhost:3000/**`
 3. ตั้งตัวเองเป็นแอดมิน (ใช้ใน Milestone 05) หลังสมัครแล้ว:
    `update public.profiles set is_admin = true where id = (select id from auth.users where email = 'อีเมลของคุณ');`
 

@@ -1,5 +1,5 @@
-// เปลี่ยนเป็นโดเมนจริงเมื่อจดโดเมนแล้ว (ใช้ทำ sitemap / ลิงก์แชร์)
-export const SITE_URL = "https://chowchowstory.vercel.app";
+// โดเมนจริง (ใช้ทำ canonical / sitemap / ลิงก์แชร์) · chowchowstory.vercel.app ยังเปิดได้ แต่ชี้ canonical มาที่นี่
+export const SITE_URL = "https://chowchowstory.com";
 export const SITE_NAME = "ChowChowStory";
 
 // โปรเจกต์ Supabase ของ ChowChowStory — ตั้งค่าตรงนี้ที่เดียว
