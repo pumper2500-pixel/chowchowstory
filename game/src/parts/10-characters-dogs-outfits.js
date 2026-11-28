@@ -1756,28 +1756,12 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         pat: 3,
         name: "ชิวาวา",
       },
-      horse: { rot: [-Math.PI / 2, 0, 0], h: 2.1, legTop: 0.48, pat: 4, name: "ม้า" },
-      lama: { rot: [-Math.PI / 2, 0, 0], h: 2, legTop: 0.4, pat: 5, name: "ลามะ" },
       redpanda: {
         rot: [-Math.PI / 2, 0, 0],
         h: 0.5,
         legTop: 0.36,
         pat: 6,
         name: "แพนด้าแดง",
-      },
-      zebra: {
-        rot: [-Math.PI / 2, Math.PI / 2, 0],
-        h: 1.8,
-        legTop: 0.46,
-        pat: 7,
-        name: "ม้าลาย",
-      },
-      giraffe: {
-        rot: [-Math.PI / 2, -Math.PI / 2, 0],
-        h: 4.6,
-        legTop: 0.36,
-        pat: 8,
-        name: "ยีราฟ",
       },
     },
     pp = {};

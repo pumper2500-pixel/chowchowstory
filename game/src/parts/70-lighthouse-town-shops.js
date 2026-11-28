@@ -1601,7 +1601,7 @@
     })(),
     nb = (i) => (l1 && bE.has(i) ? `${l1}${i}?v=${bE.get(i)}` : i),
     Zt = (i) => window.__M?.[i] ?? nb(`${i}.glb`),
-    Hi = new H(74, 0, 27),
+    Hi = new H(74, 0, 27), // v134: ที่ตั้งสวนสัตว์เดิม (ลบแล้ว) · ยังเว้นต้นไม้รอบ ๆ ไว้เป็นลานว่าง
     NA = [
       {
         key: "poodle",
@@ -1841,167 +1841,8 @@
           "เดินช้า ๆ ไม่ต้องรีบ",
         ],
       },
-      {
-        key: "z1",
-        beast: "horse",
-        name: "ม้าน้ำตาล",
-        kind: "ม้า",
-        home: [Hi.x - 6, Hi.z - 5],
-        speed: 1.8,
-        roam: 6,
-        lines: [
-          "ฮี้ ~ ยินดีต้อนรับสู่ฟาร์มสัตว์ 🐴",
-          "หญ้าตรงนี้หวานมาก",
-        ],
-      },
-      {
-        key: "z2",
-        beast: "zebra",
-        name: "ลายพาดกลอน",
-        kind: "ม้าลาย",
-        home: [Hi.x + 5, Hi.z + 3],
-        speed: 1.8,
-        roam: 6,
-        lines: [
-          "ลายขาวดำ ไม่มีตัวไหนเหมือนกันนะ 🦓",
-          "ถ่ายรูปได้เลย",
-        ],
-      },
-      {
-        key: "z3",
-        beast: "giraffe",
-        name: "คอยาว",
-        kind: "ยีราฟ",
-        home: [Hi.x + 6, Hi.z - 5],
-        speed: 1.4,
-        roam: 5,
-        lines: [
-          "มองเห็นทะเลจากตรงนี้ด้วย 🦒",
-          "ใบไม้บนยอดอร่อยสุด",
-        ],
-      },
-      {
-        key: "z4",
-        beast: "lama",
-        name: "ลามะปุยฝ้าย",
-        kind: "ลามะ",
-        home: [Hi.x - 5, Hi.z + 5],
-        speed: 1.5,
-        roam: 5,
-        lines: [
-          "ขนนุ่มมาก ลองลูบดูสิ ☁️",
-          "อย่าทำให้โกรธนะ เดี๋ยวถุยน้ำลาย 😤",
-        ],
-      },
     ],
     El = [];
-  function GA() {
-    let t = new J();
-    t.position.copy(Hi);
-    let n = new X({ map: Cn(13208139, "#7a4a24"), roughness: 0.8 }),
-      s = 3.2,
-      o = (p, m, E, g) => {
-        let y = Math.hypot(E - p, g - m),
-          x = Math.max(1, Math.round(y / 2.2)),
-          b = Math.atan2(E - p, g - m);
-        for (let _ = 0; _ <= x; _++) {
-          let S = _ / x,
-            M = new R(new ee(0.16, 1.2, 0.16), n);
-          (M.position.set(p + (E - p) * S, 0.6, m + (g - m) * S), t.add(M));
-        }
-        for (let _ of [0.45, 0.95]) {
-          let S = new R(new ee(0.08, 0.12, y), n);
-          (S.position.set((p + E) / 2, _, (m + g) / 2), (S.rotation.y = b), t.add(S));
-        }
-        let w = Hi.x + (p + E) / 2,
-          v = Hi.z + (m + g) / 2;
-        pt.push({ x: w, z: v, hw: Math.abs(E - p) / 2 + 0.15, hd: Math.abs(g - m) / 2 + 0.15 });
-      };
-    (o(-24 / 2, -20 / 2, -s / 2, -20 / 2),
-      o(s / 2, -20 / 2, 24 / 2, -20 / 2),
-      o(-24 / 2, 20 / 2, 24 / 2, 20 / 2),
-      o(-24 / 2, -20 / 2, -24 / 2, 20 / 2),
-      o(24 / 2, -20 / 2, 24 / 2, 20 / 2));
-    for (let p of [-s / 2, s / 2]) {
-      let m = new R(new ee(0.25, 3, 0.25), n);
-      (m.position.set(p, 1.5, -20 / 2), t.add(m));
-    }
-    let r = new R(new ee(s + 0.8, 0.3, 0.3), n);
-    (r.position.set(0, 3, -20 / 2), t.add(r));
-    let a = new R(
-      new Te(3.4, 0.7),
-      new be({
-        map: ei(
-          "🐾 ฟาร์มสัตว์น่ารัก",
-          16774885,
-          3050327,
-          512,
-          106,
-        ),
-        side: Ke,
-      }),
-    );
-    (a.position.set(0, 3.55, -20 / 2 - 0.05), (a.rotation.y = Math.PI), (a.material.side = ji), t.add(a));
-    {
-      let p = a.clone();
-      ((p.rotation.y = 0), (p.position.z = -20 / 2 + 0.05), t.add(p));
-    }
-    {
-      let p = new H(6.5, 0, 5),
-        m = new R(new gt(1.7, 32), new bt({ color: 7311210 }));
-      ((m.rotation.x = -Math.PI / 2), m.position.set(p.x, 0.03, p.z), t.add(m));
-      let E = new R(
-        new gt(1.6, 32),
-        new X({ color: 5224168, roughness: 0.08, metalness: 0.1, transparent: !0, opacity: 0.88 }),
-      );
-      ((E.rotation.x = -Math.PI / 2), E.position.set(p.x, 0.09, p.z), t.add(E));
-      let g = new X({ color: 11116950, roughness: 0.9 });
-      for (let y = 0; y < 14; y++) {
-        let x = (y / 14) * Math.PI * 2,
-          b = new R(new Qa(0.28, 0), g);
-        (b.position.set(p.x + Math.cos(x) * 1.75, 0.12, p.z + Math.sin(x) * 1.75),
-          b.scale.set(1.2, 0.6, 1),
-          (b.rotation.y = y),
-          t.add(b));
-      }
-      for (let y = 0; y < 3; y++) {
-        let x = new R(new gt(0.22, 12), new bt({ color: 5941322 }));
-        ((x.rotation.x = -Math.PI / 2), x.position.set(p.x - 0.6 + y * 0.5, 0.1, p.z + (y % 2 ? 0.5 : -0.4)), t.add(x));
-      }
-      pt.push({ x: Hi.x + p.x, z: Hi.z + p.z, hw: 1.5, hd: 1.5, low: !0 });
-    }
-    let c = new X({ color: 15188570, roughness: 0.95 }),
-      l = new R(new ee(2.4, 0.5, 0.7), n);
-    (l.position.set(-4, 0.25, 2), t.add(l));
-    let h = new R(new ee(2.2, 0.12, 0.55), c);
-    (h.position.set(-4, 0.52, 2), t.add(h));
-    let f = new R(new ee(2, 0.45, 0.7), UA(9079434));
-    (f.position.set(4, 0.23, -2), t.add(f));
-    let d = new R(new Te(1.8, 0.55), new X({ color: 6080757, roughness: 0.1 }));
-    ((d.rotation.x = -Math.PI / 2), d.position.set(4, 0.44, -2), t.add(d));
-    for (let [p, m] of [
-      [-9, 7],
-      [-7.6, 7.4],
-      [9, 7],
-    ]) {
-      let E = new R(new re(0.55, 0.55, 1, 16), c);
-      ((E.rotation.z = Math.PI / 2), E.position.set(p, 0.55, m), t.add(E));
-    }
-    let u = new R(new Te(24 - 0.4, 20 - 0.4), new bt({ color: 11901546 }));
-    ((u.rotation.x = -Math.PI / 2),
-      (u.position.y = 0.025),
-      (u.receiveShadow = !0),
-      t.add(u),
-      t.traverse((p) => {
-        p.castShadow = !0;
-      }),
-      K.add(t));
-    for (let [p, m, E, g] of [
-      [-4, 2, 1.3, 0.45],
-      [4, -2, 1.1, 0.45],
-    ])
-      pt.push({ x: Hi.x + p, z: Hi.z + m, hw: E, hd: g, low: !0 });
-  }
   var UA = (i) => new X({ color: i, roughness: 0.6 });
   async function VA() {
     (await D4,
@@ -2010,8 +1851,7 @@
         mp(Zt("poodle"), 0.95, "poodle"),
         mp(Zt("bulldog"), 0.78, "bulldog"),
         Ny((i) => Zt("b_" + i)),
-      ]),
-      GA());
+      ])); // v134: ลบสวนสัตว์ (ฟาร์มสัตว์น่ารัก) และม้า/ม้าลาย/ยีราฟ/ลามะออกแล้ว · พื้นที่รอบ Hi เว้นว่างไว้ทำอย่างอื่น
     for (let i of NA) {
       let e = (i.anim === "horse" || i.beast === "horse") && Xg("horse2");
       if (!e && (i.beast ? !Kg(i.beast) : i.anim ? !Xg(i.anim) : !Fc(i.key))) continue;
