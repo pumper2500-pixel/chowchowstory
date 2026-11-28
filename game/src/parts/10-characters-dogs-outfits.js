@@ -1043,7 +1043,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         #ifdef FUR_SHELL
         vec3 nn = normalize(objectNormal);
         float fd = distance(position.yz, vec2(uNoseY, uNoseZ));
-        float face = 1.0 - (1.0 - smoothstep(0.24 * uL, 0.36 * uL, fd)) * step(hc.z - 0.02 * uL, position.z);   // หน้า (ตา/ปาก/จมูก) ไม่มีขนชั้นนอก
+        float face = mix(1.0, mix(0.0, 0.7, smoothstep(0.07 * uL, 0.3 * uL, fd)), step(hc.z - 0.02 * uL, position.z));   // v143: หน้ามีขนฟู (สั้นลงใกล้ตา/จมูก ปลายจมูกไม่มี)
         float fm = (0.25 + 0.75 * legM + 0.5 * mane) * face;
         float fl = uShellK * uFurLen * uH * fm;
         transformed += nn * fl;
@@ -1055,7 +1055,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         #endif
       }
       { // ขากรรไกรล่าง: หุบ/อ้า
-        float jw = smoothstep(uNoseZ - 0.22 * uL, uNoseZ - 0.1 * uL, transformed.z) * (1.0 - smoothstep(uNoseY - 0.06 * uH, uNoseY - 0.025 * uH, transformed.y)) * smoothstep(uNoseY - 0.3 * uH, uNoseY - 0.18 * uH, transformed.y);
+        float jw = smoothstep(uNoseZ - 0.22 * uL, uNoseZ - 0.1 * uL, position.z) * (1.0 - smoothstep(uNoseY - 0.06 * uH, uNoseY - 0.025 * uH, position.y)) * smoothstep(uNoseY - 0.3 * uH, uNoseY - 0.18 * uH, position.y);
         jw *= uChow;
         if (jw > 0.0) {
           float a = uJaw * 0.3 * jw;
@@ -1064,10 +1064,10 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
           transformed = piv + vec3(q.x, q.y * ca - q.z * sa, q.y * sa + q.z * ca);
         }
       }
-      float legW = 1.0 - smoothstep(uHip * 0.45, uHip, transformed.y);
+      float legW = 1.0 - smoothstep(uHip * 0.45, uHip, position.y);   // v143: ใช้ตำแหน่งเดิม (ไม่ให้ท้องที่พองลงมาถูกนับเป็นขา)
       if (legW > 0.0) {
-        bool front = transformed.z > uZMid;
-        float side = transformed.x > 0.0 ? 1.0 : -1.0;
+        bool front = position.z > uZMid;
+        float side = position.x > 0.0 ? 1.0 : -1.0;
         float off = front ? (side > 0.0 ? 0.0 : 3.14159) : (side > 0.0 ? 3.14159 : 0.0);          // เดิน: ขาทแยงคู่กัน
         float offG = front ? (side > 0.0 ? 0.0 : 0.55) : (side > 0.0 ? 3.14159 : 3.7);            // วิ่งควบ: ขาหน้าคู่ ขาหลังคู่ สลับกัน
         off = mix(off, offG, uGal);
@@ -1079,7 +1079,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         transformed = piv + vec3(q.x, q.y * ca - q.z * sa, q.y * sa + q.z * ca);
       }
       { // หัว: หมุนรอบคอ (หันมอง ก้มดม เงยหาว เอียงคอ) \xB7 ค่อย ๆ ไล่น้ำหนักจากคอขึ้นหัว
-        float hw = smoothstep(uNeck.z - 0.04 * uL, uNeck.z + 0.1 * uL, transformed.z) * smoothstep(uNeck.y - 0.14 * uH, uNeck.y + 0.02 * uH, transformed.y);
+        float hw = smoothstep(uNeck.z - 0.04 * uL, uNeck.z + 0.1 * uL, position.z) * smoothstep(uNeck.y - 0.14 * uH, uNeck.y + 0.02 * uH, position.y);
         if (hw > 0.0 && (abs(uHeadY) + abs(uHeadX) + abs(uHeadZ)) > 0.001) {
           vec3 q = transformed - uNeck; float a, c, s2;
           a = uHeadZ * hw; c = cos(a); s2 = sin(a); q = vec3(q.x * c - q.y * s2, q.x * s2 + q.y * c, q.z);
@@ -1089,7 +1089,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         }
       }
       { // หางกระดิก: หมุนทั้งพวงรอบโคนหาง (ไม่ลากหลังให้เบี้ยว)
-        float tw = (1.0 - smoothstep(uTailZ - 0.08, uTailZ, transformed.z)) * smoothstep(uTailY, uTailY1, transformed.y);
+        float tw = (1.0 - smoothstep(uTailZ - 0.08, uTailZ, position.z)) * smoothstep(uTailY, uTailY1, position.y);   // v143: ใช้ตำแหน่งเดิม — ขนกลางหลังที่ฟูขึ้นไม่หมุนตามหาง
         if (tw > 0.0) {
           float a = sin(uWag) * 0.42 * tw;
           vec2 q = vec2(transformed.x, transformed.z - uTailPZ);
