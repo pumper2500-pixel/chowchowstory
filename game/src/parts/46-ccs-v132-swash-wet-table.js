@@ -231,7 +231,7 @@
       bar = () => ((h.style.left = P(p)), (f.style.cssText = `left:${P(Z.y0)};width:${P(Z.y1 - Z.y0)}`), (g.style.cssText = `left:${P(Z.g0)};width:${P(Z.g1 - Z.g0)}`)),
       off = () => ((h.style.left = "0%"), (f.style.cssText = "display:none"), (g.style.cssText = "display:none"));
     if (u.k === "sit") ((l.textContent = `${c}/${t.ev.length} · 🪑 สั่งนั่ง! กด ⤴ ตอนน้องหันมามอง (แถบเขียว)`), bar());
-    else if (u.k === "dis") u.on ? ((l.textContent = `${c}/${t.ev.length} · ${u.ic} ${u.nm}มาทาง${u.side === "L" ? "⬅ ซ้าย" : "ขวา ➡"}! กด ${u.side === "L" ? "⬅" : "➡"} บอก "ไม่!" ตอนเขียว`), bar()) : ((l.textContent = `${c}/${t.ev.length} · 🐕 คอย… ห้ามกดอะไร! ระวังของล่อใจ`), off());
+    else if (u.k === "dis") u.on ? ((l.textContent = `${c}/${t.ev.length} · ${u.ic} ${u.nm}มาทาง${u.side === "L" ? " ⬅ ซ้าย" : "ขวา ➡"}! กด ${u.side === "L" ? "⬅" : "➡"} บอก "ไม่!" ตอนเขียว`), bar()) : ((l.textContent = `${c}/${t.ev.length} · 🐕 คอย… ห้ามกดอะไร! ระวังของล่อใจ`), off());
     else u.on ? ((l.textContent = `${c}/${t.ev.length} · 📣 เรียกลง! กด ⤴ ตอนแถบเขียว`), bar()) : ((l.textContent = `${c}/${t.ev.length} · 🐕 คอยอีกนิด… ห้ามกด!`), off());
     (ccsTRHud.classList.remove("bal"), ccsTRHud.classList.toggle("hot", (u.k === "sit" || u.on) && p >= Z.g0 && p <= Z.g1));
   }

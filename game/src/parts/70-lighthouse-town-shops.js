@@ -2825,7 +2825,7 @@
           (j.jy > 0 || j.vy > 0) &&
             ((j.vy -= (ccsHG("prop") && j.vy < 0 ? 13 : 24) * e), (j.jy = Math.max(0, j.jy + j.vy * e)), (j.jt += e), j.jy === 0 && (j.vy = 0)));
       Ed = !1;
-      let E = Se ? (Rn && Se === Rn && (j.sleeping || $H(n.pos)) ? Rn.bedY + ccsBedLift(n) : 0) : x4(n.pos, n.rig.yaw, b4);
+      let E = Se ? (Rn && Se === Rn && (j.sleeping || $H(n.pos)) ? Rn.bedY + ccsBedLift(n) : 0) : ho ? (j.jy > 0.001 ? ((j.gy = 0), 0) : b4(n.pos.x, n.pos.z)) : x4(n.pos, n.rig.yaw, b4); // v133: ตอนฝึก บนอุปกรณ์ใช้ความสูงจากเส้นทางของด่านอย่างเดียว (เดิมบวกความสูงอุปกรณ์ซ้ำ → ตัวลอยเหนือสะพาน/โต๊ะ/บันได) · ตอนเดินบนพื้นใช้พื้นจริง
       E >= j.gy ? (j.gy = E) : (j.gy = Math.max(E, j.gy - e * 5));
       let g = Se ? 0 : go(n.pos.x, n.pos.z);
       if (((j.wade += (g - j.wade) * Math.min(1, e * 6)), g > 0.12 && j.started)) {
