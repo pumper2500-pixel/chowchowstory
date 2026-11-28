@@ -665,11 +665,12 @@ vObj = position;`,
         let y0 = l.getY(M), z0 = l.getZ(M);
         y0 > e * 0.72 && y0 < e * 0.88 && z0 > a.min.z + (a.max.z - a.min.z) * 0.76 && ((hx0 = Math.min(hx0, l.getX(M))), (hx1 = Math.max(hx1, l.getX(M))));
       }
-      let S = o.material.clone();
+      let S = o.material.clone(), tl0 = null;
       return (
         S.map || (r.deleteAttribute("color"), (S = new X({ color: 14200968 }))),
         r.getAttribute("normal") || r.computeVertexNormals(),
         t === "chow" && ccsEarMask(r, e, a.max.z - a.min.z, hx1 > hx0 ? (hx0 + hx1) / 2 : 0),
+        (tl0 = t === "chow" ? ccsTailPrep(r, e, a.max.z - a.min.z) : null),
         (S.roughness = 0.9),
         (S.metalness = 0),
         (jg[t] = {
@@ -701,6 +702,7 @@ vObj = position;`,
           noseZ: w,
           nose3: N3,
           headX: hx1 > hx0 ? (hx0 + hx1) / 2 : 0,
+          tail: tl0,
         }),
         !0
       );
@@ -763,9 +765,9 @@ vObj = position;`,
         uDirt: { value: 0 },
         uWet: { value: 0 },
         uWetY: { value: 1.2 },
-        uPuff: { value: o ? 0.06 : 0 },
-        uFurLen: { value: 0.05 },
-        uFurDen: { value: 150 },
+        uPuff: { value: o ? 0.075 : 0 },
+        uFurLen: { value: 0.07 },
+        uFurDen: { value: 125 },
         uFurT: { value: Math.random() * 50 },
         uFurFlat: { value: 0 },
         uFurVel: { value: new H() },
@@ -791,6 +793,8 @@ vObj = position;`,
           uTailY1: { value: s.tailY1 },
           uTailPZ: { value: s.tailPZ },
           uHX: { value: s.headX ?? 0 },
+          uTailSep: { value: s.tail ? 1 : 0 },
+          uTailRoot: { value: new H(...(s.tail?.root ?? [0, 0, 0])) },
         }),
           (v.fragmentShader =
             `#ifdef FUR_SHELL
@@ -1042,10 +1046,13 @@ uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uT
           (v.vertexShader =
             `varying vec3 vPosM;
 attribute float aEar;
+#ifdef CCS_TAIL
+attribute float aT;
+#endif
 #ifdef FUR_SHELL
 varying float vFm;
 #endif
-uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF, uPuff, uFurLen, uShellK, uFurT, uHX; uniform vec3 uNeck, uFurVel; uniform mat4 uFootM;
+uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF, uPuff, uFurLen, uShellK, uFurT, uHX, uTailSep; uniform vec3 uNeck, uFurVel, uTailRoot; uniform mat4 uFootM;
 ` +
             v.vertexShader.replace(
               "#include <begin_vertex>",
@@ -1059,7 +1066,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         float hw = smoothstep(uNeck.z - 0.06 * uL, uNeck.z + 0.1 * uL, position.z) * smoothstep(uNeck.y - 0.16 * uH, uNeck.y + 0.04 * uH, position.y);
         float legM = smoothstep(uHip * 0.15, uHip * 1.0, position.y);
         float mane = exp(-pow((position.z - (uNeck.z - 0.03 * uL)) / (0.16 * uL), 2.0)) * smoothstep(uHip * 0.6, uHip * 1.3, position.y);
-        float sBody = uPuff * (3.0 + 2.2 * mane) * (0.35 + 0.65 * legM);
+        float sBody = uPuff * (3.0 + 2.2 * mane) * (0.55 + 0.45 * legM);   // v147: ขาฟูอวบขึ้น
         float top = smoothstep(hc.y - 0.02 * uH, hc.y + 0.2 * uH, position.y);                // กระหม่อม/หลังหัว
         float front = smoothstep(hc.z + 0.04 * uL, uNoseZ, position.z);                         // หน้า/ปาก
         float sHead = uPuff * (1.5 + 1.4 * top * (1.0 - front));                                  // v144: หัวด้านบนพองกลมขึ้น
@@ -1067,13 +1074,22 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         vec3 off = (position - anc) * mix(sBody, sHead, hw) * (1.0 - 0.45 * aEar);   // v145b: หูไม่ถูกดึงยืดออกไปตามหัวที่ฟู (ไม่แหลมโผล่)
         off.z -= hw * front * (0.035 * uL) * smoothstep(0.0, 1.0, 1.0 - top);                    // v144: ปากสั้นลงนิดหน่อย
         off.y *= mix(legM, 1.0, hw);                                   // ขา: ฟูออกด้านข้างอย่างเดียว ไม่ยืดลงพื้น
+        { // v147: หัวกลมเป็นลูกบอล — ดึงผิวหัว (ยกเว้นหน้า/ปาก) เข้าหาทรงกลมรอบจุดกลางหัว · หูถูกดันออกให้โผล่พ้นขนเป็นก้อนกลม
+          vec3 rv = position - hc; float rl = max(length(rv), 1e-4);
+          float sph = hw * (1.0 - front) * smoothstep(hc.y - 0.2 * uH, hc.y, position.y) * 0.65;
+          off += (rv / rl * 0.235 * uH - rv) * sph;
+          off += (rv / rl * 0.045 * uH + normal * 0.03 * uH) * aEar;
+        }
         transformed += off * uChow;   // v145: ฟูถึงฝ่าเท้า (เดิมขอบล่างไม่ฟู → เห็นเป็นขอบสีส้มสว่างใต้เท้า)
         #ifdef FUR_SHELL
         vec3 nn = normalize(objectNormal);
         float fd = distance(position.yz, vec2(uNoseY, uNoseZ));
         float face = mix(1.0, mix(0.0, 0.7, smoothstep(0.07 * uL, 0.3 * uL, fd)), step(hc.z - 0.02 * uL, position.z));   // v143: หน้ามีขนฟู (สั้นลงใกล้ตา/จมูก ปลายจมูกไม่มี)
         float fm = (0.25 + 0.75 * legM + 0.5 * mane + 0.6 * hw * top * (1.0 - front)) * face;   // v144: ขนบนหัวยาวขึ้น
-        fm *= 1.0 - aEar;   // v145: หู (หาจากรูปทรงตอนโหลด แล้วเกลี่ยให้เนียน) ไม่มีขนชั้นนอก → ไม่มีขนแหลมเป็นกระจุก/เส้นโด่ ๆ
+        fm *= 1.0 - aEar;
+        #ifdef CCS_TAIL
+        fm *= 1.3;   // หางพวงฟู
+        #endif   // v145: หู (หาจากรูปทรงตอนโหลด แล้วเกลี่ยให้เนียน) ไม่มีขนชั้นนอก → ไม่มีขนแหลมเป็นกระจุก/เส้นโด่ ๆ
         vFm = fm;
         float fl = uShellK * uFurLen * uH * fm;
         transformed += nn * fl;
@@ -1137,12 +1153,25 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
             // v145b เชาเชา: หางของโมเดลติดเป็นผืนเดียวกับแผ่นหลัง → ไม่เลื่อนทั้งพวง (จะดึงผิวหลังยืดเป็นแผ่น)
             //   แต่ "เอน" ซ้าย-ขวาจากผิวหลัง: ยิ่งสูงจากหลังยิ่งปัดมาก ใต้หางที่ติดหลังแทบไม่ขยับ → ไม่มีผิวยืด
             float py = uTailY - 0.03 * uH, h = max(position.y - py, 0.0);
-            float b = sin(uWag) * 0.5 * tw;
+            float b = sin(uWag) * 0.5 * tw * (1.0 - uTailSep);   // v147: มีหางแยกชิ้นแล้ว → ตัวไม่ต้องขยับ
             transformed.x += h * sin(b);
             transformed.y -= h * (1.0 - cos(b));
           }
           transformed.y += abs(sin(uWag)) * 0.012 * tw * (1.0 - uChow);
         }
+        #ifdef CCS_TAIL
+        { // v147: หางแยกชิ้น — ส่ายรอบแกนตามแนวสะโพก (โคนหางอยู่กับที่ ไล่น้ำหนักไปปลาย) + ยกขึ้นนิด ๆ ตอนปัดสุด → ปลายหางหลุดจากหลัง
+          float wt = smoothstep(0.12, 0.4, aT);
+          vec3 piv = uTailRoot + vec3(0.0, 0.05 * uH, -0.03 * uL) * uChow;
+          vec3 ax = normalize(vec3(0.0, 0.5, -1.0));
+          float a = sin(uWag) * 0.6 * wt;
+          vec3 q = transformed - piv;
+          q = q * cos(a) + cross(ax, q) * sin(a) + ax * dot(ax, q) * (1.0 - cos(a));
+          float b = -(0.1 + 0.16 * abs(sin(uWag))) * wt;      // ยกหางขึ้น/ไปด้านหลัง (หมุนรอบแกน x)
+          q = vec3(q.x, q.y * cos(b) - q.z * sin(b), q.y * sin(b) + q.z * cos(b));
+          transformed = piv + q;
+        }
+        #endif
       }
       { // เท้าติดพื้นตอนนั่ง/หมอบ/ก้ม: ปลายเท้าคืนสู่ตำแหน่งเดิมบนพื้น ไล่น้ำหนักขึ้นไปถึงสะโพก (ขาที่กำลังเกาไม่ดึง)
         float wf = uFootOn * (1.0 - clamp((position.y - uHip * 0.1) / (uHip * 0.95), 0.0, 1.0));
@@ -1154,6 +1183,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     let p = new R(s.geo, u);
     o && p.scale.set(1.24, 1.02, 1.08);
     o && ccsFurShells(p, u, d);
+    o && ccsTailAttach(s, u, d, p);
     p.userData.ccsG = s;
     let m = (v) => {
       let _ = o0[v] ?? o0.orange;

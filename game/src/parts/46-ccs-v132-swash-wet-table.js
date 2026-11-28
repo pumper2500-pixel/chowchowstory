@@ -340,6 +340,96 @@
     g.setAttribute("aEar", new Je(ear, 1));
     g.userData.ccsEars = C;
   }
+
+  // v147: หางเชาเชาแยกชิ้น — หางในโมเดลติดเป็นผืนเดียวกับแผ่นหลัง (ทั้งโคนและปลาย) ขยับแล้วผิวหลังยืดตาม
+  //   (1) หาส่วนหางจากรูปทรง (ผิวที่อยู่สูงกว่าแผ่นหลัง) แล้ว "รีด" ให้แนบเป็นแผ่นหลังเรียบ ๆ สีเดียวกับขนหลัง
+  //   (2) สร้างหางใหม่เป็นพวงกลมฟู ม้วนขึ้นมาบนหลังแล้วพาดไปด้านข้าง (ตำแหน่งเดียวกับหางเดิม ใช้สีจากหางเดิม)
+  //   หางใหม่หมุนรอบโคนหางได้อิสระ → ส่ายแล้วปลายหางยกหลุดจากหลังตามธรรมชาติ
+  function ccsTailPrep(g, H, L) {
+    try {
+      let P = g.getAttribute("position"), N = g.getAttribute("normal"), UV = g.getAttribute("uv"), I = g.index, n = P.count, sc = H / 1.15;
+      if (!I || !UV) return null;
+      let yb = (x, z) => { let s0 = Math.min(1, Math.max(0, (-z / sc - 0.5) / 0.15)); return (0.895 - 2.3 * (x / sc) ** 2 - 0.2 * s0 * s0) * sc; },
+        cand = new Uint8Array(n), key = new Map(), w = new Int32Array(n).fill(-1);
+      for (let i = 0; i < n; i++) {
+        let x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+        if (z > -0.66 * sc && z < -0.1 * sc && y > 0.8 * sc && y > yb(x, z) + 0.025 * sc) {
+          cand[i] = 1;
+          let k = Math.round(x * 1e4) + "," + Math.round(y * 1e4) + "," + Math.round(z * 1e4);
+          key.has(k) || key.set(k, i); w[i] = key.get(k);
+        }
+      }
+      let adj = new Map();
+      for (let t = 0; t < I.count; t += 3) {
+        let a = I.getX(t), b = I.getX(t + 1), c = I.getX(t + 2);
+        if (!cand[a] || !cand[b] || !cand[c]) continue;
+        for (let [u, v] of [[w[a], w[b]], [w[b], w[c]], [w[a], w[c]]]) if (u !== v) { (adj.get(u) ?? adj.set(u, []).get(u)).push(v); (adj.get(v) ?? adj.set(v, []).get(v)).push(u); }
+      }
+      let top = -1, ty = -9;
+      for (let i of adj.keys()) P.getY(i) > ty && ((ty = P.getY(i)), (top = i));
+      if (top < 0) return null;
+      let comp = new Set([top]), st = [top];
+      while (st.length) { let u = st.pop(); for (let v of adj.get(u) ?? []) comp.has(v) || (comp.add(v), st.push(v)); }
+      if (comp.size < 300) return null;
+      // เก็บตำแหน่ง/UV หางเดิมไว้ให้หางใหม่ใช้สี
+      let src = [];
+      for (let i of comp) src.push([P.getX(i), P.getY(i), P.getZ(i), UV.getX(i), UV.getY(i)]);
+      // UV ขนหลัง (ใช้ระบายแผ่นที่รีดแล้วให้เป็นสีเดียว ไม่มีลายกระพริบ)
+      let bu = 0, bv = 0, bd = 1e9, bx = 0, bz = -0.3 * sc, byy = yb(bx, bz);
+      for (let i = 0; i < n; i++) { if (cand[i]) continue; let d = (P.getX(i) - bx) ** 2 + (P.getY(i) - byy) ** 2 + (P.getZ(i) - bz) ** 2; d < bd && ((bd = d), (bu = UV.getX(i)), (bv = UV.getY(i))); }
+      for (let i = 0; i < n; i++) {
+        if (w[i] < 0 || !comp.has(w[i])) continue;
+        let x = P.getX(i), z = P.getZ(i), s0 = Math.min(1, Math.max(0, (-z / sc - 0.5) / 0.15)),
+          nx = 4.6 * (x / sc), nz = -2.667 * s0, l = Math.hypot(nx, 1, nz);
+        P.setY(i, yb(x, z) + 0.012 * sc); N.setXYZ(i, nx / l, 1 / l, nz / l); UV.setXY(i, bu, bv);
+      }
+      ((P.needsUpdate = !0), (N.needsUpdate = !0), (UV.needsUpdate = !0));
+      // หางใหม่: ท่อโค้งตามแนวหางเดิม ปลายมนกลม
+      let C = [[0, 0.72, -0.53], [0, 0.9, -0.56], [0, 1.0, -0.5], [0.03, 1.05, -0.4], [0.09, 1.04, -0.3], [0.17, 0.99, -0.26], [0.24, 0.93, -0.3]].map((p) => p.map((v) => v * sc)),
+        cr = (t) => {
+          let f = t * (C.length - 1), k = Math.min(C.length - 2, Math.floor(f)), u = f - k,
+            p0 = C[Math.max(0, k - 1)], p1 = C[k], p2 = C[k + 1], p3 = C[Math.min(C.length - 1, k + 2)];
+          return [0, 1, 2].map((j) => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * u + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * u * u + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * u * u * u));
+        },
+        NS = 56, NR = 20, pos = [], nor = [], uv = [], at = [], idx = [],
+        sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], crs = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+        nrm = (a) => { let l = Math.hypot(...a) || 1; return a.map((v) => v / l); }, dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+      let pts = [], tuv = [0, 0], tyy = -9;
+      for (let s2 of src) s2[1] > tyy && ((tyy = s2[1]), (tuv = [s2[3], s2[4]]));
+      for (let k = 0; k <= NS; k++) pts.push(cr(k / NS));
+      let T0 = nrm(sub(pts[1], pts[0])), U = nrm(crs(T0, [1, 0, 0])), V;
+      for (let k = 0; k <= NS; k++) {
+        let t = k / NS, T = nrm(sub(pts[Math.min(NS, k + 1)], pts[Math.max(0, k - 1)]));
+        U = nrm(sub(U, T.map((v) => v * dot(U, T)))); V = crs(T, U);
+        let r = 0.1 * sc * (0.8 + 0.35 * Math.sin(Math.PI * Math.min(1, t * 1.1))), cap = t > 0.86 ? Math.sqrt(Math.max(0, 1 - ((t - 0.86) / 0.14) ** 2)) : 1;
+        r *= Math.max(cap, 0.02);
+        for (let j = 0; j <= NR; j++) {
+          let an = (j / NR) * Math.PI * 2, d = [0, 1, 2].map((q) => U[q] * Math.cos(an) + V[q] * Math.sin(an)),
+            p = [0, 1, 2].map((q) => pts[k][q] + d[q] * r),
+            nn = t > 0.86 ? nrm([0, 1, 2].map((q) => d[q] * cap + T[q] * (1 - cap) * 1.2)) : d;
+          pos.push(...p); nor.push(...nn); at.push(t);
+          uv.push(tuv[0], tuv[1]);   // สีเดียวทั้งพวง (สีขนหางเดิมตรงยอดหาง) ไม่มีรอยต่อลาย
+        }
+      }
+      for (let k = 0; k < NS; k++) for (let j = 0; j < NR; j++) { let a = k * (NR + 1) + j, b = a + NR + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
+      let tg = new qe();
+      (tg.setAttribute("position", new Fe(pos, 3)), tg.setAttribute("normal", new Fe(nor, 3)), tg.setAttribute("uv", new Fe(uv, 2)), tg.setAttribute("aT", new Fe(at, 1)), tg.setIndex(idx), tg.computeBoundingSphere());
+      return { geo: tg, root: C[0] };
+    } catch (e) { console.warn("tail", e); return null; }
+  }
+  // ติดหางใหม่ให้น้องเชาเชา (ใช้วัสดุเดียวกับตัว + คำสั่งหมุนหางของตัวเอง) พร้อมชั้นขนฟู
+  function ccsTailAttach(s, u, d, p) {
+    if (!s.tail) return null;
+    let tm = u.clone();
+    ((tm.color = u.color),
+      (tm.onBeforeCompile = (v, r) => {
+        (u.onBeforeCompile(v, r), (v.vertexShader = "#define CCS_TAIL\n" + v.vertexShader), (v.fragmentShader = "#define CCS_TAIL\n" + v.fragmentShader));
+      }),
+      (tm.customProgramCacheKey = () => "ccsTail"));
+    let m = new R(s.tail.geo, tm);
+    ((m.castShadow = !0), (m.receiveShadow = !0), p.add(m), ccsFurShells(m, tm, d));
+    return m;
+  }
   function ccsFurShells(p, u, d) {
     let base = u.onBeforeCompile,
       n = 8,
@@ -356,7 +446,7 @@
         }),
         (sm.alphaToCoverage = a2c),
         a2c && ((sm.blending = 5), (sm.blendSrc = 201), (sm.blendDst = 200), (sm.blendSrcAlpha = 200), (sm.blendDstAlpha = 201)),   // สีทับปกติ แต่ไม่เขียนค่า alpha ลงจอ (ไม่ให้พื้นหลังหน้าเว็บโผล่ทะลุขน)
-        (sm.customProgramCacheKey = () => "ccsFur" + (a2c ? "A" : "")));
+        (sm.customProgramCacheKey = () => "ccsFur" + (a2c ? "A" : "") + (u.customProgramCacheKey?.() === "ccsTail" ? "T" : "")));
       let m = new R(p.geometry, sm);
       ((m.castShadow = !1), (m.receiveShadow = !0), (m.visible = !1), (m.userData.noOcc = !0), (m.userData.ccsShell = !0), p.add(m), list.push(m));
     }
@@ -399,7 +489,7 @@
   var ccsFurQ = new At(),
     ccsFurS = new H();
   // ดีบัก: puff = ความอ้วน (สัดส่วนความสูงตัว), shells = เปิด/ปิดชั้นขน, len = ความยาวขน
-  function ccsFluff(puff = 0.06, shells = !0, len = 0.05) {
+  function ccsFluff(puff = 0.075, shells = !0, len = 0.07) {
     ccsFurOff = !shells;
     for (let f of ccsFurList) ((f.d.uPuff.value = puff), (f.d.uFurLen.value = len));
     return { puff, shells, len, dogs: ccsFurList.length, mobile: ccsFurMobile };
