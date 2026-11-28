@@ -598,6 +598,8 @@ vObj = position;`,
         f = 0;
       for (let M = 0; M < l.count; M++) l.getY(M) > e * 0.75 && ((h += l.getZ(M)), f++);
       (f && h / f < 0 && r.rotateY(Math.PI), r.computeBoundingBox(), (a = r.boundingBox));
+      let hf0 = t === "chow" ? ccsHeadStraight(r, e, a.max.z - a.min.z) : null;
+      (r.computeBoundingBox(), (a = r.boundingBox));   // v148: หัวหันตรง
       let d = 0,
         u = 0,
         p = 0,
@@ -703,6 +705,7 @@ vObj = position;`,
           nose3: N3,
           headX: hx1 > hx0 ? (hx0 + hx1) / 2 : 0,
           tail: tl0,
+          headFix: hf0,
         }),
         !0
       );
@@ -1324,6 +1327,8 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         (v.eyes.rotation.y = S),
         v.face.position.set(-0.235 * M, 0.835 * M, 0.62 * M),
         (v.face.rotation.y = S));
+      if (s.headFix) for (let T of ["head", "eyes", "face"]) ccsHeadFixObj(s.headFix, v[T]);   // v148: หัวหันตรงแล้ว → ของบนหัว/หน้าตรงตาม
+      s.headFix && (v.head.position.y += 0.08 * _, (v.head.position.z -= 0.05 * _));          // หัวกลมฟูสูงขึ้น → หมวกขึ้นไปนั่งบนกระหม่อม ไม่จมหัว/ไม่ทิ่มหน้า
       for (let T in v) p.add(v[T]);
       w.slots = v;
     }

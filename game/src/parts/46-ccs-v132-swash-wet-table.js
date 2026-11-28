@@ -430,6 +430,60 @@
     ((m.castShadow = !0), (m.receiveShadow = !0), p.add(m), ccsFurShells(m, tm, d));
     return m;
   }
+
+  // v148: โมเดลเชาเชาต้นฉบับ "หันหน้าไปทางซ้ายราว 33°" (หัวบิดอยู่ในท่าพัก) → มองด้านข้างแล้วหน้าแบน
+  //   หาลูกตาสองข้าง (ชิ้นเล็ก ๆ แยกจากตัว) แล้วหมุนหัวกลับให้ตาอยู่แนวเดียวกัน หน้าตรงกลางลำตัว · คอค่อย ๆ บิดตาม
+  function ccsHeadStraight(g, H, L) {
+    try {
+      let P = g.getAttribute("position"), N = g.getAttribute("normal"), I = g.index, n = P.count;
+      if (!I) return null;
+      let key = new Map(), w = new Int32Array(n), par = new Int32Array(n);
+      for (let i = 0; i < n; i++) {
+        let k = Math.round(P.getX(i) * 1e4) + "," + Math.round(P.getY(i) * 1e4) + "," + Math.round(P.getZ(i) * 1e4);
+        key.has(k) || key.set(k, i); w[i] = key.get(k); par[i] = i;
+      }
+      let fd = (a) => { while (par[a] !== a) ((par[a] = par[par[a]]), (a = par[a])); return a; };
+      for (let t = 0; t < I.count; t += 3) {
+        let a = fd(w[I.getX(t)]), b = fd(w[I.getX(t + 1)]), c = fd(w[I.getX(t + 2)]);
+        a !== b && (par[a] = b); b = fd(b); c !== b && (par[c] = b);
+      }
+      let cm = new Map();
+      for (let i = 0; i < n; i++) {
+        let r = fd(w[i]), q = cm.get(r) ?? cm.set(r, [0, 0, 0, 0, 9, -9, 9, -9, 9, -9]).get(r), x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+        ((q[0] += x), (q[1] += y), (q[2] += z), q[3]++, (q[4] = Math.min(q[4], x)), (q[5] = Math.max(q[5], x)), (q[6] = Math.min(q[6], y)), (q[7] = Math.max(q[7], y)), (q[8] = Math.min(q[8], z)), (q[9] = Math.max(q[9], z)));
+      }
+      let eyes = [...cm.values()].filter((q) => q[3] >= 60 && q[3] <= 1500 && Math.max(q[5] - q[4], q[7] - q[6], q[9] - q[8]) < 0.09 * H && q[1] / q[3] > 0.76 * H && q[2] / q[3] > 0)
+        .map((q) => [q[0] / q[3], q[1] / q[3], q[2] / q[3]]).sort((a, b) => a[0] - b[0]);
+      if (eyes.length !== 2) return null;
+      let dx = eyes[1][0] - eyes[0][0], dz = eyes[1][2] - eyes[0][2], ph = Math.atan2(dz, dx);
+      if (Math.abs(ph) < 0.05 || Math.abs(ph) > 0.9) return null;
+      let mx = (eyes[0][0] + eyes[1][0]) / 2, mz = (eyes[0][2] + eyes[1][2]) / 2,
+        sc = H / 1.15, ny = 0.71 * sc, nz = 0.33 * sc,
+        pz = Math.min(nz + 0.05 * sc, Math.max(nz - 0.25 * sc, mz + (mx * Math.cos(ph)) / Math.sin(ph))),
+        ss = (a, b, x) => { let t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+      let fix = { ph, pz, ny, nz, H, L };
+      for (let i = 0; i < n; i++) {
+        let x = P.getX(i), y = P.getY(i), z = P.getZ(i), k = ccsHeadFixK(fix, y, z);
+        if (k <= 0) continue;
+        let a = ph * k, c = Math.cos(a), s2 = Math.sin(a), qx = x, qz = z - pz;
+        P.setXYZ(i, qx * c + qz * s2, y, pz - qx * s2 + qz * c);
+        let ox = N.getX(i), oz = N.getZ(i);
+        N.setXYZ(i, ox * c + oz * s2, N.getY(i), -ox * s2 + oz * c);
+      }
+      ((P.needsUpdate = !0), (N.needsUpdate = !0), g.computeBoundingBox(), g.computeBoundingSphere());
+      return fix;
+    } catch (e) { console.warn("head", e); return null; }
+  }
+  function ccsHeadFixK(f, y, z) {
+    let ss = (a, b, x) => { let t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    return ss(-0.1 * f.H, 0.08 * f.H, 0.8 * (y - (f.ny + 0.08 * f.H)) + 0.6 * (z - (f.nz - 0.04 * f.L))) * ss(f.ny - 0.3 * f.H, f.ny, y);
+  }
+  // ย้ายจุดติดของ (หมวก/แว่น/หน้ากาก) ตามหัวที่หมุนตรงแล้ว
+  function ccsHeadFixObj(f, o) {
+    if (!f) return;
+    let x = o.position.x, y = o.position.y, z = o.position.z, a = f.ph * ccsHeadFixK(f, y, z), c = Math.cos(a), s2 = Math.sin(a), qz = z - f.pz;
+    (o.position.set(x * c + qz * s2, y, f.pz - x * s2 + qz * c), (o.rotation.y = 0));
+  }
   function ccsFurShells(p, u, d) {
     let base = u.onBeforeCompile,
       n = 8,
