@@ -660,10 +660,16 @@ vObj = position;`,
           l.getZ(M) > _ &&
           (_ = l.getZ(M));
       _ < -1 && (_ = w - 0.05);
+      let hx0 = 9, hx1 = -9;   // v145: กึ่งกลางหัวจริง (แกน x)
+      for (let M = 0; M < l.count; M++) {
+        let y0 = l.getY(M), z0 = l.getZ(M);
+        y0 > e * 0.72 && y0 < e * 0.88 && z0 > a.min.z + (a.max.z - a.min.z) * 0.76 && ((hx0 = Math.min(hx0, l.getX(M))), (hx1 = Math.max(hx1, l.getX(M))));
+      }
       let S = o.material.clone();
       return (
         S.map || (r.deleteAttribute("color"), (S = new X({ color: 14200968 }))),
         r.getAttribute("normal") || r.computeVertexNormals(),
+        t === "chow" && ccsEarMask(r, e, a.max.z - a.min.z, hx1 > hx0 ? (hx0 + hx1) / 2 : 0),
         (S.roughness = 0.9),
         (S.metalness = 0),
         (jg[t] = {
@@ -677,9 +683,9 @@ vObj = position;`,
           zMid: y,
           ...(t === "chow"
             ? {
-                tailZ: a.min.z + (a.max.z - a.min.z) * 0.5,
-                tailY: e * 0.755,
-                tailY1: e * 0.81,
+                tailZ: a.min.z + (a.max.z - a.min.z) * 0.45,   // v145: หางเฉพาะส่วนที่อยู่เหนือแผ่นหลัง (หลังสูงสุด ≈ 0.79H) → หางกระดิกทั้งพวง หลังไม่บิด
+                tailY: e * 0.8,
+                tailY1: e * 0.845,
                 tailPZ: a.min.z + (a.max.z - a.min.z) * 0.17,
               }
             : {
@@ -694,6 +700,7 @@ vObj = position;`,
           noseY: v,
           noseZ: w,
           nose3: N3,
+          headX: hx1 > hx0 ? (hx0 + hx1) / 2 : 0,
         }),
         !0
       );
@@ -783,9 +790,13 @@ vObj = position;`,
           uTailY: { value: s.tailY },
           uTailY1: { value: s.tailY1 },
           uTailPZ: { value: s.tailPZ },
+          uHX: { value: s.headX ?? 0 },
         }),
           (v.fragmentShader =
-            `uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt, uWet, uWetY, uShellK, uFurDen, uFurFlat; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
+            `#ifdef FUR_SHELL
+varying float vFm;
+#endif
+uniform float uRecolor, uChow, uNoseY, uNoseZ, uH, uL, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uPat, uShoeOn, uShoeStyle, uDirt, uWet, uWetY, uShellK, uFurDen, uFurFlat; uniform vec3 uDark, uLight, uShirt, uShirt2, uShoe, uNose3; varying vec3 vPosM;
       // ลายผ้า 2 มิติ (ใช้คู่กับการฉาย 3 แกน): 0 = สีหลัก, 1 = สีรอง
       float wearPat(vec2 u, float st, float ax) {
         if (st < 1.5) return 0.0;
@@ -986,6 +997,7 @@ vObj = position;`,
             diffuseColor.rgb = c;
           }
         }
+        if (uChow > 0.5) diffuseColor.rgb *= mix(0.62, 1.0, smoothstep(0.0, 0.09 * uHip, vPosM.y));   // v145: ใต้อุ้งเท้ามืดลง (เงาสัมผัสพื้น ไม่เป็นขอบสว่าง)
         // คราบสกปรก: ด่างดำตามขาและท้องก่อน แล้วลามขึ้นตัว
         if (uDirt > 0.01) {
           float n = vnoise(vPosM * 26.0) * 0.6 + vnoise(vPosM * 61.0) * 0.4;
@@ -1003,12 +1015,19 @@ vObj = position;`,
         #ifdef FUR_SHELL
         { // ขนฟู: ชั้นเปลือกขน — เส้นขนสุ่มเป็นจุด ๆ ยิ่งชั้นนอกยิ่งเหลือน้อย (ปลายขนเรียว) · ปลายขนสว่าง โคนขนมืด
           // เส้นขนกลม ปลายเรียว: แต่ละช่องมีขน 1 เส้น (ตำแหน่งสุ่ม) รัศมีเล็กลงเรื่อย ๆ ตามชั้น
+          if (vFm < 0.05) discard;   // ไม่มีขน (หู/ปลายจมูก): ไม่วาดชั้นขนทับผิว
           vec3 q = vPosM * (uFurDen * 1.6 / uH);
           vec3 ci = floor(q), cf = fract(q) - 0.5;
           vec3 jit = vec3(hsh(ci), hsh(ci + 3.1), hsh(ci + 7.7)) - 0.5;
           float r = length(cf - jit * 0.5);
           float rad = 0.62 * (1.0 - uShellK * 0.85) * (0.75 + 0.5 * hsh(ci + 1.9));
+          #ifdef FUR_A2C
+          float fa = (1.0 - smoothstep(rad * 0.45, rad * 1.15, r)) * (1.0 - uShellK * 0.35);   // v145: ขอบเส้นขนนุ่ม (MSAA alpha-to-coverage) ไม่เป็นจุดแตก ๆ
+          if (fa < 0.04) discard;
+          diffuseColor.a = fa;
+          #else
           if (r > rad) discard;
+          #endif
           float fz = 1.0 - smoothstep(0.16 * uL, 0.3 * uL, distance(vPosM.yz, vec2(uNoseY, uNoseZ)));   // โซนหน้า (ตา จมูก ปาก)
           if (uPat > 0.5 || uFurFlat > 0.5 || vPosM.y < uHip * 0.18 || (fz > 0.0 && dot(diffuseColor.rgb, vec3(0.33)) < 0.22)) discard;   // v144: ใส่เสื้อ/ตัวเปียกโชก/อุ้งเท้า/ตา-จมูก-ปาก: ไม่มีขนฟู · ส่วนอื่นสีเข้มก็มีขน
           diffuseColor.rgb *= mix(0.9, 1.12, uShellK);
@@ -1022,7 +1041,10 @@ vObj = position;`,
             )),
           (v.vertexShader =
             `varying vec3 vPosM;
-uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF, uPuff, uFurLen, uShellK, uFurT; uniform vec3 uNeck, uFurVel; uniform mat4 uFootM;
+#ifdef FUR_SHELL
+attribute float aEar; varying float vFm;
+#endif
+uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uTailY, uTailY1, uTailPZ, uNoseY, uNoseZ, uH, uL, uHeadY, uHeadX, uHeadZ, uFrontC, uRearC, uScr, uScrPh, uGal, uFootOn, uPawF, uPuff, uFurLen, uShellK, uFurT, uHX; uniform vec3 uNeck, uFurVel; uniform mat4 uFootM;
 ` +
             v.vertexShader.replace(
               "#include <begin_vertex>",
@@ -1030,7 +1052,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       vPosM = position;
       { // v142: น้องอ้วนฟู — ขยายตัวออกจาก "แกนกลางลำตัว" (เส้นจากโคนหางถึงคอ) และหัวขยายจากจุดกลางหัว ไล่ต่อเนื่องกัน
         //        (ไม่ใช้ทิศ normal → ไม่มีรอยหัก/รอยพับตอนขยับ) · ขาฟูออกด้านข้าง ไม่ยืดลงพื้น · หน้าไม่มีขนชั้นนอก (เรียบร้อยแบบหมาจริง)
-        vec3 hc = vec3(0.0, uNeck.y + 0.19 * uH, uNeck.z + 0.07 * uL);                       // จุดกลางหัว
+        vec3 hc = vec3(uHX, uNeck.y + 0.19 * uH, uNeck.z + 0.07 * uL);                       // จุดกลางหัว (v145: โมเดลหัวเอียงไปทางซ้ายนิดนึง → ใช้กึ่งกลางจริง หัวฟูกลมเท่ากันสองข้าง)
         vec3 sa = vec3(0.0, uHip * 1.25, uZB + 0.05 * uL), sb = vec3(0.0, uNeck.y - 0.02 * uH, uNeck.z - 0.02 * uL);   // แกนลำตัว
         vec3 ab = sb - sa; float tt = clamp(dot(position - sa, ab) / dot(ab, ab), 0.0, 1.0); vec3 sp = sa + ab * tt;
         float hw = smoothstep(uNeck.z - 0.06 * uL, uNeck.z + 0.1 * uL, position.z) * smoothstep(uNeck.y - 0.16 * uH, uNeck.y + 0.04 * uH, position.y);
@@ -1044,12 +1066,14 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
         vec3 off = (position - anc) * mix(sBody, sHead, hw);
         off.z -= hw * front * (0.035 * uL) * smoothstep(0.0, 1.0, 1.0 - top);                    // v144: ปากสั้นลงนิดหน่อย
         off.y *= mix(legM, 1.0, hw);                                   // ขา: ฟูออกด้านข้างอย่างเดียว ไม่ยืดลงพื้น
-        transformed += off * smoothstep(0.0, 0.1 * uHip, position.y) * uChow;
+        transformed += off * uChow;   // v145: ฟูถึงฝ่าเท้า (เดิมขอบล่างไม่ฟู → เห็นเป็นขอบสีส้มสว่างใต้เท้า)
         #ifdef FUR_SHELL
         vec3 nn = normalize(objectNormal);
         float fd = distance(position.yz, vec2(uNoseY, uNoseZ));
         float face = mix(1.0, mix(0.0, 0.7, smoothstep(0.07 * uL, 0.3 * uL, fd)), step(hc.z - 0.02 * uL, position.z));   // v143: หน้ามีขนฟู (สั้นลงใกล้ตา/จมูก ปลายจมูกไม่มี)
         float fm = (0.25 + 0.75 * legM + 0.5 * mane + 0.6 * hw * top * (1.0 - front)) * face;   // v144: ขนบนหัวยาวขึ้น
+        fm *= 1.0 - aEar;   // v145: หู (หาจากรูปทรงตอนโหลด แล้วเกลี่ยให้เนียน) ไม่มีขนชั้นนอก → ไม่มีขนแหลมเป็นกระจุก/เส้นโด่ ๆ
+        vFm = fm;
         float fl = uShellK * uFurLen * uH * fm;
         transformed += nn * fl;
         // ขนไหวเบา ๆ: ปลายขนลู่ตามการวิ่ง + เด้งตามจังหวะก้าว + ลมโชย (ขยับน้อย ๆ ไม่ให้ขนหลุดจากตัว)
@@ -1085,22 +1109,31 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
       }
       { // หัว: หมุนรอบคอ (หันมอง ก้มดม เงยหาว เอียงคอ) \xB7 ค่อย ๆ ไล่น้ำหนักจากคอขึ้นหัว
         float hw = smoothstep(uNeck.z - 0.04 * uL, uNeck.z + 0.1 * uL, position.z) * smoothstep(uNeck.y - 0.14 * uH, uNeck.y + 0.02 * uH, position.y);
+        // v145 เชาเชา: ท้ายทอยของโมเดลยื่นไปด้านหลังคอ → ใช้แนวเฉียงแบ่งหัว/แผงคอ (ท้ายทอยหมุนไปกับหัวทั้งก้อน ไม่โผล่เป็นโหนก)
+        //   และหมุนรอบจุดที่อยู่หลังคอเล็กน้อย (หัวทั้งหัวหันไปทางเดียวกัน ไม่มีส่วนหลังหัวสะบัดออกด้านตรงข้าม)
+        vec2 hq = position.yz - vec2(uNeck.y + 0.08 * uH, uNeck.z - 0.04 * uL);
+        float hwC = smoothstep(-0.06 * uH, 0.08 * uH, dot(hq, vec2(0.8, 0.6))) * smoothstep(uNeck.y - 0.2 * uH, uNeck.y, position.y);
+        hw = mix(hw, hwC, uChow);
+        vec3 pv = uNeck - vec3(0.0, 0.0, 0.1 * uL * uChow);
         if (hw > 0.0 && (abs(uHeadY) + abs(uHeadX) + abs(uHeadZ)) > 0.001) {
-          vec3 q = transformed - uNeck; float a, c, s2;
+          vec3 q = transformed - pv; float a, c, s2;
           a = uHeadZ * hw; c = cos(a); s2 = sin(a); q = vec3(q.x * c - q.y * s2, q.x * s2 + q.y * c, q.z);
           a = uHeadX * hw; c = cos(a); s2 = sin(a); q = vec3(q.x, q.y * c - q.z * s2, q.y * s2 + q.z * c);
           a = uHeadY * hw; c = cos(a); s2 = sin(a); q = vec3(q.x * c + q.z * s2, q.y, -q.x * s2 + q.z * c);
-          transformed = uNeck + q;
+          transformed = pv + q;
         }
       }
       { // หางกระดิก: หมุนทั้งพวงรอบโคนหาง (ไม่ลากหลังให้เบี้ยว)
         float tw = (1.0 - smoothstep(uTailZ - 0.08, uTailZ, position.z)) * smoothstep(uTailY, uTailY1, position.y);   // v143: ใช้ตำแหน่งเดิม — ขนกลางหลังที่ฟูขึ้นไม่หมุนตามหาง
         if (tw > 0.0) {
-          float a = sin(uWag) * 0.42 * tw;
+          float a = sin(uWag) * mix(0.42, 0.5, uChow) * tw;
           vec2 q = vec2(transformed.x, transformed.z - uTailPZ);
           float ca = cos(a), sa = sin(a);
           transformed.x = q.x * ca - q.y * sa;
           transformed.z = uTailPZ + q.x * sa + q.y * ca;
+          // v145 เชาเชา: พวงหางเอียงตามจังหวะ (หมุนรอบแกนหน้า-หลังที่โคนหาง) → หางปัดซ้าย-ขวาบนหลังเป็นธรรมชาติ ไม่ใช่แค่เลื่อน
+          float b = -sin(uWag) * 0.3 * tw * uChow; vec2 r2 = vec2(transformed.x, transformed.y - uTailY);
+          transformed.x = r2.x * cos(b) - r2.y * sin(b); transformed.y = uTailY + r2.x * sin(b) + r2.y * cos(b);
           transformed.y += abs(sin(uWag)) * 0.012 * tw;
         }
       }
@@ -1114,6 +1147,7 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
     let p = new R(s.geo, u);
     o && p.scale.set(1.24, 1.02, 1.08);
     o && ccsFurShells(p, u, d);
+    p.userData.ccsG = s;
     let m = (v) => {
       let _ = o0[v] ?? o0.orange;
       ((f.uRecolor.value = _.dark !== void 0 ? 1 : 0),
@@ -2689,7 +2723,8 @@ ${ccsLifeGL}
     let A = n.slots;
     if (!A) return;
     a.base ?? (a.base = new Map());
-    let F = s.uNeck.value;
+    let F = ccsNeckP.copy(s.uNeck.value);
+    F.z -= 0.1 * (o.L ?? 0) * (s.uChow?.value ?? 0);   // v145: จุดหมุนหัวเดียวกับใน shader
     for (let [C, P] of [
       ["eyes", 1],
       ["face", 1],
@@ -2720,6 +2755,7 @@ ${ccsLifeGL}
     }
     e3(n);
   }
+  var ccsNeckP = new H();
   var lp = new Oe(),
     Ay = new Oe(),
     Wg = new Oe();

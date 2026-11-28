@@ -271,20 +271,55 @@
   }
   // ===== v140 (ร่าง): ขนฟูแบบชั้นเปลือก (shell fur) ให้น้องเชาเชา — ใช้เรขาคณิตเดียวกับตัว + วัสดุชุดเดียวกัน (ท่าทางขยับตามกัน) =====
   var ccsFurList = [];
+
+  // v145: หาตำแหน่งหูของเชาเชาจากรูปทรงโมเดล — ผิวบนหัวที่ไม่ได้หันออกจากกลางหัว (แผ่นหู/ขอบหู) → ค่า aEar 0..1
+  //   แล้วเกลี่ยเฉลี่ยกับจุดรอบ ๆ (รัศมี ~5 ซม.) ให้ขอบนุ่ม ไม่มีจุดเดี่ยว ๆ โด่เป็นเส้น
+  function ccsEarMask(g, H, L, hx) {
+    let P = g.getAttribute("position"), N = g.getAttribute("normal"), n = P.count,
+      sc = H / 1.15, ny = 0.71 * sc, nz = 0.33 * sc,
+      cx = hx, cy = ny + 0.19 * H, cz = nz + 0.07 * L,
+      raw = new Float32Array(n), ear = new Float32Array(n), idx = [], cell = 0.04 * sc, grid = new Map();
+    for (let i = 0; i < n; i++) {
+      let x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+      if (y < cy + 0.04 * H || z < nz - 0.12 * L || z > cz + 0.12 * L) continue;
+      let dx = x - cx, dy = y - cy, dz = z - cz, dl = Math.hypot(dx, dy, dz) || 1,
+        al = (N.getX(i) * dx + N.getY(i) * dy + N.getZ(i) * dz) / dl;
+      raw[i] = al < 0.45 ? 1 : 0;
+      idx.push(i);
+      let k = Math.floor(x / cell) + "," + Math.floor(y / cell) + "," + Math.floor(z / cell);
+      (grid.get(k) ?? grid.set(k, []).get(k)).push(i);
+    }
+    let R2 = (0.05 * sc) ** 2;
+    for (let i of idx) {
+      let x = P.getX(i), y = P.getY(i), z = P.getZ(i), gx = Math.floor(x / cell), gy = Math.floor(y / cell), gz = Math.floor(z / cell), s = 0, c = 0;
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let d = -1; d <= 1; d++) {
+        let lst = grid.get(gx + a + "," + (gy + b) + "," + (gz + d));
+        if (lst) for (let j of lst) { let ex = P.getX(j) - x, ey = P.getY(j) - y, ez = P.getZ(j) - z; ex * ex + ey * ey + ez * ez < R2 && ((s += raw[j]), c++); }
+      }
+      let m = c ? s / c : 0, t = Math.min(1, Math.max(0, (m - 0.2) / 0.35));
+      ear[i] = t * t * (3 - 2 * t);
+    }
+    g.setAttribute("aEar", new Je(ear, 1));
+  }
   function ccsFurShells(p, u, d) {
     let base = u.onBeforeCompile,
       n = 8,
-      list = [];
+      list = [],
+      a2c = !1;
+    try { a2c = !!dn?.getContextAttributes?.()?.antialias; } catch (e) {}   // v145: มี MSAA → ขอบขนนุ่ม
     for (let i = 0; i < n; i++) {
       let k = (i + 1) / n,
         sm = u.clone();
       ((sm.color = u.color),
         (sm.onBeforeCompile = (v, r) => {
-          (base(v, r), (v.uniforms.uShellK = { value: k }), (v.vertexShader = "#define FUR_SHELL\n" + v.vertexShader), (v.fragmentShader = "#define FUR_SHELL\n" + v.fragmentShader));
+          let df = "#define FUR_SHELL\n" + (a2c ? "#define FUR_A2C\n" : "");
+          (base(v, r), (v.uniforms.uShellK = { value: k }), (v.vertexShader = df + v.vertexShader), (v.fragmentShader = df + v.fragmentShader));
         }),
-        (sm.customProgramCacheKey = () => "ccsFur"));
+        (sm.alphaToCoverage = a2c),
+        a2c && ((sm.blending = 5), (sm.blendSrc = 201), (sm.blendDst = 200), (sm.blendSrcAlpha = 200), (sm.blendDstAlpha = 201)),   // สีทับปกติ แต่ไม่เขียนค่า alpha ลงจอ (ไม่ให้พื้นหลังหน้าเว็บโผล่ทะลุขน)
+        (sm.customProgramCacheKey = () => "ccsFur" + (a2c ? "A" : "")));
       let m = new R(p.geometry, sm);
-      ((m.castShadow = !1), (m.receiveShadow = !0), (m.visible = !1), (m.userData.noOcc = !0), p.add(m), list.push(m));
+      ((m.castShadow = !1), (m.receiveShadow = !0), (m.visible = !1), (m.userData.noOcc = !0), (m.userData.ccsShell = !0), p.add(m), list.push(m));
     }
     ccsFurList.push({ list, d, p, last: null, on: 0 });
   }

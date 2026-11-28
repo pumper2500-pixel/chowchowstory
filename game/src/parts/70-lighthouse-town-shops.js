@@ -3084,7 +3084,7 @@
     });
     for (let t of e) {
       let n = Array.isArray(t.material) ? t.material[0] : t.material;
-      if (n.transparent) continue;
+      if (n.transparent || t.userData.ccsShell) continue;   // v145: ชั้นขนฟูไม่ต้องมีเงาเอ็กซเรย์
       t.renderOrder = 2;
       let s = n.clone(),
         o = n.onBeforeCompile.bind(n),
@@ -3094,7 +3094,7 @@
           (c.uniforms.uXCol = { value: tC }),
           (c.fragmentShader =
             `uniform vec3 uXCol;
-` + c.fragmentShader.replace(/}\s*$/, " gl_FragColor = vec4(uXCol, 0.55); }")));
+` + c.fragmentShader.replace(/}\s*$/, (c.fragmentShader.includes("varying vec3 vPosM") ? " if (vPosM.y < uHip * 0.3) discard;" : "") + " gl_FragColor = vec4(uXCol, 0.55); }")));   // v145: อุ้งเท้าที่จมพื้นนิด ๆ ไม่ขึ้นเงาเอ็กซเรย์สีส้ม (ขอบส้มใต้เท้า)
       }),
         (s.customProgramCacheKey = () => r + "|xray"),
         (s.depthFunc = rc),
