@@ -1023,19 +1023,23 @@ uniform float uChow, uPhase, uAmp, uWag, uJaw, uHip, uZF, uZB, uZMid, uTailZ, uT
               "#include <begin_vertex>",
               `#include <begin_vertex>
       vPosM = position;
-      { // v140 (ร่าง): น้องอ้วนฟู — พองตามแนวผิว มากที่แผงคอ/อก/หลัง น้อยที่ขาและปลายจมูก
+      { // v141: น้องอ้วนฟู — ตัวพองตามผิว · หัวขยายทั้งลูกจากจุดกลางหัว (หน้าไม่แบน สัดส่วนเดิม หูไม่แตก) · แผงคอฟูรอบคอ
+        vec3 hc = vec3(0.0, uNeck.y + 0.19 * uH, uNeck.z + 0.07 * uL);                       // จุดกลางหัว
+        float hw = smoothstep(uNeck.z - 0.04 * uL, uNeck.z + 0.08 * uL, position.z) * smoothstep(uNeck.y - 0.12 * uH, uNeck.y + 0.02 * uH, position.y);
         float legM = smoothstep(uHip * 0.2, uHip * 0.95, position.y);
-        float nose = 1.0 - smoothstep(0.06 * uL, 0.2 * uL, distance(position.yz, vec2(uNoseY, uNoseZ)));
-        float mane = exp(-pow((position.z - uNeck.z) / (0.17 * uL), 2.0)) * smoothstep(uHip * 0.5, uHip * 1.15, position.y);
-        float m = (0.35 + 0.65 * legM + 0.9 * mane) * (1.0 - 0.9 * nose) * smoothstep(0.0, 0.12 * uHip, position.y) * uChow;   // ฝ่าเท้าไม่พอง (ไม่จมพื้น)
+        float mane = exp(-pow((position.z - (uNeck.z - 0.04 * uL)) / (0.15 * uL), 2.0)) * smoothstep(uHip * 0.5, uHip * 1.15, position.y) * (1.0 - 0.85 * hw);
+        float m = (0.35 + 0.65 * legM + 0.9 * mane) * smoothstep(0.0, 0.12 * uHip, position.y) * uChow;   // ฝ่าเท้าไม่พอง (ไม่จมพื้น)
         vec3 nn = normalize(objectNormal);
-        transformed += nn * (uPuff * uH * m);
+        vec3 bodyOff = nn * (uPuff * uH * m);
+        vec3 headOff = (position - hc) * (uPuff * 1.5) * uChow;                                 // ขยายหัวทั้งลูก ~9%
+        transformed += mix(bodyOff, headOff, hw);
         #ifdef FUR_SHELL
-        float face = smoothstep(0.2 * uL, 0.4 * uL, distance(position.yz, vec2(uNoseY, uNoseZ)));   // หน้า (ตา/ปาก/จมูก) ขนสั้น เห็นหน้าชัด
-        float fl = uShellK * uFurLen * uH * clamp((0.12 + 0.88 * legM + 0.7 * mane) * face, 0.0, 1.6);
+        float face = mix(0.3, 1.0, smoothstep(0.08 * uL, 0.3 * uL, distance(position.yz, vec2(uNoseY, uNoseZ))));   // หน้า: ขนสั้นลง (ไม่โล้น)
+        float fm = clamp((0.12 + 0.88 * legM + 0.7 * mane) * face, 0.0, 1.6);
+        float fl = uShellK * uFurLen * uH * fm;
         transformed += nn * fl;
         // ขนไหว: ปลายขนลู่ตามแรงลม/การวิ่ง (ลู่ไปทางหลังเมื่อวิ่ง) + เด้งตามจังหวะก้าว + ลมโชยเบา ๆ
-        float k2 = uShellK * uShellK, fw = k2 * uFurLen * uH * 6.0 * clamp((0.12 + 0.88 * legM + 0.7 * mane) * face, 0.0, 1.6);
+        float fw = uShellK * uShellK * uFurLen * uH * 6.0 * fm;
         transformed -= uFurVel * fw * 0.5;
         transformed.y -= fw * (0.08 + 0.12 * abs(sin(uPhase * 2.0)) * uAmp * 3.0);
         transformed.x += fw * 0.05 * sin(uFurT * 1.7 + position.z * 9.0 + position.y * 7.0);
