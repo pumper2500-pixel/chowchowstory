@@ -377,11 +377,19 @@
       // UV ขนหลัง (ใช้ระบายแผ่นที่รีดแล้วให้เป็นสีเดียว ไม่มีลายกระพริบ)
       let bu = 0, bv = 0, bd = 1e9, bx = 0, bz = -0.3 * sc, byy = yb(bx, bz);
       for (let i = 0; i < n; i++) { if (cand[i]) continue; let d = (P.getX(i) - bx) ** 2 + (P.getY(i) - byy) ** 2 + (P.getZ(i) - bz) ** 2; d < bd && ((bd = d), (bu = UV.getX(i)), (bv = UV.getY(i))); }
+      // v149: รีดทั้ง "รอยเท้า" ของหางเดิมบนหลัง (รวมใต้หางที่แนบหลัง) ไม่ให้เหลือสันเล็ก ๆ เป็นรอยสีครีม · ขอบค่อย ๆ กลืนกับผิวเดิม
+      let cell = 0.025 * sc, fp = new Map(), ck = (x, z) => Math.floor(x / cell) + "," + Math.floor(z / cell);
+      for (let i of comp) { let cx = Math.floor(P.getX(i) / cell), cz = Math.floor(P.getZ(i) / cell); fp.set(cx + "," + cz, 0); }
+      for (let r = 1; r <= 2; r++) for (let [k0, v0] of [...fp]) { if (v0 !== r - 1) continue; let [cx, cz] = k0.split(",").map(Number); for (let a2 = -1; a2 <= 1; a2++) for (let b2 = -1; b2 <= 1; b2++) { let kk = cx + a2 + "," + (cz + b2); fp.has(kk) || fp.set(kk, r); } }
       for (let i = 0; i < n; i++) {
-        if (w[i] < 0 || !comp.has(w[i])) continue;
-        let x = P.getX(i), z = P.getZ(i), s0 = Math.min(1, Math.max(0, (-z / sc - 0.5) / 0.15)),
-          nx = 4.6 * (x / sc), nz = -2.667 * s0, l = Math.hypot(nx, 1, nz);
-        P.setY(i, yb(x, z) + 0.012 * sc); N.setXYZ(i, nx / l, 1 / l, nz / l); UV.setXY(i, bu, bv);
+        let x = P.getX(i), y = P.getY(i), z = P.getZ(i), ring = fp.get(ck(x, z)), inC = w[i] >= 0 && comp.has(w[i]);
+        if (!inC && (ring === void 0 || y < yb(x, z) - 0.05 * sc)) continue;
+        let s0 = Math.min(1, Math.max(0, (-z / sc - 0.5) / 0.15)), nx = 4.6 * (x / sc), nz = -2.667 * s0, l = Math.hypot(nx, 1, nz),
+          k = inC || ring === 0 ? 1 : ring === 1 ? 0.6 : 0.25, ty = yb(x, z) + 0.012 * sc;
+        P.setY(i, y + (ty - y) * k);
+        let ox = N.getX(i), oy = N.getY(i), oz = N.getZ(i), mx2 = ox + (nx / l - ox) * k, my2 = oy + (1 / l - oy) * k, mz2 = oz + (nz / l - oz) * k, l2 = Math.hypot(mx2, my2, mz2) || 1;
+        N.setXYZ(i, mx2 / l2, my2 / l2, mz2 / l2);
+        (inC || ring === 0) && UV.setXY(i, bu, bv);
       }
       ((P.needsUpdate = !0), (N.needsUpdate = !0), (UV.needsUpdate = !0));
       // หางใหม่: ท่อโค้งตามแนวหางเดิม ปลายมนกลม

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/vercel-prune.mjs && next build",
     "start": "npx serve out",
     "lint": "next lint",
     "test": "node --test lib/*.test.mjs",

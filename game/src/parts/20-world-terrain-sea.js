@@ -4773,7 +4773,7 @@ vec4 brk(vec2 xz, float t, float sh){
             s = new Uint8Array(n.length);
           for (let o = 0; o < n.length; o++) s[o] = n.charCodeAt(o);
           t = s.buffer;
-        } else t = await (await fetch("dog_bark.mp3")).arrayBuffer();
+        } else t = (await D4, await (await fetch(nb("dog_bark.mp3"))).arrayBuffer());
         Dh = await i.decodeAudioData(t);
       } catch (e) {
         console.warn("bark", e);

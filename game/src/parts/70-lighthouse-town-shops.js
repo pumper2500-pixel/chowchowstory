@@ -1570,7 +1570,7 @@
     OA = ["cream", "white", "black", "red", "blue"],
     L4 = new URLSearchParams(location.search).get("cdn"),
     M6 = L4 ?? "https://chowchowstory-cdn.pumper2500.workers.dev/farm/",
-    l1 = "",
+    l1 = window.__M || (!L4 && (!/^https:/.test(location.protocol) || /localhost|127\.0\.0\.1/.test(location.hostname))) ? "" : M6,   // v149: บนเว็บจริงโหลดโมเดล/เพลงจาก Cloudflare เสมอ (Vercel ไม่มีไฟล์พวกนี้แล้ว)
     bE = new Map(),
     D4 = (async () => {
       if (!(
@@ -1596,10 +1596,11 @@
             }
           }
         } catch {}
-        console.log("[cdn]", l1 || "ไฟล์บน Vercel");
+        l1 || (l1 = M6);   // v149: ไฟล์โมเดล/เพลงไม่ได้อัปขึ้น Vercel แล้ว (ประหยัดพื้นที่ deploy) → อ่านรายชื่อไม่ได้ก็ยังโหลดจาก Cloudflare
+        console.log("[cdn]", l1);
       }
     })(),
-    nb = (i) => (l1 && bE.has(i) ? `${l1}${i}?v=${bE.get(i)}` : i),
+    nb = (i) => (l1 ? `${l1}${i}${bE.has(i) ? `?v=${bE.get(i)}` : ""}` : i),
     Zt = (i) => window.__M?.[i] ?? nb(`${i}.glb`),
     Hi = new H(74, 0, 27), // v134: ที่ตั้งสวนสัตว์เดิม (ลบแล้ว) · ยังเว้นต้นไม้รอบ ๆ ไว้เป็นลานว่าง
     NA = [
